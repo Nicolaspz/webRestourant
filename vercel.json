@@ -1,0 +1,15 @@
+{
+    "buildCommand": "npm run build",
+    "installCommand": "npm install",
+    "framework": "nextjs",
+    "rewrites": [
+        {
+            "source": "/socket.io",
+            "destination": "http://13.62.222.99:3333/socket.io/"
+        },
+        {
+            "source": "/api/:path*",
+            "destination": "http://13.62.222.99:3333/:path*"
+        }
+    ]
+}
