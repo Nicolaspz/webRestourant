@@ -1,45 +1,45 @@
 'use client';
 import { API_BASE_URL } from '../../../../config';
-import { DeleteConfirmationModal } from './DeleteConfirmationModalProps'; 
+import { DeleteConfirmationModal } from './DeleteConfirmationModalProps';
 import { useState, useEffect, useContext } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
-import { 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
   Plus,
   Search,
   Filter,
@@ -75,11 +75,11 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  
+
   // Estados para paginação
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Estados para modais
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
@@ -89,16 +89,16 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
 
-// Funções para o modal de preço
-const openPriceModal = (product: Product) => {
-  setSelectedProduct(product);
-  setIsPriceModalOpen(true);
-};
+  // Funções para o modal de preço
+  const openPriceModal = (product: Product) => {
+    setSelectedProduct(product);
+    setIsPriceModalOpen(true);
+  };
 
-const closePriceModal = () => {
-  setIsPriceModalOpen(false);
-  setSelectedProduct(null);
-};
+  const closePriceModal = () => {
+    setIsPriceModalOpen(false);
+    setSelectedProduct(null);
+  };
 
   // Buscar produtos e categorias
   const fetchData = async () => {
@@ -141,11 +141,11 @@ const closePriceModal = () => {
   // Filtrar produtos
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || 
-                       (typeFilter === "derived" && product.isDerived) ||
-                       (typeFilter === "simple" && !product.isDerived);
-    
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = typeFilter === "all" ||
+      (typeFilter === "derived" && product.isDerived) ||
+      (typeFilter === "simple" && !product.isDerived);
+
     return matchesSearch && matchesType;
   });
 
@@ -155,6 +155,7 @@ const closePriceModal = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredProducts.slice(startIndex, endIndex);
+
 
   // Resetar para página 1 quando filtrar
   useEffect(() => {
@@ -173,34 +174,34 @@ const closePriceModal = () => {
 
   // Excluir produto
   const handleDeleteProduct = async () => {
-  if (!selectedProduct) return;
+    if (!selectedProduct) return;
 
-  try {
-    setIsSubmitting(true);
-    console.log("id organization", user?.organizationId)
-    // IMPORTANTE: Agora precisa passar organizationId também
-    await api.delete('/produt', {
-      params: { 
-        productId: selectedProduct.id,
-        organizationId: user?.organizationId // Adiciona o organizationId do usuário
-      },
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    try {
+      setIsSubmitting(true);
+      console.log("id organization", user?.organizationId)
+      // IMPORTANTE: Agora precisa passar organizationId também
+      await api.delete('/produt', {
+        params: {
+          productId: selectedProduct.id,
+          organizationId: user?.organizationId // Adiciona o organizationId do usuário
+        },
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    // Atualizar a lista localmente
-    setProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
-    toast.success("Produto excluído com sucesso!");
-    
-  } catch (error: any) {
-    console.error("Erro ao excluir produto:", error);
-    toast.error(error.response?.data?.message || "Erro ao excluir produto");
-  } finally {
-    // SEMPRE resetar o estado, mesmo em caso de erro
-    setIsSubmitting(false);
-    setIsDeleteDialogOpen(false);
-    setSelectedProduct(null);
-  }
-};
+      // Atualizar a lista localmente
+      setProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
+      toast.success("Produto excluído com sucesso!");
+
+    } catch (error: any) {
+      console.error("Erro ao excluir produto:", error);
+      toast.error(error.response?.data?.message || "Erro ao excluir produto");
+    } finally {
+      // SEMPRE resetar o estado, mesmo em caso de erro
+      setIsSubmitting(false);
+      setIsDeleteDialogOpen(false);
+      setSelectedProduct(null);
+    }
+  };
 
   // Aceitar preço sugerido
   const handleAcceptSuggestedPrice = async (productId: string) => {
@@ -303,7 +304,7 @@ const closePriceModal = () => {
                 className="pl-9"
               />
             </div>
-            
+
             {/* Filtros */}
             <div className="flex gap-2">
               <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -319,8 +320,8 @@ const closePriceModal = () => {
               </Select>
 
               {/* Itens por página */}
-              <Select 
-                value={itemsPerPage.toString()} 
+              <Select
+                value={itemsPerPage.toString()}
                 onValueChange={(value) => {
                   setItemsPerPage(Number(value));
                   setCurrentPage(1);
@@ -364,11 +365,36 @@ const closePriceModal = () => {
                     <TableRow key={product.id}>
                       <TableCell>
                         {product.banner ? (
-                          <img 
-                            src={`${API_BASE_URL}/tmp/${product.banner}`}
-                            alt={product.name}
-                            className="w-10 h-10 object-cover rounded-lg"
-                          />
+                          <div>
+                            <img
+                              src={`${API_BASE_URL}/tmp/${product.banner}`}
+                              alt={product.name}
+                              className="w-10 h-10 object-cover rounded-lg"
+                              onError={(e) => {
+                                console.error('❌ ERRO COMPLETO:', {
+                                  produto: product.name,
+                                  banner: product.banner,
+                                  urlTentada: `${API_BASE_URL}/tmp/${product.banner}`,
+                                  apiBaseUrl: API_BASE_URL,
+                                  timestamp: new Date().toISOString()
+                                });
+                                // Mostra placeholder em caso de erro
+                                e.currentTarget.style.display = 'none';
+                                // Mostra um fallback
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  const fallback = document.createElement('div');
+                                  fallback.className = 'w-10 h-10 bg-muted rounded-lg flex items-center justify-center';
+                                  fallback.innerHTML = '<svg class="w-4 h-4 text-muted-foreground" ...></svg>';
+                                  parent.appendChild(fallback);
+                                }
+                              }}
+                              onLoad={() => console.log('✅ Imagem carregada:', {
+                                produto: product.name,
+                                url: `${API_BASE_URL}/tmp/${product.banner}`
+                              })}
+                            />
+                          </div>
                         ) : (
                           <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                             <Image className="w-4 h-4 text-muted-foreground" />
@@ -386,42 +412,42 @@ const closePriceModal = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-  <div className="flex items-center gap-2">
-    <DollarSign className="w-4 h-4 text-green-600" />
-    <span>
-      {product.PrecoVenda?.[0]?.preco_venda?.toFixed(2) || '0.00'} Kz
-    </span>
-    {(product.PrecoVenda?.[0]?.precoSugerido || true) && (
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => openPriceModal(product)}
-          className="h-6 w-6 p-0"
-          title="Atualizar preço"
-        >
-          <Edit className="w-3 h-3 text-blue-600" />
-        </Button>
-        {product.PrecoVenda?.[0]?.precoSugerido && (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAcceptSuggestedPrice(product.id)}
-              className="h-6 w-6 p-0"
-              title="Aceitar preço sugerido"
-            >
-              <Check className="w-3 h-3 text-green-600" />
-            </Button>
-            <span className="text-xs text-yellow-600">
-              Sug: {product.PrecoVenda[0].precoSugerido.toFixed(2)} Kz
-            </span>
-          </>
-        )}
-      </div>
-    )}
-  </div>
-</TableCell>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-green-600" />
+                          <span>
+                            {product.PrecoVenda?.[0]?.preco_venda?.toFixed(2) || '0.00'} Kz
+                          </span>
+                          {(product.PrecoVenda?.[0]?.precoSugerido || true) && (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openPriceModal(product)}
+                                className="h-6 w-6 p-0"
+                                title="Atualizar preço"
+                              >
+                                <Edit className="w-3 h-3 text-blue-600" />
+                              </Button>
+                              {product.PrecoVenda?.[0]?.precoSugerido && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleAcceptSuggestedPrice(product.id)}
+                                    className="h-6 w-6 p-0"
+                                    title="Aceitar preço sugerido"
+                                  >
+                                    <Check className="w-3 h-3 text-green-600" />
+                                  </Button>
+                                  <span className="text-xs text-yellow-600">
+                                    Sug: {product.PrecoVenda[0].precoSugerido.toFixed(2)} Kz
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
                           {product.unit}
@@ -452,7 +478,7 @@ const closePriceModal = () => {
                               <Edit className="w-4 h-4 mr-2" />
                               Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => openDeleteDialog(product)}
                               className="text-red-600"
                             >
