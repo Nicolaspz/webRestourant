@@ -16,6 +16,7 @@ import { Package, Loader2, Trash2, FileText, Download } from "lucide-react";
 import { setupAPIClient } from "@/services/api";
 import { toast } from "react-toastify";
 import { AuthContext } from "@/contexts/AuthContext";
+import { API_BASE_URL } from "../../../../config";
 
 interface PurchaseProduct {
   id: string;
@@ -169,7 +170,7 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status }: PurchaseP
             {purchase.images.map((img) => (
               <a
                 key={img.id}
-                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'}/files/${img.path}`}
+                href={`${API_BASE_URL}/files/${img.path}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-md text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors"

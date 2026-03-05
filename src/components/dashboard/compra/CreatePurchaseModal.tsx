@@ -16,6 +16,7 @@ import { setupAPIClient } from "@/services/api";
 import { toast } from "react-toastify";
 import { AuthContext } from "@/contexts/AuthContext";
 import { X, FileText, Download, Trash2 } from "lucide-react";
+import { API_BASE_URL } from "../../../../config";
 
 interface CreatePurchaseModalProps {
   isOpen: boolean;
@@ -267,7 +268,7 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
                           className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40"
                         >
                           <a
-                            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'}/files/${img.path}`}
+                            href={`${API_BASE_URL}/files/${img.path}`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >

@@ -49,7 +49,16 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://13.62.222.99:3333/:path*' // Redireciona para o backend
+      }
+    ];
   }
 };
+
 
 export default nextConfig;

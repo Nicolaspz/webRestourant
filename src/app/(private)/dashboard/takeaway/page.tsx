@@ -14,6 +14,7 @@ import TakeawayGestao from '@/components/dashboard/takeaway/TakeawayGestao';
 import TakeawayClientesList from '@/components/dashboard/takeaway/TakeawayClientesList';
 import { useSocket } from '@/contexts/SocketContext';
 import { Users } from 'lucide-react';
+import { API_BASE_URL } from '../../../../../config';
 
 interface Product {
     id: string;
@@ -360,7 +361,7 @@ export default function TakeawayPage() {
                                             >
                                                 <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
                                                     {p.banner ? (
-                                                        <img src={`http://localhost:3333/files/${p.banner}`} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                                                        <img src={`${API_BASE_URL}/files/${p.banner}`} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                                                     ) : (
                                                         <Package className="w-10 h-10 text-muted-foreground/30" />
                                                     )}
