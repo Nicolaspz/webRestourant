@@ -40,7 +40,7 @@ export default function CreateMasterUserPage() {
     useEffect(() => {
         async function fetchOrg() {
             try {
-                const response = await api.get(`/organization/public/${organizationId}`);
+                const response = await api.get(`/organization/${organizationId}`);
                 if (response.data.success) {
                     setOrgName(response.data.organization.name);
                 }
