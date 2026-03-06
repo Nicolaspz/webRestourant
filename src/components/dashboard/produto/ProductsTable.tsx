@@ -51,8 +51,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  FileUp
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { api } from "@/services/apiClients";
 import { toast } from 'react-toastify';
 import { ProductFormModal } from "./ProductFormModal";
@@ -68,6 +70,7 @@ interface ProductsTableProps {
 }
 
 export function ProductsTable({ organizationId }: ProductsTableProps) {
+  const router = useRouter();
   const { user } = useContext(AuthContext);
   const { '@servFixe.token': token } = parseCookies();
   const [products, setProducts] = useState<Product[]>([]);
@@ -286,10 +289,16 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                 Gerencie os produtos do sistema ({products.length} produtos)
               </CardDescription>
             </div>
-            <Button onClick={openCreateModal}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Produto
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => router.push('/dashboard/products/import')} variant="secondary" className='cursor-pointer'>
+                <FileUp className="w-4 h-4 mr-2 " />
+                Importar
+              </Button>
+              <Button onClick={openCreateModal} className='cursor-pointer'>
+                <Plus className="w-4 h-4 mr-2 " />
+                Novo Produto
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
