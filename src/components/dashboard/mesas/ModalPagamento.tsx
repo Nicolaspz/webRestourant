@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Banknote, CreditCard, Smartphone, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Banknote, CreditCard, Smartphone, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft, X } from 'lucide-react';
 import { setupAPIClient } from '@/services/api';
 import { parseCookies } from 'nookies';
 import { toast } from 'react-toastify';
@@ -50,7 +49,6 @@ const METODOS: { value: MetodoPagamento; label: string; icon: React.ReactNode }[
 
 export default function ModalPagamento({
     open,
-    mesaId, // Destruturado para uso futuro se necessário
     mesaNumber,
     organizationId,
     onClose,
@@ -191,114 +189,125 @@ export default function ModalPagamento({
         }
     };
 
+    if (!open) return null;
+
     return (
-        <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-            <DialogContent className="max-w-lg">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center justify-between pr-6">
-                        <span className="flex items-center gap-2">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-background border border-border shadow-2xl rounded-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+                {/* Header Custom */}
+                <div className="flex items-center justify-between p-6 border-b bg-muted/30">
+                    <div className="flex flex-col">
+                        <h2 className="text-xl font-bold flex items-center gap-2">
                             {step === 1 ? <>🧾 Conta — Mesa {mesaNumber}</> : <>💳 Pagamento — Mesa {mesaNumber}</>}
-                        </span>
+                        </h2>
                         {step === 2 && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
+                            <button
                                 onClick={() => { setIsSplit(!isSplit); setPagamentos([]); setMetodo(null); }}
-                                className="text-xs font-semibold h-7"
+                                className="text-xs font-semibold text-primary hover:underline text-left mt-1"
                             >
                                 {isSplit ? '🔄 Pagamento Único' : '➕ Dividir Conta'}
-                            </Button>
+                            </button>
                         )}
-                    </DialogTitle>
-                </DialogHeader>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
 
-                <div className="flex-1 overflow-y-auto px-1 py-1 space-y-4">
+                <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                     {/* PASSO 1 — Resumo da conta */}
                     {step === 1 && (
                         <div className="space-y-4">
                             {loadingPreview ? (
                                 <div className="flex flex-col items-center justify-center py-10 gap-3">
                                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                    <p className="text-sm text-muted-foreground">A carregar conta...</p>
+                                    <p className="text-sm text-muted-foreground font-medium">A carregar consumos...</p>
                                 </div>
                             ) : conta ? (
                                 <>
-                                    <div className="text-xs text-muted-foreground">
-                                        Aberta às {new Date(conta.abertaEm).toLocaleTimeString('pt-PT')}
+                                    <div className="text-xs text-muted-foreground font-medium">
+                                        Sessão iniciada às {new Date(conta.abertaEm).toLocaleTimeString('pt-PT')}
                                     </div>
 
                                     {/* Lista de itens */}
-                                    <div className="max-h-52 overflow-y-auto space-y-1 border rounded-lg p-3 bg-muted/30">
+                                    <div className="space-y-1 border rounded-xl p-4 bg-muted/20">
                                         {conta.pedidos?.flatMap(p => p.items).map((item, i) => (
-                                            <div key={i} className="flex justify-between items-center text-sm py-1 border-b last:border-0 border-border/50">
-                                                <div className="flex items-center gap-2">
+                                            <div key={i} className="flex justify-between items-center text-sm py-2 border-b last:border-0 border-border/50">
+                                                <div className="flex items-center gap-3">
                                                     {!item.preparado && (
-                                                        <Badge variant="outline" className="text-[10px] py-0">⏳</Badge>
+                                                        <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5 bg-amber-500/10 border-amber-500/20 text-amber-600">PENDENTE</Badge>
                                                     )}
                                                     <div className="flex flex-col">
-                                                        <span className="font-medium text-foreground">{item.produto}</span>
-                                                        <span className="text-[10px] text-muted-foreground font-medium">
-                                                            {item.precoUnitario.toFixed(2)} Kz × {item.quantidade}
+                                                        <span className="font-semibold text-foreground">{item.produto}</span>
+                                                        <span className="text-[11px] text-muted-foreground">
+                                                            {item.precoUnitario.toLocaleString()} Kz × {item.quantidade}
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <span className="font-mono text-xs font-bold">{item.subtotal.toFixed(2)} Kz</span>
+                                                <span className="font-bold text-foreground">{(item.subtotal).toLocaleString()} Kz</span>
                                             </div>
                                         ))}
                                     </div>
 
                                     {temItensPendentes && (
-                                        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-2 leading-tight">
-                                            <Loader2 className="h-4 w-4 mt-0.5 animate-pulse shrink-0" />
+                                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-3">
+                                            <div className="mt-0.5 p-1 bg-amber-500 rounded-full shrink-0">
+                                                <Loader2 className="h-3 w-3 animate-spin text-white" />
+                                            </div>
                                             <div>
-                                                <p className="font-bold mb-0.5">Pedidos em preparação</p>
-                                                <p>A cozinha ainda está a preparar alguns itens. É necessário aguardar a finalização antes de fechar a conta.</p>
+                                                <p className="font-bold mb-0.5">Pedidos ainda na cozinha</p>
+                                                <p className="opacity-80">Pode avançar com o fecho, mas recorde-se que alguns itens ainda não foram marcados como preparados.</p>
                                             </div>
                                         </div>
                                     )}
 
-                                    <div className="flex justify-between items-center pt-2 border-t text-lg font-bold">
-                                        <span>Total</span>
-                                        <span className="text-primary">{conta.totalGeral.toFixed(2)} Kz</span>
+                                    <div className="flex justify-between items-center pt-4 border-t border-dashed text-xl font-extrabold uppercase tracking-tight">
+                                        <span>Total Geral</span>
+                                        <span className="text-primary">{conta.totalGeral.toLocaleString()} Kz</span>
                                     </div>
                                 </>
-                            ) : null}
+                            ) : (
+                                <div className="text-center py-10 opacity-50">Não foi possível carregar os dados.</div>
+                            )}
                         </div>
                     )}
 
                     {/* PASSO 2 — Pagamento */}
                     {step === 2 && conta && (
-                        <div className="space-y-4">
+                        <div className="space-y-5 animate-in slide-in-from-right-4 duration-300">
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="p-2.5 bg-muted rounded-lg border border-border/50">
-                                    <p className="text-[9px] uppercase font-bold text-muted-foreground">Total da Conta</p>
-                                    <p className="text-base font-bold">{conta.totalGeral.toFixed(2)} Kz</p>
+                                <div className="p-3 bg-muted rounded-xl border border-border/50 shadow-sm">
+                                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Total Final</p>
+                                    <p className="text-lg font-black text-foreground">{conta.totalGeral.toLocaleString()} Kz</p>
                                 </div>
-                                <div className={`p-2.5 rounded-lg border ${restante <= 0.01 ? 'bg-green-50 dark:bg-green-900/20 text-green-700 border-green-200' : 'bg-primary/5 text-primary border-primary/20'}`}>
-                                    <p className="text-[9px] uppercase font-bold">Faltam</p>
-                                    <p className="text-base font-bold">{Math.max(0, restante).toFixed(2)} Kz</p>
+                                <div className={`p-3 rounded-xl border-2 transition-colors shadow-sm ${restante <= 0.01 ? 'bg-green-500/10 text-green-700 border-green-500/30' : 'bg-primary/5 text-primary border-primary/20'}`}>
+                                    <p className="text-[10px] uppercase font-bold mb-1 tracking-wider">Falta Pagar</p>
+                                    <p className="text-lg font-black">{Math.max(0, restante).toLocaleString()} Kz</p>
                                 </div>
                             </div>
 
                             {isSplit ? (
-                                <div className="space-y-3">
-                                    {/* Lista de pagamentos já adicionados */}
+                                <div className="space-y-4">
                                     {pagamentos.length > 0 && (
-                                        <div className="space-y-1.5 border rounded-lg p-2 max-h-32 overflow-y-auto bg-muted/20">
+                                        <div className="space-y-2 border rounded-xl p-3 max-h-40 overflow-y-auto bg-muted/10">
                                             {pagamentos.map((p, i) => (
-                                                <div key={i} className="flex justify-between items-center p-2 bg-background rounded border border-border/50 text-[11px] shadow-sm">
+                                                <div key={i} className="flex justify-between items-center p-3 bg-background rounded-lg border border-border text-xs shadow-sm group">
                                                     <span className="flex items-center gap-2">
-                                                        {METODOS.find(m => m.value === p.metodo)?.icon}
-                                                        <span className="font-medium text-muted-foreground">{METODOS.find(m => m.value === p.metodo)?.label}</span>
+                                                        <div className="p-1.5 bg-primary/10 rounded-md text-primary">
+                                                            {METODOS.find(m => m.value === p.metodo)?.icon}
+                                                        </div>
+                                                        <span className="font-bold text-muted-foreground">{METODOS.find(m => m.value === p.metodo)?.label}</span>
                                                     </span>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="font-bold text-foreground">{p.valor.toFixed(2)} Kz</span>
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="font-black text-foreground">{p.valor.toLocaleString()} Kz</span>
                                                         <button
                                                             onClick={() => removerPagamento(i)}
-                                                            className="text-muted-foreground hover:text-destructive p-1 transition-colors"
-                                                            title="Remover"
+                                                            className="text-muted-foreground hover:text-destructive p-1.5 hover:bg-destructive/10 rounded-full transition-all"
                                                         >
-                                                            <Loader2 className="h-3 w-3 rotate-45" />
+                                                            <X size={14} />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -306,18 +315,17 @@ export default function ModalPagamento({
                                         </div>
                                     )}
 
-                                    {/* Form para adicionar novo pagamento */}
                                     {restante > 0.01 && (
-                                        <div className="p-3 border rounded-lg bg-primary/5 border-primary/20 space-y-3">
+                                        <div className="p-4 border rounded-2xl bg-primary/5 border-primary/20 space-y-4 shadow-inner">
                                             <div className="grid grid-cols-4 gap-2">
                                                 {METODOS.map(m => (
                                                     <button
                                                         key={m.value}
                                                         onClick={() => setMetodo(m.value)}
-                                                        className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${metodo === m.value ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-background hover:border-primary border-border/50'}`}
+                                                        className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${metodo === m.value ? 'bg-primary text-primary-foreground border-primary shadow-lg scale-105' : 'bg-background hover:border-primary/40 border-border/50'}`}
                                                     >
                                                         {m.icon}
-                                                        <span className="text-[9px] font-medium">{m.label}</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-tighter">{m.label}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -327,67 +335,65 @@ export default function ModalPagamento({
                                                         type="number"
                                                         value={valorInput}
                                                         onChange={e => setValorInput(e.target.value)}
-                                                        placeholder="0.00"
-                                                        className="w-full border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
+                                                        placeholder="Valor a adicionar"
+                                                        className="w-full bg-background border-2 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all"
                                                     />
-                                                    <span className="absolute right-3 top-2 text-xs text-muted-foreground">Kz</span>
+                                                    <span className="absolute right-4 top-3 text-[10px] font-black text-muted-foreground">Kz</span>
                                                 </div>
-                                                <Button size="sm" onClick={addPagamento} className="px-4">Add</Button>
+                                                <Button size="sm" onClick={addPagamento} className="px-6 rounded-xl shadow-md h-auto">ADD</Button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                <>
-                                    <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
                                         {METODOS.map(m => (
                                             <button
                                                 key={m.value}
                                                 onClick={() => { setMetodo(m.value); setTrocoPara(''); }}
-                                                className={`flex items-center gap-2 p-3.5 rounded-xl border-2 transition-all text-sm font-semibold ${metodo === m.value ? 'border-primary bg-primary/10 text-primary shadow-sm' : 'border-border/50 hover:border-primary/50'}`}
+                                                className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-sm font-bold ${metodo === m.value ? 'border-primary bg-primary/10 text-primary shadow-md scale-[1.02]' : 'border-border/50 hover:border-primary/40 hover:bg-muted/50'}`}
                                             >
-                                                {m.icon} {m.label}
-                                                {metodo === m.value && <CheckCircle2 className="h-4 w-4 ml-auto" />}
+                                                <div className={`p-2 rounded-xl ${metodo === m.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                                    {m.icon}
+                                                </div>
+                                                {m.label}
+                                                {metodo === m.value && <div className="ml-auto bg-primary rounded-full p-1"><CheckCircle2 className="h-3 w-3 text-white" /></div>}
                                             </button>
                                         ))}
                                     </div>
 
                                     {metodo === 'dinheiro' && (
-                                        <div className="space-y-2 p-3.5 border rounded-xl bg-muted/20 border-border/50">
-                                            <label className="text-xs font-bold uppercase text-muted-foreground flex justify-between">
+                                        <div className="space-y-3 p-4 border-2 rounded-2xl bg-muted/10 border-border/40 animate-in slide-in-from-top-2">
+                                            <label className="text-[11px] font-black uppercase text-muted-foreground flex justify-between tracking-widest">
                                                 Valor entregue
-                                                <span className="text-[10px] lowercase font-normal italic">Troco calculado automaticamente</span>
+                                                <span className="text-[9px] lowercase font-normal italic opacity-60">Troco automático</span>
                                             </label>
                                             <div className="relative">
                                                 <input
                                                     type="number"
                                                     value={trocoPara}
                                                     onChange={e => setTrocoPara(e.target.value)}
-                                                    placeholder={`${conta.totalGeral.toFixed(2)}`}
-                                                    className="w-full border-2 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
+                                                    placeholder={`${conta.totalGeral.toLocaleString()}`}
+                                                    className="w-full bg-background border-2 rounded-xl px-4 py-3 text-lg font-black focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none shadow-sm transition-all"
                                                 />
-                                                <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-mono">Kz</span>
+                                                <span className="absolute right-4 top-4 text-xs font-black text-muted-foreground/60">Kz</span>
                                             </div>
                                             {trocoPara && Number(trocoPara) >= conta.totalGeral && (
-                                                <div className="flex justify-between items-center bg-green-500/10 p-2 rounded-md border border-green-500/20">
-                                                    <span className="text-xs font-medium text-green-700">Troco a devolver:</span>
-                                                    <span className="font-bold text-green-700">{(Number(trocoPara) - conta.totalGeral).toFixed(2)} Kz</span>
+                                                <div className="flex justify-between items-center bg-green-500/20 p-3 rounded-xl border border-green-500/30">
+                                                    <span className="text-xs font-bold text-green-700 dark:text-green-400">Troco Disponível:</span>
+                                                    <span className="text-lg font-black text-green-700 dark:text-green-400">{(Number(trocoPara) - conta.totalGeral).toLocaleString()} Kz</span>
                                                 </div>
-                                            )}
-                                            {trocoPara && Number(trocoPara) < conta.totalGeral && (
-                                                <p className="text-[10px] text-destructive font-semibold flex items-center gap-1">
-                                                    ⚠️ Valor insuficiente para cobrir o total.
-                                                </p>
                                             )}
                                         </div>
                                     )}
-                                </>
+                                </div>
                             )}
 
                             {temItensPendentes && (
-                                <div className="p-2 border border-destructive/20 bg-destructive/5 rounded-lg text-center animate-pulse">
-                                    <p className="text-[10px] text-destructive font-bold uppercase tracking-wider flex items-center justify-center gap-2">
-                                        🔒 Ação Bloqueada: Cozinha em progresso
+                                <div className="p-3 border border-destructive/20 bg-destructive/5 rounded-xl text-center animate-pulse">
+                                    <p className="text-[10px] text-destructive font-black uppercase tracking-wider flex items-center justify-center gap-2">
+                                        🔒 BLOQUEADO: Cozinha em progresso
                                     </p>
                                 </div>
                             )}
@@ -395,38 +401,39 @@ export default function ModalPagamento({
                     )}
                 </div>
 
-                <DialogFooter className="flex justify-between gap-3 flex-row p-1 mt-2 border-t pt-4">
+                {/* Footer Custom */}
+                <div className="p-6 border-t bg-muted/30 flex gap-3">
                     {step === 1 ? (
                         <>
-                            <Button variant="ghost" onClick={onClose} size="sm" className="text-muted-foreground">Cancelar</Button>
+                            <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl h-12 font-bold text-muted-foreground border-2">CANCELAR</Button>
                             <Button
                                 onClick={() => setStep(2)}
                                 disabled={loadingPreview || !conta}
-                                className="flex-1 gap-1"
+                                className="flex-[2] rounded-xl h-12 font-black gap-2 shadow-lg"
                             >
-                                Avançar <ChevronRight className="h-4 w-4" />
+                                CONTINUAR <ChevronRight className="h-4 w-4" />
                             </Button>
                         </>
                     ) : (
                         <>
-                            <Button variant="ghost" onClick={() => setStep(1)} size="sm" className="gap-1 text-muted-foreground h-9">
-                                <ChevronLeft className="h-4 w-4" /> Voltar
+                            <Button variant="outline" onClick={() => setStep(1)} className="flex-1 rounded-xl h-12 font-bold text-muted-foreground border-2 flex gap-1">
+                                <ChevronLeft className="h-4 w-4" /> VOLTAR
                             </Button>
                             <Button
                                 onClick={handleConfirmar}
                                 disabled={!podeConfirmar || loadingConfirm}
-                                className={`flex-1 gap-2 text-white shadow-lg ${podeConfirmar ? 'bg-green-600 hover:bg-green-700' : 'bg-muted text-muted-foreground'}`}
+                                className={`flex-[2] rounded-xl h-12 font-black gap-2 shadow-xl transition-all ${podeConfirmar ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-500/20' : 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'}`}
                             >
                                 {loadingConfirm ? (
-                                    <><Loader2 className="h-4 w-4 animate-spin" /> Processando...</>
+                                    <><Loader2 className="h-5 w-5 animate-spin" /> PROCESSANDO...</>
                                 ) : (
-                                    <><CheckCircle2 className="h-4 w-4" /> Finalizar Conta</>
+                                    <><CheckCircle2 className="h-5 w-5" /> CONCLUIR E PAGAR</>
                                 )}
                             </Button>
                         </>
                     )}
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                </div>
+            </div>
+        </div>
     );
 }

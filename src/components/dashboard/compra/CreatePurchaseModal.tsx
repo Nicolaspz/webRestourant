@@ -325,7 +325,7 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
               disabled={isSubmitting || !formData.name.trim()}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white"
             >
-              {isSubmitting ? "Salvando..." : purchase ? "Salvar Alterações" : "Criar Compra"}
+              {isSubmitting ? "Salvando..." : purchase ? "Salvar Alterações" : "Salvar Rascunho"}
             </Button>
           </div>
         </form>
