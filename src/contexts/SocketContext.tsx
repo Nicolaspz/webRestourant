@@ -17,13 +17,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        // URL do backend dinâmica vinda do config
-        const socketUrl = API_BASE_URL === '/api'
-            ? window.location.origin // Se for /api (Vercel proxy), o socket tenta no mesmo host
+        // URL do backend direta para AWS (Vercel proxy não suporta WebSockets)
+        const socketUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+            ? 'http://13.62.222.99:3333' // URL DIRETA DA AWS
             : API_BASE_URL;
 
-        const socketInstance = io(API_BASE_URL, {
-            path: API_BASE_URL === '/api' ? '/socket.io' : undefined,
+        const socketInstance = io(socketUrl, {
             transports: ['websocket', 'polling'],
             reconnectionAttempts: 5,
             reconnectionDelay: 5000,

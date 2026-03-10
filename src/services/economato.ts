@@ -41,6 +41,7 @@ export type PedidoArea = {
   status: 'pendente' | 'aprovado' | 'rejeitado' | 'processado' | 'cancelado';
   observacoes?: string;
   confirmationCode?: string;
+  criadoPor?: string;
   criadoEm: string;
   areaOrigem: { nome: string };
   areaDestino: { nome: string };

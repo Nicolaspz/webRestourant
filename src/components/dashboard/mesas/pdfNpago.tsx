@@ -20,6 +20,7 @@ interface OrganizationInfo {
   name: string;
   address: string;
   nif: string;
+  phone?: string;
   imageLogo: string | null;
 }
 
@@ -30,6 +31,9 @@ interface DadosSessao {
   fechadaEm: Date;
   pedidos: Pedido[];
   totalGeral: number;
+  isEmpresa?: boolean;
+  clienteNome?: string;
+  clienteNif?: string;
   organization?: OrganizationInfo;
 }
 
@@ -41,6 +45,16 @@ const formatarKz = (valor: number): string => {
 // Função para renderizar o cabeçalho da organização
 const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: number): number => {
   if (dados.organization) {
+    if (dados.organization.imageLogo) {
+      const logoUrl = `${API_BASE_URL}/files/${dados.organization.imageLogo}`;
+      try {
+        doc.addImage(logoUrl, 'PNG', 85, yPos, 40, 40);
+        yPos += 45;
+      } catch (e) {
+        console.error("Erro ao carregar logo no PDF", e);
+      }
+    }
+
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text(dados.organization.name.toUpperCase(), 105, yPos, { align: 'center' });
@@ -48,10 +62,23 @@ const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: nu
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`NIF: ${dados.organization.nif}`, 105, yPos, { align: 'center' });
+    doc.text(`NIF: ${dados.organization.nif} | Tel: ${dados.organization.phone || 'N/A'}`, 105, yPos, { align: 'center' });
     yPos += 6;
     doc.text(dados.organization.address, 105, yPos, { align: 'center' });
     yPos += 10;
+
+    // Se for empresa, mostrar os dados do cliente
+    if (dados.clienteNome || dados.clienteNif) {
+      doc.setDrawColor(200, 200, 200);
+      doc.rect(20, yPos, 170, 20);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DADOS DO CLIENTE (FACTURA EMPRESA)', 25, yPos + 6);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Cliente: ${dados.clienteNome || 'Consumidor Final'}`, 25, yPos + 12);
+      doc.text(`NIF: ${dados.clienteNif || '999999999'}`, 25, yPos + 17);
+      yPos += 25;
+    }
 
     doc.setLineWidth(0.5);
     doc.line(20, yPos, 190, yPos);

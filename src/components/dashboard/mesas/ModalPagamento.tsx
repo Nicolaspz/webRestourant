@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Banknote, CreditCard, Smartphone, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft, X } from 'lucide-react';
+import { Banknote, CreditCard, Smartphone, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft, X, Building2, User } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { setupAPIClient } from '@/services/api';
 import { parseCookies } from 'nookies';
 import { toast } from 'react-toastify';
@@ -61,6 +64,9 @@ export default function ModalPagamento({
     const [metodo, setMetodo] = useState<MetodoPagamento | null>(null);
     const [valorPago, setValorPago] = useState('');
     const [trocoPara, setTrocoPara] = useState('');
+    const [isEmpresa, setIsEmpresa] = useState(false);
+    const [clienteNome, setClienteNome] = useState('');
+    const [clienteNif, setClienteNif] = useState('');
 
     const { '@servFixe.token': token } = parseCookies();
     const apiClient = setupAPIClient();
@@ -164,6 +170,9 @@ export default function ModalPagamento({
                 body = {
                     metodoPagamento: metodo,
                     valorPago: conta.totalGeral,
+                    isEmpresa,
+                    clienteNome: isEmpresa ? clienteNome : undefined,
+                    clienteNif: isEmpresa ? clienteNif : undefined,
                 };
                 if (metodo === 'dinheiro' && trocoPara && Number(trocoPara) >= conta.totalGeral) {
                     body.trocoPara = Number(trocoPara);
@@ -389,6 +398,47 @@ export default function ModalPagamento({
                                     )}
                                 </div>
                             )}
+
+                            {/* Seção Empresa */}
+                            <div className="p-4 border-2 rounded-2xl bg-muted/5 border-border/40 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 text-primary" />
+                                        <Label htmlFor="mode-empresa" className="text-sm font-bold">Factura Empresa?</Label>
+                                    </div>
+                                    <Switch
+                                        id="mode-empresa"
+                                        checked={isEmpresa}
+                                        onCheckedChange={setIsEmpresa}
+                                    />
+                                </div>
+
+                                {isEmpresa && (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="space-y-1.5">
+                                            <Label className="text-[11px] font-bold text-muted-foreground uppercase">Nome da Empresa</Label>
+                                            <div className="relative">
+                                                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/50" />
+                                                <Input
+                                                    placeholder="Razão Social"
+                                                    value={clienteNome}
+                                                    onChange={e => setClienteNome(e.target.value)}
+                                                    className="pl-10 h-11 rounded-xl border-2 focus:ring-primary/20"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-[11px] font-bold text-muted-foreground uppercase">NIF da Empresa</Label>
+                                            <Input
+                                                placeholder="NIF Ex: 500000000"
+                                                value={clienteNif}
+                                                onChange={e => setClienteNif(e.target.value)}
+                                                className="h-11 rounded-xl border-2 focus:ring-primary/20"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             {temItensPendentes && (
                                 <div className="p-3 border border-destructive/20 bg-destructive/5 rounded-xl text-center animate-pulse">

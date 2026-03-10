@@ -38,8 +38,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { 
   Loader2,
-  Plus
+  Plus,
+  AlertCircle,
+  Users,
+  UtensilsCrossed,
+  Clock,
+  LayoutDashboard
 } from "lucide-react";
+import { useMemo } from "react";
 import { toast } from 'react-toastify';
 import { AuthContext } from "@/contexts/AuthContext";
 import { economatoService, Area, ConsumoInterno } from "@/services/economato";
@@ -65,6 +71,18 @@ export function ConsumoTable() {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Relatório de Resumo
+  const stats = useMemo(() => {
+    const report = {
+      total: consumos.length,
+      quebras: consumos.filter(c => c.motivo === 'Quebra').length,
+      staff: consumos.filter(c => c.motivo === 'Refeição Staff').length,
+      validades: consumos.filter(c => c.motivo === 'Validade').length,
+      outros: consumos.filter(c => !['Quebra', 'Refeição Staff', 'Validade'].includes(c.motivo)).length,
+    };
+    return report;
+  }, [consumos]);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -142,6 +160,69 @@ export function ConsumoTable() {
   };
 
   return (
+    <div className="space-y-6">
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card className="bg-blue-50/50 border-blue-100 dark:bg-blue-900/10 dark:border-blue-800">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <LayoutDashboard className="w-4 h-4 text-blue-600" />
+              Total Registos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <span className="text-2xl font-bold">{stats.total}</span>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-red-50/50 border-red-100 dark:bg-red-900/10 dark:border-red-800">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-red-600">
+              <AlertCircle className="w-4 h-4" />
+              Quebras
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <span className="text-2xl font-bold text-red-700">{stats.quebras}</span>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-green-50/50 border-green-100 dark:bg-green-900/10 dark:border-green-800">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-green-600">
+              <Users className="w-4 h-4" />
+              Staff
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <span className="text-2xl font-bold text-green-700">{stats.staff}</span>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-orange-50/50 border-orange-100 dark:bg-orange-900/10 dark:border-orange-800">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-orange-600">
+              <Clock className="w-4 h-4" />
+              Validade
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <span className="text-2xl font-bold text-orange-700">{stats.validades}</span>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-50/50 border-gray-100 dark:bg-gray-900/10 dark:border-gray-800">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-gray-600">
+              <Plus className="w-4 h-4" />
+              Outros
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <span className="text-2xl font-bold text-gray-700">{stats.outros}</span>
+          </CardContent>
+        </Card>
+      </div>
     <Card>
       <CardHeader>
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
@@ -290,6 +371,7 @@ export function ConsumoTable() {
           </Table>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

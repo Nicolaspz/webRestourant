@@ -60,7 +60,7 @@ const TableSelectionPage = () => {
             setHasCameraSupport(true)
           } catch {
             setHasCameraSupport(false)
-            toast.warning('Seu navegador não suporta acesso à câmera para leitura de QR Code')
+            //toast.warning('Seu navegador não suporta acesso à câmera para leitura de QR Code')
           }
         }
       }

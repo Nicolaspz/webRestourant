@@ -17,6 +17,8 @@ export type Product = {
     orderCount?: number;
     createdAt?: string;
     isNew?: boolean;
+    isFeatured?: boolean;
+    isDerived?: boolean;
 };
 
 export type CartItem = {
@@ -99,11 +101,14 @@ export function useKioskMenu() {
                 });
 
                 const processed = response.data
-                    .filter((p: Product) => !p.isIgredient)
+                    .filter((p: any) => {
+                        const isIngredienteCategory = p.Category?.name?.toLowerCase() === 'ingredientes' || 
+                                                    p.Category?.name?.toLowerCase() === 'ingrediente';
+                        return !p.isIgredient && !isIngredienteCategory;
+                    })
                     .map((p: Product) => ({
                         ...p,
                         PrecoVenda: p.PrecoVenda || [{ preco_venda: 0 }],
-                        isNew: Math.random() > 0.8
                     }));
 
                 setProducts(processed);
@@ -144,17 +149,31 @@ export function useKioskMenu() {
     }, [clientToken, tokenLoading, organizationId, tableNumberFromUrl]);
 
     const categories = useMemo(() => {
-        const cats = Array.from(new Set(products.map(p => p.Category?.name || 'Outros'))).sort();
-        return ['Destaques', ...cats];
+        const cats = Array.from(new Set(products.map(p => {
+            if (p.isDerived) return 'Pratos';
+            return p.Category?.name || 'Outros';
+        }))).filter(c => c !== 'Ingredientes' && c !== 'Ingrediente').sort();
+        
+        // Colocar Pratos logo após Destaques se existir
+        const finalCats = ['Destaques'];
+        if (cats.includes('Pratos')) finalCats.push('Pratos');
+        cats.forEach(c => {
+            if (c !== 'Pratos') finalCats.push(c);
+        });
+        
+        return finalCats;
     }, [products]);
 
     const filteredProducts = useMemo(() => {
         let filtered = products;
 
         if (activeCategory === 'Destaques') {
-            return products.filter(p => p.isNew || (p.orderCount && p.orderCount > 50));
-        } else if (activeCategory !== 'all') {
-            filtered = products.filter(p => (p.Category?.name || 'Outros') === activeCategory);
+            return products.filter(p => p.isFeatured || p.isNew || (p.orderCount && p.orderCount > 50));
+        } else {
+            filtered = products.filter(p => {
+                const catName = p.isDerived ? 'Pratos' : (p.Category?.name || 'Outros');
+                return catName === activeCategory;
+            });
         }
 
         if (searchQuery) {

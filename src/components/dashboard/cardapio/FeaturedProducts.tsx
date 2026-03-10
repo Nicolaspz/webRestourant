@@ -18,13 +18,32 @@ export function FeaturedProducts({
   const getFeaturedProductsByTab = () => {
     switch (activeTab) {
       case 'popular':
-        return [...products].sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0)).slice(0, 8);
+        // Filtra os que estão em destaque (isFeatured) ou os mais vendidos (orderCount)
+        return products
+          .filter(p => p.isFeatured || p.orderCount > 0)
+          .sort((a, b) => {
+            if (a.isFeatured && !b.isFeatured) return -1;
+            if (!a.isFeatured && b.isFeatured) return 1;
+            return (b.orderCount || 0) - (a.orderCount || 0);
+          })
+          .slice(0, 8);
       case 'recent':
-        return [...products].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()).slice(0, 8);
+        // Filtra os que são marcados como novos (isNew) ou por data
+        return products
+          .filter(p => p.isNew || (p.createdAt && new Date(p.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000))
+          .sort((a, b) => {
+            if (a.isNew && !b.isNew) return -1;
+            if (!a.isNew && b.isNew) return 1;
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+          })
+          .slice(0, 8);
       case 'price':
         return [...products].sort((a, b) => (a.PrecoVenda[0]?.preco_venda || 0) - (b.PrecoVenda[0]?.preco_venda || 0)).slice(0, 8);
       default:
-        return products.slice(0, 8);
+        // Por padrão, mostra os destaques manuais primeiro
+        return products
+          .sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))
+          .slice(0, 8);
     }
   };
 

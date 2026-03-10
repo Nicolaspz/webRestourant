@@ -46,6 +46,8 @@ export function ProductFormModal({
     unit: 'un',
     isDerived: false,
     isIgredient: false,
+    isFeatured: false,
+    isNew: false,
     categoryId: '',
     file: null,
     previewImage: '',
@@ -112,6 +114,8 @@ export function ProductFormModal({
           unit: initialData.unit || 'un',
           isDerived: initialData.isDerived || false,
           isIgredient: initialData.isIgredient || false,
+          isFeatured: initialData.isFeatured || false,
+          isNew: initialData.isNew || false,
           categoryId: initialData.categoryId || initialData.Category?.id || '',
           file: null,
           previewImage: initialData.banner ? `${API_BASE_URL}/tmp/${initialData.banner}` : '',
@@ -133,6 +137,8 @@ export function ProductFormModal({
           unit: 'un',
           isDerived: false,
           isIgredient: false,
+          isFeatured: false,
+          isNew: false,
           categoryId: '',
           file: null,
           previewImage: '',
@@ -193,6 +199,8 @@ export function ProductFormModal({
       formPayload.append('unit', formData.unit);
       formPayload.append('isDerived', formData.isDerived.toString());
       formPayload.append('isIgredient', formData.isIgredient.toString());
+      formPayload.append('isFeatured', formData.isFeatured.toString());
+      formPayload.append('isNew', formData.isNew.toString());
 
       // Só envia categoryId se não for produto derivado
       if (!formData.isDerived && formData.categoryId) {
@@ -547,6 +555,31 @@ export function ProductFormModal({
               <Utensils className="w-4 h-4" />
               Produto Derivado (Contém Ingredientes/Receita)
             </Label>
+          </div>
+          <div className="flex gap-6 pt-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isFeatured"
+                checked={formData.isFeatured}
+                onCheckedChange={(checked) => handleInputChange('isFeatured', !!checked)}
+                className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-yellow-500"
+              />
+              <Label htmlFor="isFeatured" className="flex items-center gap-2 text-gray-900 dark:text-white">
+                Em Destaque
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isNew"
+                checked={formData.isNew}
+                onCheckedChange={(checked) => handleInputChange('isNew', !!checked)}
+                className="border-gray-300 dark:border-gray-600 data-[state=checked]:bg-green-600"
+              />
+              <Label htmlFor="isNew" className="flex items-center gap-2 text-gray-900 dark:text-white">
+                Novidade
+              </Label>
+            </div>
           </div>
 
           <div className="space-y-2">

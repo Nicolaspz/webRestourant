@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Star, Utensils, Heart } from "lucide-react";
+import { Plus, Star, Utensils, Heart, TrendingUp } from "lucide-react";
 import { API_BASE_URL } from "../../../config";
 import { Product, theme } from "../hooks/useKioskMenu";
 
@@ -40,8 +40,14 @@ export function KioskProductCard({ product, onSelect, onAdd }: KioskProductCardP
                 </div>
 
                 {product.isNew && (
-                    <div className="absolute top-4 left-4 px-3 py-1 bg-orange-500 text-black text-[10px] font-black rounded-full shadow-xl flex items-center gap-1">
+                    <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-orange-500 text-black text-[10px] font-black rounded-full shadow-xl flex items-center gap-1">
                         <Star size={10} fill="currentColor" /> NOVO
+                    </div>
+                )}
+
+                {product.isFeatured && (
+                    <div className="absolute top-14 left-4 z-20 px-3 py-1 bg-yellow-400 text-black text-[10px] font-black rounded-full shadow-xl flex items-center gap-1">
+                        <TrendingUp size={10} /> DESTAQUE
                     </div>
                 )}
 

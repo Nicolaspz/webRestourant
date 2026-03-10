@@ -434,9 +434,13 @@ export function PedidosTable() {
                     <TableCell>{getStatusBadge(pedido.status)}</TableCell>
                     <TableCell>
                       {pedido.status === 'aprovado' && pedido.confirmationCode ? (
-                        <div className="font-mono text-lg font-bold tracking-widest bg-muted px-2 py-1 rounded w-fit">
-                          {pedido.confirmationCode}
-                        </div>
+                        pedido.criadoPor === user?.id ? (
+                          <div className="font-mono text-lg font-bold tracking-widest bg-orange-100 text-orange-700 px-2 py-1 rounded w-fit border border-orange-200">
+                            {pedido.confirmationCode}
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">Código Seguro</Badge>
+                        )
                       ) : (
                         <span className="text-muted-foreground text-xs">-</span>
                       )}
@@ -476,14 +480,15 @@ export function PedidosTable() {
                           </>
                         )}
 
-                        {pedido.status === 'aprovado' && (
+                        {pedido.status === 'aprovado' && (user?.role === 'ADMIN' || user?.role === 'SUPER ADMIN') && (
                           <Button
                             variant="default"
                             size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
                             onClick={() => openConfirmSheet(pedido)}
                           >
                             <Key className="w-3 h-3 mr-2" />
-                            Confirmar
+                            Confirmar Entrega
                           </Button>
                         )}
                       </div>
@@ -521,9 +526,11 @@ export function PedidosTable() {
                     <p className="font-medium">{selectedPedido.areaDestino.nome}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-muted-foreground">Código</p>
+                    <p className="text-muted-foreground">Código de Retirada</p>
                     <p className="font-mono font-bold text-blue-600">
-                      {selectedPedido.confirmationCode || '-'}
+                      {selectedPedido.criadoPor === user?.id 
+                        ? (selectedPedido.confirmationCode || '-') 
+                        : '*******'}
                     </p>
                   </div>
                 </div>

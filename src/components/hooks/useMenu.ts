@@ -135,7 +135,11 @@ export const useMenu = () => {
       });
 
       const processedProducts = productsResponse.data
-        .filter((product: Product) => product.isIgredient === false)
+        .filter((product: any) => {
+          const isIngredienteCategory = product.Category?.name?.toLowerCase() === 'ingredientes' || 
+                                      product.Category?.name?.toLowerCase() === 'ingrediente';
+          return product.isIgredient === false && !isIngredienteCategory;
+        })
         .map((product: Product, index: number) => ({
           ...product,
           PrecoVenda: product.PrecoVenda || [{ preco_venda: 0 }],
@@ -154,15 +158,39 @@ export const useMenu = () => {
   const groupProductsByCategory = (products: Product[]) => {
     const grouped: Record<string, Product[]> = {};
     products.forEach(product => {
-      const categoryName = product.Category?.name || 'Sem Categoria';
+      let categoryName = product.isDerived ? 'Pratos' : (product.Category?.name || 'Sem Categoria');
+      
+      if (categoryName.toLowerCase() === 'ingredientes' || categoryName.toLowerCase() === 'ingrediente') {
+        return; // Pula ingredientes (redundante com o filtro anterior, mas garante)
+      }
+
       if (!grouped[categoryName]) {
         grouped[categoryName] = [];
       }
       grouped[categoryName].push(product);
     });
-    setGroupedProducts(grouped);
+    
+    // Ordenação: Se existir "Pratos", "Entradas", "Pizzas", colocá-los primeiro
+    const sortedGrouped: Record<string, Product[]> = {};
+    const priorityCategories = ['Pratos', 'Pratos Principais', 'Entradas', 'Pizzas', 'Destaques'];
+    
+    // Adiciona categorias prioritárias primeiro
+    priorityCategories.forEach(cat => {
+      if (grouped[cat]) {
+        sortedGrouped[cat] = grouped[cat];
+      }
+    });
 
-    const firstCategory = Object.keys(grouped)[0];
+    // Adiciona as restantes
+    Object.keys(grouped).forEach(cat => {
+      if (!priorityCategories.includes(cat)) {
+        sortedGrouped[cat] = grouped[cat];
+      }
+    });
+
+    setGroupedProducts(sortedGrouped);
+
+    const firstCategory = Object.keys(sortedGrouped)[0];
     setActiveCategory(firstCategory);
   };
 

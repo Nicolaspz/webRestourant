@@ -36,6 +36,8 @@ export interface Product {
   is_fractional: boolean;
   isDerived: boolean;
   isIgredient: boolean;
+  isFeatured: boolean;
+  isNew: boolean;
   PrecoVenda: PrecoVenda[];
   recipeItems: RecipeItem[];
   categoryId: string;
@@ -68,6 +70,8 @@ export interface ProductFormData {
   unit: string;
   isDerived: boolean;
   isIgredient: boolean;
+  isFeatured: boolean;
+  isNew: boolean;
   categoryId: string;
   file: File | null;
   previewImage: string;

@@ -10,6 +10,8 @@ interface ProductCardProps {
     description?: string;
     banner?: string;
     PrecoVenda: { preco_venda: number }[];
+    isFeatured?: boolean;
+    isNew?: boolean;
   };
   onAddToCart: () => void;
   variant?: 'grid' | 'featured';
@@ -39,6 +41,19 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
                   <Utensils className="w-8 h-8 text-blue-400" />
                 </div>
               )}
+              {/* Badges para Featured/New */}
+              <div className="absolute top-1 left-1 flex flex-col gap-1">
+                {product.isFeatured && (
+                  <span className="bg-yellow-400 text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm uppercase tracking-wider">
+                    Destaque
+                  </span>
+                )}
+                {product.isNew && (
+                  <span className="bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm uppercase tracking-wider">
+                    Novo
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div className="p-3">
@@ -57,7 +72,11 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
   return (
     <motion.div whileHover={{ y: -4 }} transition={{ type: "spring", stiffness: 300 }}>
       <div
-        className="cursor-pointer h-full rounded-lg overflow-hidden group border border-gray-300 hover:shadow-lg transition-all duration-300 bg-white"
+        className={`cursor-pointer h-full rounded-lg overflow-hidden group border transition-all duration-300 bg-white hover:shadow-lg ${
+          product.isFeatured 
+            ? 'border-yellow-400 shadow-md ring-1 ring-yellow-400/20' 
+            : 'border-gray-300'
+        }`}
         onClick={onAddToCart}
       >
         <div className="relative aspect-video overflow-hidden">
@@ -72,6 +91,20 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
               <Utensils className="w-12 h-12 text-blue-400" />
             </div>
           )}
+
+          {/* Badges para Featured/New */}
+          <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+            {product.isFeatured && (
+              <span className="bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider border border-yellow-500/20">
+                Destaque
+              </span>
+            )}
+            {product.isNew && (
+              <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider border border-green-600/20">
+                Lançamento
+              </span>
+            )}
+          </div>
           
           <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
             <p className="text-white text-sm text-center line-clamp-4">
