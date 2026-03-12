@@ -55,7 +55,7 @@ export default function KioskMenu() {
                 />
 
                 {activeCategory === 'Destaques' && !searchQuery && (
-                    <KioskHighlights />
+                    <KioskHighlights products={filteredProducts} onSelect={setSelectedProduct} />
                 )}
 
                 <div className="flex-1 overflow-y-auto px-6 md:px-8 pb-32">

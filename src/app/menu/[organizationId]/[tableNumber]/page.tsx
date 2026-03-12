@@ -60,7 +60,7 @@ export default function ProductMenu() {
         <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 pt-32 md:pt-0">
           {activeCategory === 'Destaques' && !searchQuery && (
             <div className="mb-10">
-              <KioskHighlights />
+              <KioskHighlights products={filteredProducts} onSelect={setSelectedProduct} />
             </div>
           )}
 
