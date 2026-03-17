@@ -163,11 +163,17 @@ export default function GerenciamentoMesasPage() {
     fetchMesas();
     // Gerar PDF do recibo já pago
     if (dadosFechamento) {
-      gerarPDFReciboPago(dadosFechamento, {
+      const infoPagamento = {
         metodo: dadosFechamento.metodoPagamento,
         valorPago: dadosFechamento.valorPago,
         trocoPara: dadosFechamento.trocoPara
-      });
+      };
+      
+      // Gera a versão Térmica (POS) por padrão agora
+      gerarPDFReciboPago(dadosFechamento, infoPagamento, true);
+      
+      // Gera a versão A4 também para backup
+      gerarPDFReciboPago(dadosFechamento, infoPagamento, false);
     }
   };
 
