@@ -39,12 +39,14 @@ interface DadosSessao {
   clienteNome?: string;
   clienteNif?: string;
   observacoes?: string;
+  agtQRCode?: string;
+  agtDocumentNo?: string;
   organization?: OrganizationInfo;
 }
 
 // Função para formatar valores em Kwanzas
-const formatarKz = (valor: number): string => {
-  return `${valor.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`;
+const formatarKz = (valor: number | undefined | null): string => {
+  return `${(valor ?? 0).toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`;
 };
 
 // Função para renderizar o cabeçalho da organização
@@ -65,7 +67,7 @@ const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: nu
       }
     }
 
-    doc.setFontSize(isTermica ? 13 : 16); 
+    doc.setFontSize(isTermica ? 13 : 16);
     doc.setFont('helvetica', 'bold');
     doc.text(dados.organization.name.toUpperCase(), centerX, yPos, { align: 'center' });
     yPos += isTermica ? 6 : 7;
@@ -75,7 +77,7 @@ const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: nu
     const orgInfo = `NIF: ${dados.organization.nif} | Tel: ${dados.organization.phone || 'N/A'}`;
     doc.text(orgInfo, centerX, yPos, { align: 'center' });
     yPos += isTermica ? 4 : 5;
-    
+
     // Endereço (quebrar linha se for térmica)
     const address = dados.organization.address || '';
     if (isTermica) {
@@ -91,7 +93,7 @@ const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: nu
     if (dados.clienteNome || dados.clienteNif) {
       const boxWidth = isTermica ? 70 : 170;
       const boxX = (pageWidth - boxWidth) / 2;
-      
+
       doc.setDrawColor(200, 200, 200);
       doc.rect(boxX, yPos, boxWidth, isTermica ? 15 : 20);
       doc.setFontSize(isTermica ? 7 : 9);
@@ -175,7 +177,7 @@ export const gerarPDFReciboNaoPago = (dados: DadosSessao) => {
   doc.setTextColor(192, 57, 43);
   doc.setFontSize(12);
   doc.text('ESTE DOCUMENTO NÃO SERVE DE FATURA', 105, yPos, { align: 'center' });
-  
+
   doc.save(`consulta_mesa_${dados.mesaNumero}.pdf`);
 };
 
@@ -184,7 +186,7 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
   // A4: [210, 297] | Térmica: [80, 150 + (itens * 10)]
   const pageWidth = isTermica ? 80 : 210;
   const pageHeight = isTermica ? Math.max(200, 150 + (dados.pedidos.length * 30)) : 297;
-  
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -220,7 +222,7 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
   doc.text(`Mesa: ${dados.mesaNumero}`, margin, yPos);
   yPos += isTermica ? 5 : 6;
   doc.setFont('helvetica', 'normal');
-  doc.text(`Sessão: ${dados.codigoAbertura}`, margin, yPos);
+  doc.text(`Doc: ${dados.agtDocumentNo || dados.numero || dados.codigoAbertura}`, margin, yPos);
   yPos += isTermica ? 8 : 12;
 
   // Tabela de Itens
@@ -250,14 +252,26 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
 
   // Totais
   if (yPos > pageHeight - 80 && !isTermica) { doc.addPage(); yPos = 20; }
-  
+
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 8;
 
+  // Cálculo de IVA (14%)
+  const grossTotal = dados.totalGeral;
+  const netTotal = Number((grossTotal / 1.14).toFixed(2));
+  const taxTotal = Number((grossTotal - netTotal).toFixed(2));
+
+  doc.setFontSize(isTermica ? 7 : 9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Subtotal (Base): ${formatarKz(netTotal)}`, margin, yPos);
+  yPos += isTermica ? 4 : 5;
+  doc.text(`IVA (14%): ${formatarKz(taxTotal)}`, margin, yPos);
+  yPos += isTermica ? 6 : 8;
+
   doc.setFontSize(isTermica ? 10 : 14);
   doc.setFont('helvetica', 'bold');
-  doc.text(`TOTAL GERAL: ${formatarKz(dados.totalGeral)}`, centerX, yPos, { align: 'center' });
+  doc.text(`TOTAL GERAL: ${formatarKz(grossTotal)}`, centerX, yPos, { align: 'center' });
   yPos += isTermica ? 8 : 12;
 
   // Info Pagamento
@@ -281,19 +295,16 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
   yPos += isTermica ? 8 : 12;
 
   // --- SEÇÃO AGT ---
-  let hashAGT = '';
-  if (dados.observacoes && dados.observacoes.includes('[JWS:')) {
-    const match = dados.observacoes.match(/\[JWS:(.*?)\]/);
+  let docRef = '';
+  if (dados.observacoes && dados.observacoes.includes('[AGT-DOC:')) {
+    const match = dados.observacoes.match(/\[AGT-DOC:(.*?)\]/);
     if (match && match[1]) {
-      const parts = match[1].split('.');
-      if (parts.length === 3) {
-        hashAGT = parts[2].substring(0, 4);
-        doc.setFontSize(isTermica ? 6 : 8);
-        doc.setTextColor(100, 100, 100);
-        const validationNum = dados.organization?.softwareValidationNumber || '0/AGT/2024';
-        doc.text(`${hashAGT} - Validação nº ${validationNum}`, centerX, yPos, { align: 'center' });
-        yPos += isTermica ? 6 : 8;
-      }
+      docRef = match[1];
+      doc.setFontSize(isTermica ? 6 : 8);
+      doc.setTextColor(100, 100, 100);
+      const validationNum = dados.organization?.softwareValidationNumber || '0/AGT/2026';
+      doc.text(`Doc: ${docRef} - Validação nº ${validationNum}`, centerX, yPos, { align: 'center' });
+      yPos += isTermica ? 6 : 8;
     }
   }
 
@@ -302,35 +313,69 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
   doc.text('Muito obrigado pela sua preferência!', centerX, yPos, { align: 'center' });
   yPos += 5;
 
-  // QR CODE AGT (Garantir que não fica no limite da página)
-  const nifEmpresa = dados.organization?.nif || '';
-  const nifCliente = dados.clienteNif || '999999999';
-  const dataDoc = new Date(dados.fechadaEm).toISOString().split('T')[0];
-  const numDoc = dados.numero || dados.id || 'S/N';
-  const qrString = `${nifEmpresa};${nifCliente};FT;${dataDoc};${numDoc};${dados.totalGeral.toFixed(2)};0.00;${hashAGT}`;
-
   try {
-    const qrDataUrl = await QRCode.toDataURL(qrString, { margin: 1 });
     const qrSize = isTermica ? 30 : 40;
     
-    // Se não houver espaço, adiciona página em A4. Em térmica a página já foi calculada.
+    // Se houver espaço, adiciona página em A4
     if (yPos + qrSize > pageHeight - 10 && !isTermica) {
       doc.addPage();
       yPos = 20;
     }
-    
-    doc.addImage(qrDataUrl, 'PNG', centerX - (qrSize / 2), yPos, qrSize, qrSize);
+
+    if (dados.agtQRCode) {
+      // Usar QR Code retornado pela AGT Gateway (Base64)
+      doc.addImage(dados.agtQRCode, 'PNG', centerX - (qrSize / 2), yPos, qrSize, qrSize);
+    } else {
+      // Fallback para QR Code gerado localmente (pode não ter todos os dados da AGT)
+      const nifEmpresa = dados.organization?.nif || '';
+      const nifCliente = dados.clienteNif || '999999999';
+      const dataDoc = new Date(dados.fechadaEm).toISOString().split('T')[0];
+      const numDoc = dados.numero || dados.id || 'S/N';
+      const qrString = `${nifEmpresa};${nifCliente};FT;${dataDoc};${numDoc};${dados.totalGeral.toFixed(2)};0.00;`;
+      
+      const qrDataUrl = await QRCode.toDataURL(qrString, { margin: 1 });
+      doc.addImage(qrDataUrl, 'PNG', centerX - (qrSize / 2), yPos, qrSize, qrSize);
+    }
   } catch (err) {
-    console.error('Erro ao gerar QR Code', err);
+    console.error('Erro ao renderizar QR Code no PDF', err);
   }
 
   const fileName = isTermica ? `POS_Mesa_${dados.mesaNumero}.pdf` : `A4_Mesa_${dados.mesaNumero}.pdf`;
-  
+
   if (isTermica) {
-    // Para POS, abre em nova aba para facilitar impressão imediata
-    const pdfBlob = doc.output('blob');
-    const url = URL.createObjectURL(pdfBlob);
-    window.open(url, '_blank');
+    // Configura o PDF para auto-print (adiciona script interno ao PDF)
+    doc.autoPrint();
+    const pdfDataUri = doc.output('datauristring');
+
+    // Cria um iframe escondido
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    iframe.src = pdfDataUri;
+    document.body.appendChild(iframe);
+
+    iframe.onload = () => {
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (e) {
+          console.error("Erro na impressão automática:", e);
+          // Fallback se o iframe falhar
+          doc.save(fileName);
+        }
+        // Remove o iframe após a tentativa (3 segundos depois)
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 3000);
+      }, 1200);
+    };
   } else {
     // Para A4, apenas salva/baixa
     doc.save(fileName);

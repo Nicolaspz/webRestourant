@@ -47,6 +47,7 @@ export function PagamentoFechamentoModal({
   const [metodoPagamento, setMetodoPagamento] = useState('dinheiro');
   const [valorPago, setValorPago] = useState(dadosSessao?.totalGeral || 0);
   const [trocoPara, setTrocoPara] = useState('');
+  const [formatoImpressao, setFormatoImpressao] = useState<'termica' | 'a4'>('termica');
   const [loading, setLoading] = useState(false);
   const apiClient = setupAPIClient();
 
@@ -82,9 +83,18 @@ export function PagamentoFechamentoModal({
       toast.success('Mesa fechada e pagamento processado com sucesso!');
       
       // Gerar PDF do recibo pago
-      if (response.data.recibo) {
-        // Função para gerar PDF
-        gerarPDFReciboPago(response.data);
+      const dadosRecibo = response.data.recibo || response.data;
+      if (dadosRecibo) {
+        // Passar informações de pagamento e formato
+        gerarPDFReciboPago(
+          dadosRecibo, 
+          { 
+            metodo: metodoPagamento, 
+            valorPago: valorPago, 
+            trocoPara: trocoPara ? parseFloat(trocoPara) : undefined 
+          },
+          formatoImpressao === 'termica'
+        );
       }
 
       onSuccess();
@@ -167,6 +177,25 @@ export function PagamentoFechamentoModal({
               )}
             </>
           )}
+
+          {/* Formato de Impressão */}
+          <div className="space-y-3 pt-2">
+            <Label>Formato de Impressão</Label>
+            <RadioGroup 
+              value={formatoImpressao} 
+              onValueChange={(val: any) => setFormatoImpressao(val)}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="termica" id="termica" />
+                <Label htmlFor="termica" className="font-normal cursor-pointer">Térmica (80mm)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="a4" id="a4" />
+                <Label htmlFor="a4" className="font-normal cursor-pointer">A4</Label>
+              </div>
+            </RadioGroup>
+          </div>
         </div>
 
         <DialogFooter>
