@@ -30,17 +30,6 @@ export function SettingsTabs({ tabs, defaultTab }: SettingsTabsProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const savedTab = localStorage.getItem("activeTab")
-    if (savedTab) {
-      setActiveTab(savedTab)
-    }
-  }, [])
-
-  useEffect(() => {
-    localStorage.setItem("activeTab", activeTab)
-  }, [activeTab])
-
-  useEffect(() => {
     setLoading(true)
     const timer = setTimeout(() => setLoading(false), 800)
     return () => clearTimeout(timer)

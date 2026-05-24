@@ -26,7 +26,7 @@ const Caixa = () => {
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [activeTab, setActiveTab] = useState('pendentes');
+  const [activeTab, setActiveTab] = useState('abertas');
   const [estatisticas, setEstatisticas] = useState(null);
 
   // Estado do modal de pagamento para mesas abertas
