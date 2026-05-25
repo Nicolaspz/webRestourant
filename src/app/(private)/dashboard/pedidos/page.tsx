@@ -27,6 +27,20 @@ interface OrderItem {
   };
 }
 
+interface Order {
+  id: string;
+  created_at: string;
+  Session: {
+    mesa: {
+      number: number;
+      Category?: {
+        name: string;
+      };
+    };
+  };
+  items: OrderItem[];
+}
+
 interface GroupedOrder {
   id: string;
   name: string;

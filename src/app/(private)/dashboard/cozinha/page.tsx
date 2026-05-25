@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSocket } from "@/contexts/SocketContext";
 
-// ========== INTERFACES ==========
+// ========== INTERFACES (DEFINIR AQUI, ANTES DE USAR) ==========
 interface Order {
   id: string;
   created_at: string;
@@ -59,7 +59,6 @@ interface GroupedOrder {
   items: OrderItem[];
   orderIds: string[];
 }
-
 // ========== COMPONENTE PRINCIPAL ==========
 export default function KitchenPage() {
   const { user } = useContext(AuthContext);
