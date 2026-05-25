@@ -64,7 +64,7 @@ export default function ModalPagamento({
     const [metodo, setMetodo] = useState<MetodoPagamento | null>(null);
     const [valorPago, setValorPago] = useState('');
     const [trocoPara, setTrocoPara] = useState('');
-    const [isEmpresa, setIsEmpresa] = useState(false);
+    const [tipoCliente, setTipoCliente] = useState<'final' | 'singular' | 'empresa'>('final');
     const [clienteNome, setClienteNome] = useState('');
     const [clienteNif, setClienteNif] = useState('');
 
@@ -87,6 +87,9 @@ export default function ModalPagamento({
         setValorPago('');
         setTrocoPara('');
         setConta(null);
+        setTipoCliente('final');
+        setClienteNome('');
+        setClienteNif('');
         setLoadingPreview(true);
         try {
             const res = await apiClient.get(`/preview_conta/${mesaNumber}`, {
@@ -121,7 +124,11 @@ export default function ModalPagamento({
     const totalPagoMultiplo = pagamentos.reduce((acc, p) => acc + p.valor, 0);
     const restante = (conta?.totalGeral ?? 0) - totalPagoMultiplo;
 
-    const podeConfirmar = !temItensPendentes && conta && (
+    const clientInfoValida = tipoCliente === 'final' || (
+        clienteNome.trim() !== '' && clienteNif.trim().length === 9
+    );
+
+    const podeConfirmar = !temItensPendentes && conta && clientInfoValida && (
         // Caso simples
         (!isSplit && metodo !== null && (
             metodo !== 'dinheiro' || (trocoPara !== '' && Number(trocoPara) >= conta.totalGeral)
@@ -167,12 +174,14 @@ export default function ModalPagamento({
                 };
             } else {
                 if (!metodo) return;
+                const isEmp = tipoCliente === 'empresa';
+                const hasClientInfo = tipoCliente !== 'final';
                 body = {
                     metodoPagamento: metodo,
                     valorPago: conta.totalGeral,
-                    isEmpresa,
-                    clienteNome: isEmpresa ? clienteNome : undefined,
-                    clienteNif: isEmpresa ? clienteNif : undefined,
+                    isEmpresa: isEmp,
+                    clienteNome: hasClientInfo ? clienteNome.trim() : undefined,
+                    clienteNif: hasClientInfo ? clienteNif.trim() : undefined,
                 };
                 if (metodo === 'dinheiro' && trocoPara && Number(trocoPara) >= conta.totalGeral) {
                     body.trocoPara = Number(trocoPara);
@@ -399,28 +408,56 @@ export default function ModalPagamento({
                                 </div>
                             )}
 
-                            {/* Seção Empresa */}
+                            {/* Seção Tipo de Cliente */}
                             <div className="p-4 border-2 rounded-2xl bg-muted/5 border-border/40 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Building2 className="h-4 w-4 text-primary" />
-                                        <Label htmlFor="mode-empresa" className="text-sm font-bold">Factura Empresa?</Label>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-bold block mb-1">Tipo de Cliente (Fatura)</Label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setTipoCliente('final');
+                                                setClienteNome('');
+                                                setClienteNif('');
+                                            }}
+                                            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border-2 transition-all text-xs font-bold ${tipoCliente === 'final' ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-background hover:border-primary/40 border-border/50'}`}
+                                        >
+                                            <User className="h-4 w-4" />
+                                            <span>Cons. Final</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setTipoCliente('singular');
+                                            }}
+                                            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border-2 transition-all text-xs font-bold ${tipoCliente === 'singular' ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-background hover:border-primary/40 border-border/50'}`}
+                                        >
+                                            <User className="h-4 w-4" />
+                                            <span>Particular</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setTipoCliente('empresa');
+                                            }}
+                                            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border-2 transition-all text-xs font-bold ${tipoCliente === 'empresa' ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-background hover:border-primary/40 border-border/50'}`}
+                                        >
+                                            <Building2 className="h-4 w-4" />
+                                            <span>Empresa</span>
+                                        </button>
                                     </div>
-                                    <Switch
-                                        id="mode-empresa"
-                                        checked={isEmpresa}
-                                        onCheckedChange={setIsEmpresa}
-                                    />
                                 </div>
 
-                                {isEmpresa && (
+                                {tipoCliente !== 'final' && (
                                     <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                                         <div className="space-y-1.5">
-                                            <Label className="text-[11px] font-bold text-muted-foreground uppercase">Nome da Empresa</Label>
+                                            <Label className="text-[11px] font-bold text-muted-foreground uppercase">
+                                                {tipoCliente === 'empresa' ? 'Nome da Empresa' : 'Nome do Cliente'}
+                                            </Label>
                                             <div className="relative">
                                                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/50" />
                                                 <Input
-                                                    placeholder="Razão Social"
+                                                    placeholder={tipoCliente === 'empresa' ? 'Razão Social' : 'Nome Completo'}
                                                     value={clienteNome}
                                                     onChange={e => setClienteNome(e.target.value)}
                                                     className="pl-10 h-11 rounded-xl border-2 focus:ring-primary/20"
@@ -428,11 +465,14 @@ export default function ModalPagamento({
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label className="text-[11px] font-bold text-muted-foreground uppercase">NIF da Empresa</Label>
+                                            <Label className="text-[11px] font-bold text-muted-foreground uppercase">
+                                                {tipoCliente === 'empresa' ? 'NIF da Empresa' : 'NIF do Cliente'}
+                                            </Label>
                                             <Input
-                                                placeholder="NIF Ex: 500000000"
+                                                placeholder="NIF (9 dígitos)"
                                                 value={clienteNif}
                                                 onChange={e => setClienteNif(e.target.value)}
+                                                maxLength={9}
                                                 className="h-11 rounded-xl border-2 focus:ring-primary/20"
                                             />
                                         </div>

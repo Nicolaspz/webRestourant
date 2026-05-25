@@ -26,26 +26,27 @@ interface OrderItem {
   };
 }
 
-interface Order {
+interface GroupedOrder {
   id: string;
   name: string;
   created_at: string;
   Session: {
     mesa: {
       number: number;
-      Category: {
+      Category?: {
         name: string;
       };
     };
   };
   items: OrderItem[];
+  orderIds: string[];
 }
 
 export default function KitchenPage() {
   const { user } = useContext(AuthContext);
   const apiClient = setupAPIClient();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<GroupedOrder[]>([]);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true);
@@ -64,21 +65,36 @@ export default function KitchenPage() {
       const allOrders: Order[] = response.data;
 
       console.log("pedidos", allOrders)
-      // Filtro local por categoria
-      const filtered = allOrders
-        .map((order) => {
-          const filteredItems = order.items.filter(
-            (item) => item.Product?.Category?.name === CATEGORY_FILTER && !item.canceled
-          );
+      // Filtro local por categoria e agrupamento por mesa
+      const groupedByMesa: Record<number, GroupedOrder> = {};
 
-          return filteredItems.length > 0
-            ? { ...order, items: filteredItems }
-            : null;
-        })
-        .filter(Boolean) as Order[];
+      allOrders.forEach((order) => {
+        const mesaNumber = order.Session?.mesa?.number;
+        if (mesaNumber === undefined || mesaNumber === null) return;
+
+        const filteredItems = order.items.filter(
+          (item) => item.Product?.Category?.name === CATEGORY_FILTER && !item.canceled
+        );
+
+        if (filteredItems.length === 0) return;
+
+        if (!groupedByMesa[mesaNumber]) {
+          groupedByMesa[mesaNumber] = {
+            id: `mesa-${mesaNumber}`,
+            name: `Mesa ${mesaNumber}`,
+            created_at: order.created_at,
+            Session: order.Session,
+            items: [],
+            orderIds: [],
+          };
+        }
+
+        groupedByMesa[mesaNumber].items.push(...filteredItems);
+        groupedByMesa[mesaNumber].orderIds.push(order.id);
+      });
 
       setOrders(allOrders);
-      setFilteredOrders(filtered);
+      setFilteredOrders(Object.values(groupedByMesa));
     } catch (error) {
       toast.error("Erro ao buscar pedidos");
       console.error("Erro ao buscar pedidos:", error);
@@ -91,20 +107,24 @@ export default function KitchenPage() {
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
   };
 
-  const handleCloseOrder = async (order_id: string) => {
+  const handleCloseOrder = async (orderIds: string[]) => {
     try {
-      await apiClient.put(
-        "/order/finish",
-        { order_id },
-        {
-          headers: { Authorization: `Bearer ${user?.token}` },
-        }
+      await Promise.all(
+        orderIds.map((id) =>
+          apiClient.put(
+            "/order/finish",
+            { order_id: id },
+            {
+              headers: { Authorization: `Bearer ${user?.token}` },
+            }
+          )
+        )
       );
-      toast.success("Pedido finalizado com sucesso");
+      toast.success("Pedidos finalizados com sucesso");
       fetchOrders(true);
     } catch (error: any) {
       const message =
-        error?.response?.data?.error || "Erro ao fechar pedido.";
+        error?.response?.data?.error || "Erro ao fechar pedidos.";
       toast.error(message);
     }
   };
@@ -124,13 +144,15 @@ export default function KitchenPage() {
     }
   };
 
-  const isAllPrepared = (order: Order) => {
-    const fullOrder = orders.find((o) => o.id === order.id);
-    if (!fullOrder) return false;
+  const isAllPrepared = (groupedOrder: GroupedOrder) => {
+    return groupedOrder.orderIds.every((orderId) => {
+      const fullOrder = orders.find((o) => o.id === orderId);
+      if (!fullOrder) return false;
 
-    return fullOrder.items.every(
-      (item) => item.prepared || item.canceled
-    );
+      return fullOrder.items.every(
+        (item) => item.prepared || item.canceled
+      );
+    });
   };
 
   const getTimeAgo = (dateString: string) => {
@@ -259,7 +281,7 @@ export default function KitchenPage() {
                           )}
                         </CardTitle>
                         <CardDescription>
-                          {order.name} • {getTimeAgo(order.created_at)}
+                          Vários Pedidos • Atualizado {getTimeAgo(order.created_at)}
                         </CardDescription>
                       </div>
                       <Button
@@ -324,7 +346,7 @@ export default function KitchenPage() {
                     {/* Complete Order Button */}
                     {isAllPrepared(order) && (
                       <Button
-                        onClick={() => handleCloseOrder(order.id)}
+                        onClick={() => handleCloseOrder(order.orderIds)}
                         className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white"
                         size="sm"
                       >
