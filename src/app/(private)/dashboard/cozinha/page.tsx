@@ -11,6 +11,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSocket } from "@/contexts/SocketContext";
 
+// ========== INTERFACES ==========
+interface Order {
+  id: string;
+  created_at: string;
+  status?: boolean;
+  draft?: boolean;
+  sessionId?: string;
+  Session?: {
+    mesa?: {
+      number: number;
+      Category?: {
+        name: string;
+      };
+    };
+  };
+  items: OrderItem[];
+}
+
 interface OrderItem {
   id: string;
   amount: number;
@@ -42,6 +60,7 @@ interface GroupedOrder {
   orderIds: string[];
 }
 
+// ========== COMPONENTE PRINCIPAL ==========
 export default function KitchenPage() {
   const { user } = useContext(AuthContext);
   const apiClient = setupAPIClient();
@@ -69,29 +88,34 @@ export default function KitchenPage() {
       const groupedByMesa: Record<number, GroupedOrder> = {};
 
       allOrders.forEach((order) => {
-        const mesaNumber = order.Session?.mesa?.number;
-        if (mesaNumber === undefined || mesaNumber === null) return;
+  const mesaNumber = order.Session?.mesa?.number;
+  if (mesaNumber === undefined || mesaNumber === null) return;
 
-        const filteredItems = order.items.filter(
-          (item) => item.Product?.Category?.name === CATEGORY_FILTER && !item.canceled
-        );
+  const filteredItems = order.items.filter(
+    (item) => item.Product?.Category?.name === CATEGORY_FILTER && !item.canceled
+  );
 
-        if (filteredItems.length === 0) return;
+  if (filteredItems.length === 0) return;
 
-        if (!groupedByMesa[mesaNumber]) {
-          groupedByMesa[mesaNumber] = {
-            id: `mesa-${mesaNumber}`,
-            name: `Mesa ${mesaNumber}`,
-            created_at: order.created_at,
-            Session: order.Session,
-            items: [],
-            orderIds: [],
-          };
+  if (!groupedByMesa[mesaNumber]) {
+    groupedByMesa[mesaNumber] = {
+      id: `mesa-${mesaNumber}`,
+      name: `Mesa ${mesaNumber}`,
+      created_at: order.created_at,
+      Session: {  // ✅ Criando o objeto Session corretamente
+        mesa: {
+          number: mesaNumber,
+          Category: order.Session?.mesa?.Category
         }
+      },
+      items: [],
+      orderIds: [],
+    };
+  }
 
-        groupedByMesa[mesaNumber].items.push(...filteredItems);
-        groupedByMesa[mesaNumber].orderIds.push(order.id);
-      });
+  groupedByMesa[mesaNumber].items.push(...filteredItems);
+  groupedByMesa[mesaNumber].orderIds.push(order.id);
+});
 
       setOrders(allOrders);
       setFilteredOrders(Object.values(groupedByMesa));
@@ -365,7 +389,7 @@ export default function KitchenPage() {
   );
 }
 
-// Icon component para substituir o Lucide
+// ========== ICONE UTENSÍLIOS ==========
 const Utensils = ({ className }: { className?: string }) => (
   <svg
     className={className}
