@@ -15,6 +15,7 @@ interface Pedido {
   nomePedido: string;
   criadoEm: Date;
   items: ItemPedido[];
+  atendidoPor?: string;
 }
 
 interface OrganizationInfo {
@@ -33,6 +34,7 @@ interface DadosSessao {
   codigoAbertura: string;
   abertaEm: Date;
   fechadaEm: Date;
+  abertoPorNome?: string;
   pedidos: Pedido[];
   totalGeral: number;
   isEmpresa?: boolean;
@@ -50,7 +52,7 @@ const formatarKz = (valor: number | undefined | null): string => {
 };
 
 // Função para renderizar o cabeçalho da organização
-const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: number, isTermica = false): number => {
+const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: number, isTermica = false, isFatura = false): number => {
   const pageWidth = isTermica ? 80 : 210;
   const centerX = pageWidth / 2;
 
@@ -89,8 +91,8 @@ const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: nu
       yPos += 8;
     }
 
-    // Se for empresa, mostrar os dados do cliente
-    if (dados.clienteNome || dados.clienteNif) {
+    // Mostrar os dados do cliente
+    if (isFatura || dados.clienteNome || dados.clienteNif) {
       const boxWidth = isTermica ? 70 : 170;
       const boxX = (pageWidth - boxWidth) / 2;
 
@@ -152,7 +154,7 @@ export const gerarPDFReciboNaoPago = (dados: DadosSessao) => {
 
     autoTable(doc, {
       startY: yPos,
-      head: [[`Pedido: ${pedido.nomePedido}`, 'Qtd', 'Preço Unit.', 'Subtotal']],
+      head: [[`Pedido: ${pedido.nomePedido}${pedido.atendidoPor ? ` (Atendido por: ${pedido.atendidoPor})` : ''}`, 'Qtd', 'Preço Unit.', 'Subtotal']],
       body: pedido.items.map(item => [
         item.produto,
         item.quantidade.toString(),
@@ -203,7 +205,7 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
   });
 
   let yPos = 10;
-  yPos = renderizarCabecalhoOrganizacao(doc, dados, yPos, isTermica);
+  yPos = renderizarCabecalhoOrganizacao(doc, dados, yPos, isTermica, true);
 
   // Título
   doc.setFontSize(isTermica ? 12 : 16);
@@ -222,8 +224,18 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
   doc.text(`Mesa: ${dados.mesaNumero}`, margin, yPos);
   yPos += isTermica ? 5 : 6;
   doc.setFont('helvetica', 'normal');
+  if (dados.abertaEm) {
+    doc.text(`Abertura: ${new Date(dados.abertaEm).toLocaleString('pt-BR')}`, margin, yPos);
+    yPos += isTermica ? 5 : 6;
+  }
   doc.text(`Doc: ${dados.agtDocumentNo || dados.numero || dados.codigoAbertura}`, margin, yPos);
   yPos += isTermica ? 8 : 12;
+
+  if (dados.abertoPorNome) {
+    doc.setFontSize(isTermica ? 7 : 9);
+    doc.text(`Aberto por: ${dados.abertoPorNome}`, margin, yPos);
+    yPos += isTermica ? 6 : 8;
+  }
 
   // Tabela de Itens
   dados.pedidos.forEach((pedido) => {
