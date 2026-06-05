@@ -158,7 +158,7 @@ export const useMenu = () => {
   const groupProductsByCategory = (products: Product[]) => {
     const grouped: Record<string, Product[]> = {};
     products.forEach(product => {
-      let categoryName = product.isDerived ? 'Pratos' : (product.Category?.name || 'Sem Categoria');
+      let categoryName = product.Category?.name || (product.isDerived ? 'Pratos' : 'Sem Categoria');
       
       if (categoryName.toLowerCase() === 'ingredientes' || categoryName.toLowerCase() === 'ingrediente') {
         return; // Pula ingredientes (redundante com o filtro anterior, mas garante)

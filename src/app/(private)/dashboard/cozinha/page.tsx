@@ -91,7 +91,7 @@ export default function KitchenPage() {
   if (mesaNumber === undefined || mesaNumber === null) return;
 
   const filteredItems = order.items.filter(
-    (item) => item.Product?.Category?.name === CATEGORY_FILTER && !item.canceled
+    (item) => item.Product?.Category?.name !== "Bebidas" && !item.canceled
   );
 
   if (filteredItems.length === 0) return;
@@ -278,7 +278,7 @@ export default function KitchenPage() {
                 <div className="text-muted-foreground text-center">
                   <Utensils className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <h3 className="text-lg font-semibold mb-2">Nenhum pedido encontrado</h3>
-                  <p>Não há pedidos de {CATEGORY_FILTER} no momento.</p>
+                  <p>Não há pedidos de Cozinha no momento.</p>
                 </div>
               </CardContent>
             </Card>

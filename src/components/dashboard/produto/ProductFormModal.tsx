@@ -179,8 +179,8 @@ export function ProductFormModal({
       return;
     }
 
-    if (!formData.categoryId && !formData.isDerived) {
-      toast.error("Categoria é obrigatória para produtos não derivados");
+    if (!formData.categoryId) {
+      toast.error("Categoria é obrigatória");
       return;
     }
     if (!formData.defaultAreaId && !formData.isDerived) {
@@ -202,24 +202,8 @@ export function ProductFormModal({
       formPayload.append('isFeatured', formData.isFeatured.toString());
       formPayload.append('isNew', formData.isNew.toString());
 
-      // Só envia categoryId se não for produto derivado
-      if (!formData.isDerived && formData.categoryId) {
+      if (formData.categoryId) {
         formPayload.append('categoryId', formData.categoryId);
-      } else if (formData.isDerived) {
-        // Tentar encontrar a categoria "Pratos Principais" ou "Derivados" pelo nome
-        const derivedCategory = categories.find(c =>
-          c.name.toLowerCase() === 'pratos principais' ||
-          c.name.toLowerCase() === 'derivados' ||
-          c.name.toLowerCase() === 'derivado'
-        );
-
-        if (derivedCategory) {
-          formPayload.append('categoryId', derivedCategory.id);
-        } else {
-          toast.error("Categoria 'Pratos Principais' não encontrada. Verifique as categorias cadastradas.");
-          setIsSubmitting(false);
-          return;
-        }
       }
 
       if (formData.defaultAreaId && formData.defaultAreaId.trim() !== '') {
@@ -440,13 +424,13 @@ export function ProductFormModal({
 
             <div className="space-y-2">
               <Label htmlFor="categoryId" className="text-gray-900 dark:text-white">
-                Categoria {!formData.isDerived && '*'}
+                Categoria *
               </Label>
               <Select
                 value={formData.categoryId}
                 onValueChange={(value) => handleInputChange('categoryId', value)}
-                disabled={formData.isDerived || !isDataReady || isSubmitting}
-                required={!formData.isDerived}
+                disabled={!isDataReady || isSubmitting}
+                required
               >
                 <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue placeholder="Selecione uma categoria">

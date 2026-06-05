@@ -150,8 +150,7 @@ export function useKioskMenu() {
 
     const categories = useMemo(() => {
         const cats = Array.from(new Set(products.map(p => {
-            if (p.isDerived) return 'Pratos';
-            return p.Category?.name || 'Outros';
+            return p.Category?.name || (p.isDerived ? 'Pratos' : 'Outros');
         }))).filter(c => c !== 'Ingredientes' && c !== 'Ingrediente').sort();
         
         // Colocar Pratos logo após Destaques se existir
@@ -171,7 +170,7 @@ export function useKioskMenu() {
             return products.filter(p => p.isFeatured || p.isNew || (p.orderCount && p.orderCount > 50));
         } else {
             filtered = products.filter(p => {
-                const catName = p.isDerived ? 'Pratos' : (p.Category?.name || 'Outros');
+                const catName = p.Category?.name || (p.isDerived ? 'Pratos' : 'Outros');
                 return catName === activeCategory;
             });
         }
