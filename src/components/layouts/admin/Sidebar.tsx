@@ -6,6 +6,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { parseCookies } from "nookies"
+import { useContext } from "react"
+import { AuthContext } from "@/contexts/AuthContext"
+import { API_BASE_URL } from "../../../../config"
 
 // Definir os tipos de roles
 type UserRole = 'SUPER ADMIN' | 'ADMIN' | 'GARCON' | 'CAIXA' | 'COZINHA' | 'BAR'
@@ -211,6 +214,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({})
   const [filteredMenu, setFilteredMenu] = useState<MenuItem[]>([])
+  const { user } = useContext(AuthContext)
 
   useEffect(() => {
     // Pegar a role do cookie
@@ -279,17 +283,25 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
       <div>
         <div className="flex flex-col items-center gap-2 mb-8 px-4">
           <div className="w-14 h-14 rounded-full bg-[var(--sidebar-foreground)] text-[var(--sidebar)] flex items-center justify-center font-bold text-2xl overflow-hidden">
-            <Image
-              src={logoImg}
-              alt="ServeFixe"
-              width={60}
-              height={60}
-              priority
-              className="object-contain"
-            />
+            {user?.imageLogo ? (
+              <img
+                src={`${API_BASE_URL}/files/${user.imageLogo}`}
+                alt={user?.name_org || "Logo"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Image
+                src={logoImg}
+                alt="ServeFixe"
+                width={60}
+                height={60}
+                priority
+                className="object-contain"
+              />
+            )}
           </div>
-          <h2 className="text-xl font-semibold">
-            ServeFixe
+          <h2 className="text-xl font-semibold line-clamp-1 text-center px-2" title={user?.name_org || "ServeFixe"}>
+            {user?.name_org || "ServeFixe"}
           </h2>
           {/* Mostrar role do usuário */}
           <div className="px-3 py-1 bg-[var(--sidebar-accent)] rounded-full">
