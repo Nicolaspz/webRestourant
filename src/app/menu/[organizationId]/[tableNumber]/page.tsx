@@ -15,6 +15,7 @@ import { KioskWelcomeModal } from '@/components/kiosk/KioskWelcomeModal';
 
 export default function ProductMenu() {
   const {
+    organizationData,
     cart,
     categories,
     activeCategory,
@@ -46,6 +47,7 @@ export default function ProductMenu() {
         categories={categories}
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
+        organizationData={organizationData}
       />
 
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">

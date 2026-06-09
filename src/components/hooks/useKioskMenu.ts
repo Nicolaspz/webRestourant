@@ -40,6 +40,7 @@ export const theme = {
 
 export function useKioskMenu() {
     const [products, setProducts] = useState<Product[]>([]);
+    const [organizationData, setOrganizationData] = useState<any>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [activeCategory, setActiveCategory] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -96,6 +97,19 @@ export function useKioskMenu() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Buscar dados da organização primeiro
+                try {
+                    const orgResponse = await apiClient.get(`/organization/${organizationId}`);
+                    console.log("🔥 RESPOSTA DA ORGANIZACAO:", orgResponse.data);
+                    if (orgResponse.data && orgResponse.data.organization) {
+                        setOrganizationData(orgResponse.data.organization);
+                    } else {
+                        setOrganizationData(orgResponse.data);
+                    }
+                } catch (orgError) {
+                    console.error("Error fetching organization:", orgError);
+                }
+
                 const response = await apiClient.get('/produts', {
                     params: { organizationId }
                 });
@@ -176,11 +190,12 @@ export function useKioskMenu() {
         }
 
         if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            filtered = filtered.filter(p =>
-                p.name.toLowerCase().includes(q) ||
-                p.description?.toLowerCase().includes(q)
-            );
+            const q = searchQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            filtered = filtered.filter(p => {
+                const pName = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const pDesc = p.description ? p.description.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+                return pName.includes(q) || pDesc.includes(q);
+            });
         }
 
         return filtered;
@@ -296,6 +311,7 @@ export function useKioskMenu() {
 
     return {
         products,
+        organizationData,
         cart,
         categories,
         activeCategory,

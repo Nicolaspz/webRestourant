@@ -143,8 +143,10 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
 
   // Filtrar produtos
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = searchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const pName = product.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const pDesc = product.description ? product.description.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+    const matchesSearch = pName.includes(q) || pDesc.includes(q);
     const matchesType = typeFilter === "all" ||
       (typeFilter === "derived" && product.isDerived) ||
       (typeFilter === "simple" && !product.isDerived);
@@ -414,7 +416,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                         <div className="flex flex-col">
                           <span className="font-medium">{product.name}</span>
                           {product.description && (
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-muted-foreground line-clamp-1 max-w-[250px]" title={product.description}>
                               {product.description}
                             </span>
                           )}

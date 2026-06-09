@@ -5,20 +5,36 @@ interface KioskSidebarProps {
     categories: string[];
     activeCategory: string;
     onSelectCategory: (category: string) => void;
+    organizationData?: any;
 }
 
-export function KioskSidebar({ categories, activeCategory, onSelectCategory }: KioskSidebarProps) {
+export function KioskSidebar({ categories, activeCategory, onSelectCategory, organizationData }: KioskSidebarProps) {
+    const { API_BASE_URL } = require('../../../config');
+
     return (
         <nav
             className="fixed bottom-0 left-0 right-0 z-50 flex flex-row md:relative md:w-64 md:h-full md:flex-col border-t md:border-r md:border-t-0 bg-white/10 backdrop-blur-xl md:bg-[#1E1E1E]"
             style={{ borderColor: 'rgba(255,255,255,0.1)' }}
         >
             <div className="hidden md:flex p-6 items-center justify-start gap-3 border-b border-white/10">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-orange-500 shadow-lg shadow-orange-500/20">
-                    <Flame size={20} className="text-black scale-110" fill="black" />
-                </div>
-                <h1 className="text-2xl font-black tracking-tighter text-white">
-                    MENU<span className="text-orange-500">.DIGITAL</span>
+                {organizationData?.imageLogo ? (
+                    <img 
+                        src={`${API_BASE_URL}/tmp/${organizationData.imageLogo}`} 
+                        alt={organizationData?.name || 'Logo'} 
+                        className="w-12 h-12 rounded-xl object-cover shadow-lg"
+                    />
+                ) : (
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-orange-500 shadow-lg shadow-orange-500/20">
+                        <Flame size={20} className="text-black scale-110" fill="black" />
+                    </div>
+                )}
+                
+                <h1 className="text-xl font-black tracking-tighter text-white line-clamp-2">
+                    {organizationData?.name ? (
+                        organizationData.name.toUpperCase()
+                    ) : (
+                        <>MENU<span className="text-orange-500">.DIGITAL</span></>
+                    )}
                 </h1>
             </div>
 
