@@ -146,7 +146,14 @@ export const gerarPDFReciboNaoPago = (dados: DadosSessao) => {
   doc.text(`Mesa: ${dados.mesaNumero}`, 20, yPos);
   yPos += 5;
   doc.text(`Abertura: ${new Date(dados.abertaEm).toLocaleString('pt-BR')}`, 20, yPos);
-  yPos += 10;
+  yPos += 5;
+
+  const garcom = dados.abertoPorNome || (dados.pedidos && dados.pedidos.length > 0 ? dados.pedidos[0].atendidoPor : '');
+  if (garcom) {
+    doc.text(`Aberto por: ${garcom}`, 20, yPos);
+    yPos += 5;
+  }
+  yPos += 5;
 
   // Lista de pedidos
   dados.pedidos.forEach((pedido) => {
@@ -231,9 +238,10 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
   doc.text(`Doc: ${dados.agtDocumentNo || dados.numero || dados.codigoAbertura}`, margin, yPos);
   yPos += isTermica ? 8 : 12;
 
-  if (dados.abertoPorNome) {
+  const garcom = dados.abertoPorNome || (dados.pedidos && dados.pedidos.length > 0 ? dados.pedidos[0].atendidoPor : '');
+  if (garcom) {
     doc.setFontSize(isTermica ? 7 : 9);
-    doc.text(`Aberto por: ${dados.abertoPorNome}`, margin, yPos);
+    doc.text(`Aberto por: ${garcom}`, margin, yPos);
     yPos += isTermica ? 6 : 8;
   }
 
@@ -314,9 +322,14 @@ export const gerarPDFReciboPago = async (dados: DadosSessao, infoPagamento?: { m
       docRef = match[1];
       doc.setFontSize(isTermica ? 6 : 8);
       doc.setTextColor(100, 100, 100);
-      const validationNum = dados.organization?.softwareValidationNumber || '0/AGT/2026';
-      doc.text(`Doc: ${docRef} - Validação nº ${validationNum}`, centerX, yPos, { align: 'center' });
-      yPos += isTermica ? 6 : 8;
+      const validationNum = 'FE/232/AGT/2026';
+      doc.text(`Doc: ${docRef}`, centerX, yPos, { align: 'center' });
+      yPos += isTermica ? 4 : 5;
+      doc.setFontSize(isTermica ? 5 : 7);
+      const agtText = `Processado por software certificado Cipherpath Fiscal Engine nº ${validationNum}`;
+      const splitText = doc.splitTextToSize(agtText, isTermica ? 70 : 190);
+      doc.text(splitText, centerX, yPos, { align: 'center' });
+      yPos += (splitText.length * (isTermica ? 3 : 4)) + 2;
     }
   }
 
