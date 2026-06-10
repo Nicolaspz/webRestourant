@@ -1,6 +1,7 @@
 // app/menu/page.tsx (ou onde estiver seu componente principal)
 'use client';
 
+import { useEffect } from 'react';
 import { useMenu } from '@/components/hooks/useMenu'; 
 import { Header } from '@/components/dashboard/cardapio/Header'; 
 import { SessionConflictModal } from '@/components/dashboard/cardapio/SessionConflictModal'; 
@@ -44,12 +45,39 @@ export default function ProductMenu() {
   } = useMenu();
 
   const scrollToCategory = (category: string) => {
+    setActiveCategory(category);
     const formattedCategory = category.replace(/\s+/g, '-');
     const element = document.getElementById(formattedCategory);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+
+  // IntersectionObserver para atualizar categoria ativa ao fazer scroll
+  useEffect(() => {
+    if (Object.keys(groupedProducts).length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const categoryName = Object.keys(groupedProducts).find(
+              cat => cat.replace(/\s+/g, '-') === entry.target.id
+            );
+            if (categoryName) setActiveCategory(categoryName);
+          }
+        });
+      },
+      { threshold: 0.3, rootMargin: '-80px 0px -50% 0px' }
+    );
+
+    Object.keys(groupedProducts).forEach(cat => {
+      const el = document.getElementById(cat.replace(/\s+/g, '-'));
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [groupedProducts]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">

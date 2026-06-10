@@ -87,11 +87,15 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
       (entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
-            setActiveCategory(entry.target.id);
+            // Resolve o nome original da categoria a partir do id formatado
+            const categoryName = Object.keys(groupedProducts).find(
+              cat => cat.replace(/\s+/g, '-') === entry.target.id
+            );
+            if (categoryName) setActiveCategory(categoryName);
           }
         });
       },
-      { threshold: 0.5, rootMargin: '-100px 0px -50% 0px' }
+      { threshold: 0.3, rootMargin: '-80px 0px -50% 0px' }
     );
 
     Object.values(categoryRefs.current).forEach(ref => {
@@ -117,6 +121,7 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
   };
 
   const scrollToCategory = (category: string) => {
+    setActiveCategory(category);
     const formattedCategory = category.replace(/\s+/g, '-');
     const element = categoryRefs.current[formattedCategory];
     if (element) {
@@ -196,12 +201,12 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
 
           {/* Categorias */}
           <div className="w-full">
-            <div className="flex space-x-2 py-3 overflow-x-auto">
+            <div className="flex flex-wrap gap-2 py-3">
               {Object.keys(groupedProducts).map(category => (
                 <button
                   key={category}
                   onClick={() => scrollToCategory(category)}
-                  className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     activeCategory === category 
                       ? 'text-white shadow-md' 
                       : 'border hover:shadow-sm'
@@ -217,6 +222,7 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
               ))}
             </div>
           </div>
+
         </div>
       </header>
 

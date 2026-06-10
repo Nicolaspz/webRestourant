@@ -1,5 +1,4 @@
 import {ShoppingCart, ChefHat } from 'lucide-react';
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
@@ -66,13 +65,13 @@ export function Header({
 </Button>
         </div>
 
-        <ScrollArea className="w-full">
-          <div className="flex space-x-2 py-3">
+        <div className="w-full">
+          <div className="flex flex-wrap gap-2 py-3">
             {Object.keys(groupedProducts).map(category => (
               <button
                 key={category}
                 onClick={() => onCategoryClick(category)}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   activeCategory === category
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'border border-gray-300 text-gray-600 hover:shadow-sm'
@@ -82,8 +81,8 @@ export function Header({
               </button>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </header>
   );
-}
+}

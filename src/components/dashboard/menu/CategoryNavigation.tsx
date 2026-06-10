@@ -1,8 +1,6 @@
 // components/dashboard/menu/CategoryNavigation.tsx
 'use client';
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-
 interface CategoryNavigationProps {
   categories: string[];
   activeCategory: string | null;
@@ -21,13 +19,13 @@ const CategoryNavigation = ({
   };
 
   return (
-    <ScrollArea className="w-full">
-      <div className="flex space-x-2 py-3">
+    <div className="w-full">
+      <div className="flex flex-wrap gap-2 py-3">
         {categories.map(category => (
           <button
             key={category}
             onClick={() => onCategoryChange(category)}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
               activeCategory === category 
                 ? 'text-white shadow-md' 
                 : 'border hover:shadow-sm'
@@ -42,7 +40,7 @@ const CategoryNavigation = ({
           </button>
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 };
 
