@@ -19,12 +19,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select";
+import {
     MoreHorizontal,
     Plus,
     Search,
     Edit2,
     Trash2,
-    Loader2
+    Loader2,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight
 } from "lucide-react";
 import { setupAPIClient } from "@/services/api";
 import { AuthContext } from "@/contexts/AuthContext";
@@ -45,11 +56,20 @@ export function CategoryTable() {
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
+    // Paginação
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
     useEffect(() => {
         if (user?.organizationId) {
             loadCategories();
         }
     }, [user?.organizationId]);
+
+    // Reset para página 1 ao pesquisar
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     async function loadCategories() {
         setIsLoading(true);
@@ -91,23 +111,60 @@ export function CategoryTable() {
         setIsModalOpen(true);
     }
 
+    // Filtro por nome
     const filteredCategories = categories.filter(cat =>
         cat.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Lógica de paginação
+    const totalItems = filteredCategories.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentItems = filteredCategories.slice(startIndex, endIndex);
+
+    const goToPage = (page: number) => setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    const goToFirstPage = () => goToPage(1);
+    const goToLastPage = () => goToPage(totalPages);
+    const goToPreviousPage = () => goToPage(currentPage - 1);
+    const goToNextPage = () => goToPage(currentPage + 1);
 
     return (
         <div className="space-y-4">
             {/* Header Actions */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                <div className="relative w-full md:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    <Input
-                        placeholder="Procurar categorias..."
-                        className="pl-10 bg-white dark:bg-[#1a1b1e] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    {/* Pesquisa */}
+                    <div className="relative w-full sm:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <Input
+                            placeholder="Procurar categorias..."
+                            className="pl-10 bg-white dark:bg-[#1a1b1e] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Itens por página */}
+                    <Select
+                        value={itemsPerPage.toString()}
+                        onValueChange={(value) => {
+                            setItemsPerPage(Number(value));
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <SelectTrigger className="w-[110px] bg-white dark:bg-[#1a1b1e] border-gray-300 dark:border-gray-700">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="5">5 / pág.</SelectItem>
+                            <SelectItem value="10">10 / pág.</SelectItem>
+                            <SelectItem value="20">20 / pág.</SelectItem>
+                            <SelectItem value="50">50 / pág.</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
+
                 <Button
                     onClick={handleCreate}
                     className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto transition-colors"
@@ -117,11 +174,22 @@ export function CategoryTable() {
                 </Button>
             </div>
 
+            {/* Resumo */}
+            {!isLoading && (
+                <p className="text-xs text-muted-foreground">
+                    {totalItems === 0
+                        ? 'Nenhuma categoria encontrada'
+                        : `A mostrar ${startIndex + 1}–${Math.min(endIndex, totalItems)} de ${totalItems} categoria(s)`}
+                    {searchTerm && ` · Busca: "${searchTerm}"`}
+                </p>
+            )}
+
             {/* Table */}
             <div className="bg-white dark:bg-[#1a1b1e] border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-xl">
                 <Table>
                     <TableHeader className="bg-gray-50 dark:bg-gray-800/50">
                         <TableRow className="border-gray-200 dark:border-gray-700 hover:bg-transparent">
+                            <TableHead className="text-gray-700 dark:text-gray-300 font-medium h-12 w-12">#</TableHead>
                             <TableHead className="text-gray-700 dark:text-gray-300 font-medium h-12">Nome da Categoria</TableHead>
                             <TableHead className="text-gray-700 dark:text-gray-300 font-medium h-12 text-right">Operações</TableHead>
                         </TableRow>
@@ -129,22 +197,27 @@ export function CategoryTable() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={2} className="h-40 text-center">
+                                <TableCell colSpan={3} className="h-40 text-center">
                                     <div className="flex flex-col items-center gap-2">
                                         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                                         <span className="text-gray-600 dark:text-gray-400">A carregar categorias...</span>
                                     </div>
                                 </TableCell>
                             </TableRow>
-                        ) : filteredCategories.length === 0 ? (
+                        ) : currentItems.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={2} className="h-40 text-center">
-                                    <p className="text-gray-600 dark:text-gray-400">Nenhuma categoria encontrada.</p>
+                                <TableCell colSpan={3} className="h-40 text-center">
+                                    <p className="text-gray-600 dark:text-gray-400">
+                                        {categories.length === 0 ? 'Nenhuma categoria cadastrada.' : 'Nenhuma categoria encontrada.'}
+                                    </p>
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredCategories.map((category) => (
+                            currentItems.map((category, index) => (
                                 <TableRow key={category.id} className="border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800/30 transition-colors">
+                                    <TableCell className="text-gray-400 dark:text-gray-500 text-sm">
+                                        {startIndex + index + 1}
+                                    </TableCell>
                                     <TableCell className="text-gray-900 dark:text-white py-4 font-medium">{category.name}</TableCell>
                                     <TableCell className="text-right py-4">
                                         <DropdownMenu>
@@ -178,6 +251,55 @@ export function CategoryTable() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Paginação */}
+            {!isLoading && totalPages > 1 && (
+                <div className="flex items-center justify-between px-1 py-2">
+                    <div className="text-sm text-muted-foreground">
+                        Página {currentPage} de {totalPages}
+                    </div>
+                    <div className="flex items-center space-x-1">
+                        <Button variant="outline" size="sm" onClick={goToFirstPage} disabled={currentPage === 1}>
+                            <ChevronsLeft className="w-4 h-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={goToPreviousPage} disabled={currentPage === 1}>
+                            <ChevronLeft className="w-4 h-4" />
+                        </Button>
+
+                        {/* Números de página */}
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let page: number;
+                            if (totalPages <= 5) {
+                                page = i + 1;
+                            } else if (currentPage <= 3) {
+                                page = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                page = totalPages - 4 + i;
+                            } else {
+                                page = currentPage - 2 + i;
+                            }
+                            return (
+                                <Button
+                                    key={page}
+                                    variant={currentPage === page ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => goToPage(page)}
+                                    className="w-8 h-8 p-0"
+                                >
+                                    {page}
+                                </Button>
+                            );
+                        })}
+
+                        <Button variant="outline" size="sm" onClick={goToNextPage} disabled={currentPage === totalPages}>
+                            <ChevronRight className="w-4 h-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={goToLastPage} disabled={currentPage === totalPages}>
+                            <ChevronsRight className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <CategoryFormModal
                 isOpen={isModalOpen}

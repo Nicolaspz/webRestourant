@@ -78,6 +78,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   // Estados para paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -150,8 +151,10 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
     const matchesType = typeFilter === "all" ||
       (typeFilter === "derived" && product.isDerived) ||
       (typeFilter === "simple" && !product.isDerived);
+    const matchesCategory = categoryFilter === "all" ||
+      product.Category?.id === categoryFilter;
 
-    return matchesSearch && matchesType;
+    return matchesSearch && matchesType && matchesCategory;
   });
 
   // Lógica de paginação
@@ -165,7 +168,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
   // Resetar para página 1 quando filtrar
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, typeFilter]);
+  }, [searchTerm, typeFilter, categoryFilter]);
 
   // Funções de paginação
   const goToPage = (page: number) => {
@@ -304,9 +307,9 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Busca */}
-            <div className="flex-1 relative">
+          <div className="flex flex-col gap-3 mb-6">
+            {/* Linha 1: Busca */}
+            <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome ou descrição..."
@@ -316,11 +319,27 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
               />
             </div>
 
-            {/* Filtros */}
-            <div className="flex gap-2">
+            {/* Linha 2: Filtros */}
+            <div className="flex flex-wrap gap-2">
+              {/* Filtro por Categoria */}
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Filtro por Tipo */}
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -330,25 +349,49 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                 </SelectContent>
               </Select>
 
-              {/* Itens por página */}
-              <Select
-                value={itemsPerPage.toString()}
-                onValueChange={(value) => {
-                  setItemsPerPage(Number(value));
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Limpar filtros */}
+              {(categoryFilter !== "all" || typeFilter !== "all" || searchTerm) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setCategoryFilter("all"); setTypeFilter("all"); setSearchTerm(""); }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Limpar filtros
+                </Button>
+              )}
+
+              <div className="ml-auto">
+                {/* Itens por página */}
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={(value) => {
+                    setItemsPerPage(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Resumo dos filtros ativos */}
+            {(categoryFilter !== "all" || typeFilter !== "all" || searchTerm) && (
+              <p className="text-xs text-muted-foreground">
+                {filteredProducts.length} produto(s) encontrado(s)
+                {categoryFilter !== "all" && ` • Categoria: ${categories.find(c => c.id === categoryFilter)?.name}`}
+                {typeFilter !== "all" && ` • Tipo: ${typeFilter === "simple" ? "Simples" : "Derivados"}`}
+                {searchTerm && ` • Busca: "${searchTerm}"`}
+              </p>
+            )}
           </div>
 
           {/* Tabela */}
@@ -358,6 +401,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                 <TableRow>
                   <TableHead>Imagem</TableHead>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Categoria</TableHead>
                   <TableHead>Preço</TableHead>
                   <TableHead>Unidade</TableHead>
                   <TableHead>Tipo</TableHead>
@@ -367,8 +411,8 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
               <TableBody>
                 {currentItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      {products.length === 0 ? "Nenhum produto cadastrado" : "Nenhum produto encontrado"}
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      {products.length === 0 ? "Nenhum produto cadastrado" : "Nenhum produto encontrado com os filtros selecionados"}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -421,6 +465,15 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                             </span>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {product.Category ? (
+                          <Badge variant="outline" className="text-xs font-medium border-blue-200 text-blue-700 bg-blue-50">
+                            {product.Category.name}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
