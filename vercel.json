@@ -5,11 +5,11 @@
     "rewrites": [
         {
             "source": "/socket.io",
-            "destination": "http://13.62.222.99:3333/socket.io/"
+            "destination": "https://server-restourant.onrender.com/socket.io/"
         },
         {
             "source": "/api/:path*",
-            "destination": "http://13.62.222.99:3333/:path*"
+            "destination": "https://server-restourant.onrender.com/:path*"
         }
     ]
 }

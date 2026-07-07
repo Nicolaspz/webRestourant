@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https: http://13.62.222.99:3333 http://localhost:3333;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https: https://server-restourant.onrender.com http://localhost:3333;",
           },
         ],
       },
@@ -45,7 +45,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://server-restourant.onrender.com:1000/:path*' // Redireciona para o backend
+        destination: 'https://server-restourant.onrender.com/:path*' // Redireciona para o backend
       }
     ];
   }

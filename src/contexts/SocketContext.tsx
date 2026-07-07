@@ -17,9 +17,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        // URL do backend direta para AWS (Vercel proxy não suporta WebSockets)
+        // URL direta do backend para WebSockets (proxy da Vercel nao suporta WebSockets)
         const socketUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-            ? 'http://13.62.222.99:3333' // URL DIRETA DA AWS
+            ? 'https://server-restourant.onrender.com'
             : API_BASE_URL;
 
         const socketInstance = io(socketUrl, {
