@@ -45,7 +45,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://13.62.222.99:3333/:path*' // Redireciona para o backend
+        destination: 'https://server-restourant.onrender.com:1000/:path*' // Redireciona para o backend
       }
     ];
   }
