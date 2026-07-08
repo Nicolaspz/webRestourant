@@ -8,9 +8,10 @@ import { Fatura } from '@/types/product';
 interface FaturaCardProps {
   fatura: Fatura;
   onPagamento: () => void;
+  onProforma?: () => void;
 }
 
-const FaturaCard = ({ fatura, onPagamento }: FaturaCardProps) => {
+const FaturaCard = ({ fatura, onPagamento, onProforma }: FaturaCardProps) => {
   const getStatusVariant = (status: string) => {
     const variants = {
       pendente: "destructive",
@@ -85,12 +86,19 @@ const FaturaCard = ({ fatura, onPagamento }: FaturaCardProps) => {
           </div>
           
           {fatura.status === 'pendente' && (
-            <Button onClick={onPagamento} className="gap-2" size="sm">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-              Pagar
-            </Button>
+            <div className="flex items-center gap-2">
+              {onProforma && (
+                <Button onClick={onProforma} variant="outline" className="gap-2" size="sm">
+                  Proforma
+                </Button>
+              )}
+              <Button onClick={onPagamento} className="gap-2" size="sm">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+                Pagar
+              </Button>
+            </div>
           )}
           
           {fatura.status === 'paga' && fatura.metodoPagamento && (

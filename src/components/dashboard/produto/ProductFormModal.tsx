@@ -48,6 +48,7 @@ export function ProductFormModal({
     isIgredient: false,
     isFeatured: false,
     isNew: false,
+    productKind: 'SIMPLE_PRODUCT',
     categoryId: '',
     file: null,
     previewImage: '',
@@ -61,6 +62,13 @@ export function ProductFormModal({
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
+  const availableCategories = categories.filter((category) => {
+    if (formData.productKind === 'INGREDIENT') {
+      return category.kind === 'STOCK' || !category.kind;
+    }
+
+    return category.kind === 'MENU' || !category.kind;
+  });
 
   const fetchAreas = async () => {
     if (!user?.organizationId) return;
@@ -116,6 +124,7 @@ export function ProductFormModal({
           isIgredient: initialData.isIgredient || false,
           isFeatured: initialData.isFeatured || false,
           isNew: initialData.isNew || false,
+          productKind: initialData.productKind || (initialData.isIgredient ? 'INGREDIENT' : initialData.isDerived ? 'RECIPE_PRODUCT' : 'SIMPLE_PRODUCT'),
           categoryId: initialData.categoryId || initialData.Category?.id || '',
           file: null,
           previewImage: initialData.banner ? getMediaUrl(initialData.banner) : '',
@@ -139,6 +148,7 @@ export function ProductFormModal({
           isIgredient: false,
           isFeatured: false,
           isNew: false,
+          productKind: 'SIMPLE_PRODUCT',
           categoryId: '',
           file: null,
           previewImage: '',
@@ -183,7 +193,7 @@ export function ProductFormModal({
       toast.error("Categoria é obrigatória");
       return;
     }
-    if (!formData.defaultAreaId && !formData.isDerived) {
+    if (!formData.defaultAreaId && formData.productKind !== 'RECIPE_PRODUCT') {
       toast.error("Área de Consumo é obrigatório para produtos não derivados");
       return;
     }
@@ -201,6 +211,7 @@ export function ProductFormModal({
       formPayload.append('isIgredient', formData.isIgredient.toString());
       formPayload.append('isFeatured', formData.isFeatured.toString());
       formPayload.append('isNew', formData.isNew.toString());
+      formPayload.append('productKind', formData.productKind);
 
       if (formData.categoryId) {
         formPayload.append('categoryId', formData.categoryId);
@@ -273,6 +284,17 @@ export function ProductFormModal({
   };
 
   const handleInputChange = (field: string, value: any) => {
+    if (field === 'productKind') {
+      setFormData(prev => ({
+        ...prev,
+        productKind: value,
+        isIgredient: value === 'INGREDIENT',
+        isDerived: value === 'RECIPE_PRODUCT',
+        categoryId: '',
+        defaultAreaId: value === 'RECIPE_PRODUCT' ? '' : prev.defaultAreaId,
+      }));
+      return;
+    }
     console.log(`✏️ Alterando ${field}:`, value);
     setFormData(prev => ({
       ...prev,
@@ -370,6 +392,27 @@ export function ProductFormModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="productKind" className="text-gray-900 dark:text-white">Tipo *</Label>
+            <Select
+              value={formData.productKind}
+              onValueChange={(value) => handleInputChange('productKind', value)}
+              disabled={!isDataReady || isSubmitting}
+            >
+              <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                <SelectItem value="SIMPLE_PRODUCT">Produto de venda</SelectItem>
+                <SelectItem value="RECIPE_PRODUCT">Prato / Receita</SelectItem>
+                <SelectItem value="INGREDIENT">Ingrediente</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Ingredientes entram no stock/receitas. Produtos e pratos aparecem no cardapio.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-gray-900 dark:text-white">Nome *</Label>
@@ -439,13 +482,13 @@ export function ProductFormModal({
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                  {categories.map(category => (
+                  {availableCategories.map(category => (
                     <SelectItem
                       key={category.id}
                       value={category.id}
                       className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
-                      {category.name}
+                      {category.parentId ? `  - ${category.name}` : category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -454,7 +497,7 @@ export function ProductFormModal({
           </div>
 
           {/* Área Padrão - Apenas para produtos não derivados */}
-          {!formData.isDerived && (
+          {formData.productKind !== 'RECIPE_PRODUCT' && (
             <div className="space-y-2">
               <Label htmlFor="defaultAreaId" className="flex items-center gap-2 text-gray-900 dark:text-white">
                 <Warehouse className="w-4 h-4" />
@@ -511,14 +554,20 @@ export function ProductFormModal({
             </div>
           )}
 
-          <div className="flex items-center space-x-2">
+          {formData.productKind === 'RECIPE_PRODUCT' && (
+            <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+              Este item sera tratado como prato/receita. Depois de criar, defina os ingredientes na receita do produto.
+            </div>
+          )}
+
+          <div className="hidden">
             <Checkbox
               id="isDerived"
-              checked={formData.isDerived}
+              checked={formData.productKind === 'RECIPE_PRODUCT'}
               onCheckedChange={(checked) => {
                 const isDerived = !!checked;
                 console.log("✅ Produto derivado:", isDerived);
-                handleInputChange('isDerived', isDerived);
+                handleInputChange('productKind', isDerived ? 'RECIPE_PRODUCT' : 'SIMPLE_PRODUCT');
                 // Se marcar como derivado, tenta setar automaticamente a categoria "Pratos Principais"
                 if (isDerived) {
                   const derivedCategory = categories.find(c =>

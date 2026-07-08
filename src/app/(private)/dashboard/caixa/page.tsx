@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { gerarPDFReciboPago } from '@/components/dashboard/mesas/pdfNpago';
+import { toast } from 'react-toastify';
 
 // Definir interface para os parâmetros
 interface FaturaParams {
@@ -196,6 +197,34 @@ const Caixa = () => {
     });
   };
 
+  const gerarProformaMesa = async (mesaNumber: number) => {
+    if (!user?.organizationId) return;
+
+    try {
+      const response = await apiClient.post('/proformas', {
+        organizationId: user.organizationId,
+        mesaNumber
+      });
+      toast.success(`Proforma ${response.data.numero} emitida com sucesso.`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Erro ao emitir proforma.');
+    }
+  };
+
+  const gerarProformaFatura = async (fatura: Fatura) => {
+    if (!user?.organizationId) return;
+
+    try {
+      const response = await apiClient.post('/proformas', {
+        organizationId: user.organizationId,
+        sessionId: fatura.session.id
+      });
+      toast.success(`Proforma ${response.data.numero} emitida com sucesso.`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Erro ao emitir proforma.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 p-4">
       <div className="max-w-[90vw] mx-auto space-y-6">
@@ -229,7 +258,7 @@ const Caixa = () => {
                   <p>A carregar mesas...</p>
                 ) : mesas.length > 0 ? (
                   mesas.map(mesa => (
-                    <Card key={mesa.id} className="hover:shadow-md transition-shadow cursor-pointer border-2" onClick={() => openCheckoutMesa(mesa)}>
+                    <Card key={mesa.id} className="hover:shadow-md transition-shadow border-2">
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-center">
                           <CardTitle className="text-xl">Mesa {mesa.number}</CardTitle>
@@ -241,12 +270,21 @@ const Caixa = () => {
                           <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
                           Em consumo
                         </div>
-                        <Button className="w-full gap-2 bg-green-600 hover:bg-green-700">
+                        <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2"
+                          onClick={() => gerarProformaMesa(mesa.number)}
+                        >
+                          Proforma
+                        </Button>
+                        <Button className="w-full gap-2 bg-green-600 hover:bg-green-700" onClick={() => openCheckoutMesa(mesa)}>
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
-                          Pagar e Fechar
+                          Pagar
                         </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))
@@ -261,6 +299,7 @@ const Caixa = () => {
                 faturas={faturas}
                 loading={loading}
                 onPagamentoSuccess={handlePagamentoSuccess}
+                onProforma={gerarProformaFatura}
               />
             )}
           </div>

@@ -45,6 +45,13 @@ import { toast } from "react-toastify";
 interface Category {
     id: string;
     name: string;
+    parentId?: string | null;
+    kind?: 'MENU' | 'STOCK';
+    parent?: {
+        id: string;
+        name: string;
+    } | null;
+    children?: Category[];
 }
 
 export function CategoryTable() {
@@ -113,7 +120,7 @@ export function CategoryTable() {
 
     // Filtro por nome
     const filteredCategories = categories.filter(cat =>
-        cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+        `${cat.name} ${cat.parent?.name || ''} ${cat.kind || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Lógica de paginação
@@ -308,6 +315,7 @@ export function CategoryTable() {
                 initialData={selectedCategory}
                 mode={modalMode}
                 organizationId={user?.organizationId || ''}
+                categories={categories}
             />
         </div>
     );

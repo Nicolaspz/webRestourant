@@ -2,6 +2,14 @@ export interface Category {
   id: string;
   name: string;
   organizationId: string;
+  parentId?: string | null;
+  kind?: 'MENU' | 'STOCK';
+  parent?: {
+    id: string;
+    name: string;
+    kind?: 'MENU' | 'STOCK';
+  } | null;
+  children?: Category[];
 }
 
 export interface PrecoVenda {
@@ -38,6 +46,7 @@ export interface Product {
   isIgredient: boolean;
   isFeatured: boolean;
   isNew: boolean;
+  productKind?: 'INGREDIENT' | 'SIMPLE_PRODUCT' | 'RECIPE_PRODUCT';
   PrecoVenda: PrecoVenda[];
   recipeItems: RecipeItem[];
   categoryId: string;
@@ -72,6 +81,7 @@ export interface ProductFormData {
   isIgredient: boolean;
   isFeatured: boolean;
   isNew: boolean;
+  productKind: 'INGREDIENT' | 'SIMPLE_PRODUCT' | 'RECIPE_PRODUCT';
   categoryId: string;
   file: File | null;
   previewImage: string;
@@ -121,6 +131,7 @@ export interface Fatura {
   pagaEm: string;
   metodoPagamento: string;
   session: {
+    id: string;
     codigoAbertura: string;
     mesa: {
       number: number;

@@ -10,9 +10,10 @@ interface FaturaListProps {
   faturas: Fatura[];
   loading: boolean;
   onPagamentoSuccess: () => void;
+  onProforma?: (fatura: Fatura) => void;
 }
 
-const FaturaList = ({ faturas, loading, onPagamentoSuccess }: FaturaListProps) => {
+const FaturaList = ({ faturas, loading, onPagamentoSuccess, onProforma }: FaturaListProps) => {
   const [faturaSelecionada, setFaturaSelecionada] = useState<Fatura | null>(null);
   const [showPagamentoModal, setShowPagamentoModal] = useState(false);
 
@@ -81,6 +82,7 @@ const FaturaList = ({ faturas, loading, onPagamentoSuccess }: FaturaListProps) =
                 key={fatura.id}
                 fatura={fatura}
                 onPagamento={() => handlePagamento(fatura)}
+                onProforma={onProforma ? () => onProforma(fatura) : undefined}
               />
             ))}
           </div>
