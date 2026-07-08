@@ -1,5 +1,5 @@
 'use client';
-import { API_BASE_URL } from '../../../../config';
+import { API_BASE_URL, getMediaUrl } from '../../../../config';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -118,7 +118,7 @@ export function ProductFormModal({
           isNew: initialData.isNew || false,
           categoryId: initialData.categoryId || initialData.Category?.id || '',
           file: null,
-          previewImage: initialData.banner ? `${API_BASE_URL}/tmp/${initialData.banner}` : '',
+          previewImage: initialData.banner ? getMediaUrl(initialData.banner) : '',
           price: initialData.PrecoVenda?.[0]?.preco_venda || 0,
           existingBanner: initialData.banner || '',
           defaultAreaId: areaId // ← Usando o valor correto
@@ -298,7 +298,8 @@ export function ProductFormModal({
       setFormData(prev => ({
         ...prev,
         file,
-        previewImage: URL.createObjectURL(file)
+        previewImage: URL.createObjectURL(file),
+        existingBanner: ''
       }));
     }
   };
@@ -590,12 +591,18 @@ export function ProductFormModal({
             {(formData.previewImage || formData.existingBanner) && (
               <div className="mt-2 relative inline-block">
                 <img
-                  src={formData.previewImage || (formData.existingBanner ? `${API_BASE_URL}/tmp/${formData.existingBanner}` : '')}
+                  key={formData.previewImage || formData.existingBanner || 'product-preview'}
+                  src={formData.previewImage || (formData.existingBanner ? getMediaUrl(formData.existingBanner) : '')}
                   alt="Preview"
                   className="w-32 h-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                  onLoad={(e) => {
+                    e.currentTarget.style.display = 'block';
+                  }}
                   onError={(e) => {
-                    console.error('Erro ao carregar imagem:', formData.existingBanner);
-                    e.currentTarget.style.display = 'none';
+                    console.error('Erro ao carregar imagem:', formData.previewImage || formData.existingBanner);
+                    if (!formData.previewImage) {
+                      e.currentTarget.style.display = 'none';
+                    }
                   }}
                 />
                 <Button

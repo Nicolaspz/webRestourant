@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ShoppingCart, X } from "lucide-react";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL, getMediaUrl } from "../../../config";
 import { Product, theme } from "../hooks/useKioskMenu";
 
 interface KioskProductModalProps {
@@ -28,7 +28,7 @@ export function KioskProductModal({ product, onClose, onAddToCart }: KioskProduc
                 <div className="h-64 md:h-80 relative">
                     {product.banner && (
                         <img
-                            src={`${API_BASE_URL}/tmp/${product.banner}`}
+                            src={getMediaUrl(product.banner)}
                             className="w-full h-full object-cover"
                             alt={product.name}
                         />

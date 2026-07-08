@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import TakeawayGestao from '@/components/dashboard/takeaway/TakeawayGestao';
 import TakeawayClientesList from '@/components/dashboard/takeaway/TakeawayClientesList';
 import { useSocket } from '@/contexts/SocketContext';
-import { API_BASE_URL } from '../../../../../config';
+import { API_BASE_URL, getMediaUrl } from '../../../../../config';
 
 interface Product {
     id: string;
@@ -281,7 +281,7 @@ export default function TakeawayPage() {
                                         {displayProducts.map((p: any) => (
                                             <Card key={p.id} className="cursor-pointer hover:border-primary active:scale-95 transition-all" onClick={() => addToCart(p)}>
                                                 <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
-                                                    {p.banner ? <img src={`${API_BASE_URL}/files/${p.banner}`} className="w-full h-full object-cover" /> : <Package className="w-8 h-8 opacity-20" />}
+                                                    {p.banner ? <img src={getMediaUrl(p.banner)} className="w-full h-full object-cover" /> : <Package className="w-8 h-8 opacity-20" />}
                                                 </div>
                                                 <CardContent className="p-3">
                                                     <h3 className="font-medium text-xs truncate">{p.name}</h3>

@@ -1,5 +1,5 @@
 'use client';
-import { API_BASE_URL } from '../../../../config';
+import { API_BASE_URL, getMediaUrl } from '../../../../config';
 import { DeleteConfirmationModal } from './DeleteConfirmationModalProps';
 import { useState, useEffect, useContext } from "react";
 import {
@@ -422,14 +422,14 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                         {product.banner ? (
                           <div>
                             <img
-                              src={`${API_BASE_URL}/tmp/${product.banner}`}
+                              src={getMediaUrl(product.banner)}
                               alt={product.name}
                               className="w-10 h-10 object-cover rounded-lg"
                               onError={(e) => {
                                 console.error('❌ ERRO COMPLETO:', {
                                   produto: product.name,
                                   banner: product.banner,
-                                  urlTentada: `${API_BASE_URL}/tmp/${product.banner}`,
+                                  urlTentada: getMediaUrl(product.banner),
                                   apiBaseUrl: API_BASE_URL,
                                   timestamp: new Date().toISOString()
                                 });
@@ -446,7 +446,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                               }}
                               onLoad={() => console.log('✅ Imagem carregada:', {
                                 produto: product.name,
-                                url: `${API_BASE_URL}/tmp/${product.banner}`
+                                url: getMediaUrl(product.banner)
                               })}
                             />
                           </div>

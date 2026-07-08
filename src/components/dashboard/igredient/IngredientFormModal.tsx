@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Image, Loader2, Warehouse, X } from "lucide-react";
 import { useState, useEffect, useContext } from "react";
 import { Category, Ingredient } from "@/types/product";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL, getMediaUrl } from "../../../../config";
 import { Area, economatoService } from "@/services/economato";
 import { AuthContext } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
@@ -92,7 +92,7 @@ export function IngredientFormModal({
           file: null,
           existingBanner: initialData.banner || '',
           defaultAreaId: initialData.defaultAreaId || '',
-          previewImage: initialData.banner ? `${API_BASE_URL}/tmp/${initialData.banner}` : ''
+          previewImage: initialData.banner ? getMediaUrl(initialData.banner) : ''
         });
       } else {
         setFormData({
@@ -152,7 +152,8 @@ export function IngredientFormModal({
       setFormData(prev => ({
         ...prev,
         file,
-        previewImage: URL.createObjectURL(file)
+        previewImage: URL.createObjectURL(file),
+        existingBanner: ''
       }));
     }
   };
@@ -363,19 +364,25 @@ export function IngredientFormModal({
                   {(formData.previewImage || formData.existingBanner) && (
                     <div className="relative">
                       <img
-                        src={formData.previewImage || (formData.existingBanner ? `${API_BASE_URL}/tmp/${formData.existingBanner}` : '')}
+                        key={formData.previewImage || formData.existingBanner || 'ingredient-preview'}
+                        src={formData.previewImage || (formData.existingBanner ? getMediaUrl(formData.existingBanner) : '')}
                         alt="Preview"
                         className="w-16 h-16 object-cover rounded border border-gray-300 dark:border-gray-600"
+                        onLoad={(e) => {
+                          e.currentTarget.style.display = 'block';
+                        }}
                         onError={(e) => {
-                          console.error('Erro ao carregar imagem:', formData.existingBanner);
-                          e.currentTarget.style.display = 'none';
+                          console.error('Erro ao carregar imagem:', formData.previewImage || formData.existingBanner);
+                          if (!formData.previewImage) {
+                            e.currentTarget.style.display = 'none';
+                          }
                         }}
                       />
                       <Button
                         type="button"
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleInputChange('previewImage', '')}
+                        onClick={() => setFormData(prev => ({ ...prev, file: null, previewImage: '', existingBanner: '' }))}
                         className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
                         disabled={isSubmitting}
                       >

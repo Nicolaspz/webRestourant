@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { getMediaUrl } from '../../../../config';
 
 // Components chadcn/ui
 import { 
@@ -259,7 +260,7 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
                       <div className="relative aspect-video overflow-hidden">
                         {product.banner ? (
                           <img
-                            src={`/api/images/${product.banner}`}
+                            src={getMediaUrl(product.banner)}
                             alt={product.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />

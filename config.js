@@ -31,3 +31,14 @@ export const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 console.log('API Base URL (corrigida):', API_BASE_URL);
+export const getMediaUrl = (mediaPath) => {
+    if (!mediaPath) return '';
+
+    const value = String(mediaPath);
+    if (/^(https?:)?\/\//.test(value) || value.startsWith('data:') || value.startsWith('blob:')) {
+        return value;
+    }
+
+    const cleanPath = value.replace(/^\/?(tmp|files)\//, '');
+    return `${API_BASE_URL}/files/${cleanPath}`;
+};

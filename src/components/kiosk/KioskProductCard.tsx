@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Plus, Star, Utensils, Heart, TrendingUp } from "lucide-react";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL, getMediaUrl } from "../../../config";
 import { Product, theme } from "../hooks/useKioskMenu";
 
 interface KioskProductCardProps {
@@ -20,7 +20,7 @@ export function KioskProductCard({ product, onSelect, onAdd }: KioskProductCardP
             <div className="aspect-[1/1] w-full overflow-hidden bg-[#2A2A2A] relative">
                 {product.banner ? (
                     <img
-                        src={`${API_BASE_URL}/tmp/${product.banner}`}
+                        src={getMediaUrl(product.banner)}
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />

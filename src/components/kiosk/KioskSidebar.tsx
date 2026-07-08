@@ -9,7 +9,7 @@ interface KioskSidebarProps {
 }
 
 export function KioskSidebar({ categories, activeCategory, onSelectCategory, organizationData }: KioskSidebarProps) {
-    const { API_BASE_URL } = require('../../../config');
+    const { getMediaUrl } = require('../../../config');
 
     return (
         <nav
@@ -19,7 +19,7 @@ export function KioskSidebar({ categories, activeCategory, onSelectCategory, org
             <div className="hidden md:flex p-6 items-center justify-start gap-3 border-b border-white/10">
                 {organizationData?.imageLogo ? (
                     <img 
-                        src={`${API_BASE_URL}/tmp/${organizationData.imageLogo}`} 
+                        src={getMediaUrl(organizationData.imageLogo)} 
                         alt={organizationData?.name || 'Logo'} 
                         className="w-12 h-12 rounded-xl object-cover shadow-lg"
                     />

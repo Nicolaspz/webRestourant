@@ -1,7 +1,7 @@
 // components/menu/ProductCard.tsx
 import { motion } from 'framer-motion';
 import { Utensils, Plus } from 'lucide-react';
-import { API_BASE_URL } from '../../../../config'; 
+import { API_BASE_URL, getMediaUrl } from '../../../../config'; 
 
 interface ProductCardProps {
   product: {
@@ -32,7 +32,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
             <div className="aspect-square relative rounded-lg overflow-hidden bg-blue-50">
               {product.banner ? (
                 <img
-                  src={`${API_BASE_URL}/tmp/${product.banner}`}
+                  src={getMediaUrl(product.banner)}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -82,7 +82,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
         <div className="relative aspect-video overflow-hidden">
           {product.banner ? (
             <img
-              src={`${API_BASE_URL}/tmp/${product.banner}`}
+              src={getMediaUrl(product.banner)}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />

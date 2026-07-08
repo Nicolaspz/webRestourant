@@ -8,7 +8,7 @@ import { useEffect, useState } from "react"
 import { parseCookies } from "nookies"
 import { useContext } from "react"
 import { AuthContext } from "@/contexts/AuthContext"
-import { API_BASE_URL } from "../../../../config"
+import { API_BASE_URL, getMediaUrl } from "../../../../config"
 
 // Definir os tipos de roles
 type UserRole = 'SUPER ADMIN' | 'ADMIN' | 'GARCON' | 'CAIXA' | 'COZINHA' | 'BAR'
@@ -285,7 +285,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
           <div className="w-14 h-14 rounded-full bg-[var(--sidebar-foreground)] text-[var(--sidebar)] flex items-center justify-center font-bold text-2xl overflow-hidden">
             {user?.imageLogo ? (
               <img
-                src={`${API_BASE_URL}/files/${user.imageLogo}`}
+                src={getMediaUrl(user.imageLogo)}
                 alt={user?.name_org || "Logo"}
                 className="w-full h-full object-cover"
               />

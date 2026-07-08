@@ -4,7 +4,7 @@
 import { motion } from 'framer-motion';
 import { Minus, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../../../../config'; 
+import { API_BASE_URL, getMediaUrl } from '../../../../config'; 
 
 interface Product {
   id: string;
@@ -61,7 +61,7 @@ const ProductModal = ({ product, isOpen, onClose, onConfirm }: ProductModalProps
         <div className="flex items-center space-x-4 mb-4">
           {product.banner && (
             <img 
-              src={`${API_BASE_URL}/tmp/${product.banner}`}
+              src={getMediaUrl(product.banner)}
               alt={product.name}
               className="w-16 h-16 rounded-lg object-cover"
             />

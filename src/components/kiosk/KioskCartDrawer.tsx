@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Minus, Plus, ShoppingCart, X } from "lucide-react";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL, getMediaUrl } from "../../../config";
 import { CartItem, theme } from "../hooks/useKioskMenu";
 
 interface KioskCartDrawerProps {
@@ -57,7 +57,7 @@ export function KioskCartDrawer({ isOpen, cart, total, onClose, onUpdateQuantity
                         cart.map(item => (
                             <div key={item.product.id} className="p-4 rounded-xl bg-[#252525] flex gap-4">
                                 <img
-                                    src={item.product.banner ? `${API_BASE_URL}/tmp/${item.product.banner}` : ''}
+                                    src={item.product.banner ? getMediaUrl(item.product.banner) : ''}
                                     className="w-20 h-20 rounded-lg object-cover bg-gray-800"
                                     alt={item.product.name}
                                 />

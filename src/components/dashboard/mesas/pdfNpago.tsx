@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
-import { API_BASE_URL } from '@/../config';
+import { API_BASE_URL, getMediaUrl } from '@/../config';
 
 interface ItemPedido {
   produto: string;
@@ -58,7 +58,7 @@ const renderizarCabecalhoOrganizacao = (doc: jsPDF, dados: DadosSessao, yPos: nu
 
   if (dados.organization) {
     if (dados.organization.imageLogo) {
-      const logoUrl = `${API_BASE_URL}/files/${dados.organization.imageLogo}`;
+      const logoUrl = getMediaUrl(dados.organization.imageLogo);
       try {
         const logoWidth = isTermica ? 18 : 25; // Reduzido para 25 em A4
         const logoHeight = isTermica ? 18 : 25;

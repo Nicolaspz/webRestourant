@@ -42,7 +42,7 @@ function VerifyOrganizationContent() {
                 toast.success("Verificação concluída!");
 
                 setTimeout(() => {
-                    router.push(`/register/${orgIdFromUrl}`);
+                    router.push("/login");
                 }, 2500);
             }
         } catch (err: any) {
@@ -73,7 +73,7 @@ function VerifyOrganizationContent() {
                             </div>
                             <h2 className="text-xl font-bold text-gray-900 mb-2">Conta Activada!</h2>
                             <p className="text-gray-600 mb-4">{message}</p>
-                            <p className="text-sm text-gray-400">A redirecionar para a criação do administrador...</p>
+                            <p className="text-sm text-gray-400">A redirecionar para o login...</p>
                         </div>
                     ) : (
                         <form onSubmit={handleVerify} className="space-y-6">

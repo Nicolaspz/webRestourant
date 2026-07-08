@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Utensils, Star, TrendingUp } from "lucide-react";
 import { Product } from "../hooks/useKioskMenu";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL, getMediaUrl } from "../../../config";
 
 interface KioskHighlightsProps {
     products: Product[];
@@ -42,7 +42,7 @@ export function KioskHighlights({ products, onSelect }: KioskHighlightsProps) {
                 {topFeatured.banner && (
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src={`${API_BASE_URL}/tmp/${topFeatured.banner}`} 
+                            src={getMediaUrl(topFeatured.banner)} 
                             alt={topFeatured.name}
                             className="w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700"
                         />

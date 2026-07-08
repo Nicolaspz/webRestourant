@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Minus, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { API_BASE_URL } from '../../../../config'; 
+import { API_BASE_URL, getMediaUrl } from '../../../../config'; 
 
 interface AddToCartModalProps {
   isOpen: boolean;
@@ -39,7 +39,7 @@ export function AddToCartModal({
           <div className="flex items-center space-x-4 mb-4">
             {product.banner && (
               <img
-                src={`${API_BASE_URL}/tmp/${product.banner}`}
+                src={getMediaUrl(product.banner)}
                 alt={product.name}
                 className="w-16 h-16 rounded-lg object-cover"
               />

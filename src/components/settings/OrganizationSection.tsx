@@ -4,7 +4,7 @@ import { useState, useRef, ChangeEvent, FormEvent, useContext, useEffect } from 
 import { toast } from 'react-toastify'
 import { AuthContext } from '@/contexts/AuthContext'
 import { setupAPIClient } from "@/services/api"
-import { API_BASE_URL } from '../../../config'
+import { API_BASE_URL, getMediaUrl } from '../../../config'
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,7 +47,7 @@ export function OrganizationSection({ organization, onUpdateSuccess }: Organizat
     
     // Se tem imagem, constrói a URL no mesmo formato dos produtos
     if (organization?.imageLogo) {
-      const imageUrl = `${API_BASE_URL}/tmp/${organization.imageLogo}`
+      const imageUrl = getMediaUrl(organization.imageLogo)
       console.log('🖼️ URL da imagem:', imageUrl)
       setPreview(imageUrl)
       setIsImageLoading(false)
@@ -146,7 +146,7 @@ export function OrganizationSection({ organization, onUpdateSuccess }: Organizat
     
     // Restaura o preview original
     if (organization?.imageLogo) {
-      setPreview(`${API_BASE_URL}/tmp/${organization.imageLogo}`)
+      setPreview(getMediaUrl(organization.imageLogo))
     } else {
       setPreview(null)
     }

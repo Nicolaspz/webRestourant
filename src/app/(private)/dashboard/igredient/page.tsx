@@ -1,5 +1,5 @@
 'use client';
-import { API_BASE_URL } from "../../../../../config";
+import { API_BASE_URL, getMediaUrl } from "../../../../../config";
 import { useState, useEffect, useContext } from "react";
 import {
   Table,
@@ -455,7 +455,7 @@ export default function IngredientsPage() {
                       <TableCell>
                         {ingredient.banner ? (
                           <img
-                            src={`${API_BASE_URL}/tmp/${ingredient.banner}`}
+                            src={getMediaUrl(ingredient.banner)}
                             alt={ingredient.name}
                             className="w-10 h-10 object-cover rounded-lg"
                           />
