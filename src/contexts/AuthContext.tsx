@@ -263,8 +263,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Erro inesperado, tente novamente.";
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
+        "Erro inesperado, tente novamente.";
       toast.error(errorMessage);
+      throw err;
     }
   }
   async function signUp({ name, email, role, user_name }: SignUpProps) {
