@@ -1,38 +1,17 @@
 'use client';
 
+import { GpayReferencePanel } from './GpayReferencePanel';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Banknote, CreditCard, Smartphone, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft, X, Building2, User } from 'lucide-react';
+import { Banknote, CreditCard, Smartphone, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft, X, Building2, User, Minus, Send, Copy, MessageCircle, ExternalLink } from 'lucide-react';
+import { setupAPIClient } from '@/services/api';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { setupAPIClient } from '@/services/api';
-import { parseCookies } from 'nookies';
 import { toast } from 'react-toastify';
-
-type MetodoPagamento = 'dinheiro' | 'cartao' | 'multicaixa' | 'transferencia';
-
-interface ItemPreview {
-    produto: string;
-    quantidade: number;
-    precoUnitario: number;
-    subtotal: number;
-    preparado: boolean;
-}
-
-interface PedidoPreview {
-    id: string;
-    nomePedido: string | null;
-    items: ItemPreview[];
-}
-
-interface ContaPreview {
-    mesaNumero: number;
-    abertaEm: string;
-    pedidos: PedidoPreview[];
-    totalGeral: number;
-}
+import { tableCheckoutService } from '@/services/table-checkout';
+import { useCheckoutForm } from '@/hooks/useCheckoutForm';
+import type { AccountPreview, PaymentMethod } from '@/types/checkout';
 
 interface ModalPagamentoProps {
     open: boolean;
@@ -40,10 +19,12 @@ interface ModalPagamentoProps {
     mesaNumber: number;
     organizationId: string;
     onClose: () => void;
-    onSuccess: (dadosFechamento: any) => void;
+    onMinimize?: () => void;
+    visible?: boolean;
+    onSuccess: (dadosFechamento: any) => void | boolean | Promise<void | boolean>;
 }
 
-const METODOS: { value: MetodoPagamento; label: string; icon: React.ReactNode }[] = [
+const METODOS: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
     { value: 'dinheiro', label: 'Dinheiro', icon: <Banknote className="h-5 w-5" /> },
     { value: 'cartao', label: 'Cartão', icon: <CreditCard className="h-5 w-5" /> },
     { value: 'multicaixa', label: 'Multicaixa', icon: <Smartphone className="h-5 w-5" /> },
@@ -55,21 +36,27 @@ export default function ModalPagamento({
     mesaNumber,
     organizationId,
     onClose,
+    onMinimize,
+    visible = true,
     onSuccess,
 }: ModalPagamentoProps) {
+    const [referencePending, setReferencePending] = useState(false);
     const [step, setStep] = useState<1 | 2>(1);
-    const [conta, setConta] = useState<ContaPreview | null>(null);
+    const [conta, setConta] = useState<AccountPreview | null>(null);
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [loadingConfirm, setLoadingConfirm] = useState(false);
-    const [metodo, setMetodo] = useState<MetodoPagamento | null>(null);
-    const [valorPago, setValorPago] = useState('');
-    const [trocoPara, setTrocoPara] = useState('');
-    const [tipoCliente, setTipoCliente] = useState<'final' | 'singular' | 'empresa'>('final');
-    const [clienteNome, setClienteNome] = useState('');
-    const [clienteNif, setClienteNif] = useState('');
-
-    const { '@servFixe.token': token } = parseCookies();
-    const apiClient = setupAPIClient();
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [sendingLink, setSendingLink] = useState(false);
+    const [onlinePaymentEnabled, setOnlinePaymentEnabled] = useState(false);
+    const [checkoutLink, setCheckoutLink] = useState('');
+    const form = useCheckoutForm(conta?.totalGeral ?? 0);
+    const {
+        method: metodo, setMethod: setMetodo, cashReceived: trocoPara, setCashReceived: setTrocoPara,
+        customerType: tipoCliente, setCustomerType: setTipoCliente, customerName: clienteNome,
+        setCustomerName: setClienteNome, customerNif: clienteNif, setCustomerNif: setClienteNif,
+        isSplit, payments: pagamentos, paymentInput: valorInput, setPaymentInput: setValorInput,
+        remaining: restante,
+    } = form;
 
     // Verificação de itens preparados
     const temItensPendentes = conta?.pedidos?.some(p => p.items.some(i => !i.preparado)) ?? false;
@@ -82,21 +69,14 @@ export default function ModalPagamento({
             return;
         }
 
+        setReferencePending(false);
         setStep(1);
-        setMetodo(null);
-        setValorPago('');
-        setTrocoPara('');
+        form.reset();
         setConta(null);
-        setTipoCliente('final');
-        setClienteNome('');
-        setClienteNif('');
+        setCheckoutLink('');
         setLoadingPreview(true);
         try {
-            const res = await apiClient.get(`/preview_conta/${mesaNumber}`, {
-                params: { organizationId },
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setConta(res.data);
+            setConta(await tableCheckoutService.preview(mesaNumber, organizationId));
         } catch (error: any) {
             console.error('❌ Erro ao buscar preview:', error);
             toast.error(error?.response?.data?.error || 'Erro ao carregar conta');
@@ -106,99 +86,65 @@ export default function ModalPagamento({
         }
     };
 
-    // Estado para pagamentos múltiplos
-    const [isSplit, setIsSplit] = useState(false);
-    const [pagamentos, setPagamentos] = useState<Array<{ metodo: MetodoPagamento, valor: number }>>([]);
-    const [valorInput, setValorInput] = useState('');
-
     // Trigger de abertura
     useEffect(() => {
         if (open) {
             handleOnOpen();
-            setIsSplit(false);
-            setPagamentos([]);
-            setValorInput('');
+            setupAPIClient().get('/payment-provider/availability')
+                .then(({ data }) => setOnlinePaymentEnabled(data.enabled === true))
+                .catch(() => setOnlinePaymentEnabled(false));
+        } else {
+            setOnlinePaymentEnabled(false);
         }
     }, [open, mesaNumber, organizationId]);
 
-    const totalPagoMultiplo = pagamentos.reduce((acc, p) => acc + p.valor, 0);
-    const restante = (conta?.totalGeral ?? 0) - totalPagoMultiplo;
+    // Mantém a conta aberta sincronizada enquanto chegam novos pedidos.
+    useEffect(() => {
+        if (!open || !organizationId || !mesaNumber || loadingConfirm) return;
+        let refreshing = false;
+        const refreshPreview = async () => {
+            if (refreshing || document.hidden || !visible || referencePending) return;
+            refreshing = true;
+            try {
+                setConta(await tableCheckoutService.preview(mesaNumber, organizationId));
+            } catch {
+                // A leitura inicial já apresenta o erro; atualizações silenciosas
+                // não devem interromper o preenchimento do pagamento.
+            } finally { refreshing = false; }
+        };
+        const timer = window.setInterval(refreshPreview, 15_000);
+        window.addEventListener('focus', refreshPreview);
+        return () => {
+            window.clearInterval(timer);
+            window.removeEventListener('focus', refreshPreview);
+        };
+    }, [loadingConfirm, mesaNumber, open, organizationId, visible, referencePending]);
 
-    const clientInfoValida = tipoCliente === 'final' || (
-        clienteNome.trim() !== '' && clienteNif.trim().length === 9
-    );
-
-    const podeConfirmar = !temItensPendentes && conta && clientInfoValida && (
-        // Caso simples
-        (!isSplit && metodo !== null && (
-            metodo !== 'dinheiro' || (trocoPara !== '' && Number(trocoPara) >= conta.totalGeral)
-        )) ||
-        // Caso múltiplo
-        (isSplit && Math.abs(restante) < 0.01 && pagamentos.length > 0)
-    );
+    const podeConfirmar = Boolean(!referencePending && conta && form.canConfirm(temItensPendentes));
 
     const addPagamento = () => {
-        const valor = Number(valorInput);
-        if (!metodo || isNaN(valor) || valor <= 0) {
-            toast.error('Selecione um método e insira um valor válido');
-            return;
-        }
-        if (valor > restante + 0.1 && metodo !== 'dinheiro') {
-            toast.error('O valor não pode ser superior ao restante');
-            return;
-        }
-
-        setPagamentos([...pagamentos, { metodo, valor: Math.min(valor, restante > 0 ? restante : valor) }]);
-        setValorInput('');
-        setMetodo(null);
+        const error = form.addPayment();
+        if (error) toast.error(error);
     };
 
     const removerPagamento = (index: number) => {
-        setPagamentos(pagamentos.filter((_, i) => i !== index));
+        form.removePayment(index);
     };
 
     const handleConfirmar = async () => {
         if (!conta) return;
         setLoadingConfirm(true);
         try {
-            let body: any = {};
+            const body = form.buildPayload();
+            if (!body) return;
+            const result = await tableCheckoutService.closeAndPay(mesaNumber, organizationId, body);
 
-            if (isSplit) {
-                body = {
-                    metodoPagamento: pagamentos[0].metodo,
-                    valorPago: conta.totalGeral,
-                    pagamentosMultiplos: pagamentos.map(p => ({
-                        metodo: p.metodo,
-                        valor: p.valor
-                    }))
-                };
-            } else {
-                if (!metodo) return;
-                const isEmp = tipoCliente === 'empresa';
-                const hasClientInfo = tipoCliente !== 'final';
-                body = {
-                    metodoPagamento: metodo,
-                    valorPago: conta.totalGeral,
-                    isEmpresa: isEmp,
-                    clienteNome: hasClientInfo ? clienteNome.trim() : undefined,
-                    clienteNif: hasClientInfo ? clienteNif.trim() : undefined,
-                };
-                if (metodo === 'dinheiro' && trocoPara && Number(trocoPara) >= conta.totalGeral) {
-                    body.trocoPara = Number(trocoPara);
-                }
-            }
-
-            const resFecho = await apiClient.post(
-                `/close_table_pay/${mesaNumber}`,
-                body,
-                {
-                    params: { organizationId },
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
-
-            toast.success(`✅ Mesa ${mesaNumber} fechada e paga com sucesso!`);
-            onSuccess(resFecho.data);
+            // Preserva os dados digitados mesmo se uma versão antiga da API não os
+            // devolver no payload do fecho; o PDF nunca volta a "Consumidor Final".
+            const invoiceReady = await onSuccess({ ...result, isEmpresa: body.isEmpresa, clienteNome: body.clienteNome, clienteNif: body.clienteNif });
+            toast.success(invoiceReady
+                ? `Mesa ${mesaNumber} paga e fatura fiscal gerada com sucesso!`
+                : `Mesa ${mesaNumber} paga com sucesso!`);
             onClose();
         } catch (error: any) {
             toast.error(error?.response?.data?.error || 'Erro ao processar pagamento');
@@ -207,10 +153,42 @@ export default function ModalPagamento({
         }
     };
 
+    const handleSendPaymentLink = async () => {
+        if (!phoneNumber.trim()) return toast.error('Informe o telefone do cliente');
+        setSendingLink(true);
+        try {
+            const { data } = await setupAPIClient().post(`/tables/${mesaNumber}/online-payment`, { phoneNumber });
+            setCheckoutLink(data.sessionUrl || '');
+            if (data.smsSent) toast.success('Link de pagamento enviado por SMS');
+            else toast.warning('Checkout criado. Use Copiar link ou WhatsApp para enviar ao cliente.');
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Não foi possível criar o checkout');
+        } finally {
+            setSendingLink(false);
+        }
+    };
+
+    const copyCheckoutLink = async () => {
+        if (!checkoutLink) return;
+        try {
+            await navigator.clipboard.writeText(checkoutLink);
+            toast.success('Link copiado');
+        } catch {
+            toast.error('Não foi possível copiar automaticamente');
+        }
+    };
+
+    const sendCheckoutByWhatsApp = () => {
+        if (!checkoutLink) return;
+        const phone = phoneNumber.replace(/\D/g, '');
+        const message = encodeURIComponent(`Pagamento da Mesa ${mesaNumber}: ${checkoutLink}`);
+        window.open(`https://wa.me/${phone}?text=${message}`, '_blank', 'noopener,noreferrer');
+    };
+
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className={`${visible ? 'flex' : 'hidden'} fixed inset-0 z-[100] items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
             <div className="bg-background border border-border shadow-2xl rounded-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header Custom */}
                 <div className="flex items-center justify-between p-6 border-b bg-muted/30">
@@ -220,22 +198,21 @@ export default function ModalPagamento({
                         </h2>
                         {step === 2 && (
                             <button
-                                onClick={() => { setIsSplit(!isSplit); setPagamentos([]); setMetodo(null); }}
+                                onClick={form.toggleSplit}
                                 className="text-xs font-semibold text-primary hover:underline text-left mt-1"
                             >
                                 {isSplit ? '🔄 Pagamento Único' : '➕ Dividir Conta'}
                             </button>
                         )}
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"
-                    >
-                        <X size={20} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        {onMinimize && <button type="button" onClick={onMinimize} title="Pausar este fecho" className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"><Minus size={20} /></button>}
+                        <button type="button" onClick={onClose} title="Cancelar este fecho" className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"><X size={20} /></button>
+                    </div>
                 </div>
 
                 <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                    <GpayReferencePanel key={mesaNumber} organizationId={organizationId} number={mesaNumber} onPending={setReferencePending} onSuccess={async data => { await onSuccess(data); toast.success('Pagamento por referência confirmado e mesa fechada'); onClose(); }} />
                     {/* PASSO 1 — Resumo da conta */}
                     {step === 1 && (
                         <div className="space-y-4">
@@ -409,6 +386,29 @@ export default function ModalPagamento({
                             )}
 
                             {/* Seção Tipo de Cliente */}
+                            {onlinePaymentEnabled && !isSplit && (
+                                <div className="space-y-3 rounded-2xl border-2 border-primary/20 bg-primary/5 p-4">
+                                    <div><p className="text-sm font-bold">Pagamento por link</p><p className="text-xs text-muted-foreground">O cliente paga no checkout seguro; a mesa permanece aberta até ao webhook confirmar.</p></div>
+                                    <div className="flex gap-2">
+                                        <Input value={phoneNumber} onChange={event => setPhoneNumber(event.target.value)} placeholder="Telefone do cliente" inputMode="tel" />
+                                        <Button type="button" onClick={handleSendPaymentLink} disabled={referencePending || sendingLink || temItensPendentes} className="shrink-0">
+                                            {sendingLink ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}<span className="ml-2 hidden sm:inline">Enviar link</span>
+                                        </Button>
+                                    </div>
+                                    {checkoutLink && (
+                                        <div className="space-y-3 rounded-xl border border-green-300 bg-green-50 p-3 text-green-950 animate-in fade-in slide-in-from-top-2">
+                                            <div className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 className="h-4 w-4 text-green-600" />Checkout pronto</div>
+                                            <Input value={checkoutLink} readOnly onFocus={event => event.currentTarget.select()} className="bg-white text-xs" aria-label="Link do checkout" />
+                                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                                <Button type="button" size="sm" variant="outline" onClick={copyCheckoutLink}><Copy className="mr-2 h-4 w-4" />Copiar</Button>
+                                                <Button type="button" size="sm" variant="outline" onClick={sendCheckoutByWhatsApp}><MessageCircle className="mr-2 h-4 w-4" />WhatsApp</Button>
+                                                <Button type="button" size="sm" variant="outline" onClick={() => window.open(checkoutLink, '_blank', 'noopener,noreferrer')}><ExternalLink className="mr-2 h-4 w-4" />Abrir</Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="p-4 border-2 rounded-2xl bg-muted/5 border-border/40 space-y-4">
                                 <div className="space-y-2">
                                     <Label className="text-sm font-bold block mb-1">Tipo de Cliente (Fatura)</Label>

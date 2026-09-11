@@ -1,7 +1,7 @@
 // components/settings/SettingsTabs.tsx (atualizado)
 "use client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, Lock, Bell, CreditCard, Building2, Loader2, Truck } from "lucide-react"
+import { User, Lock, Bell, CreditCard, Building2, Loader2, Truck, Printer } from "lucide-react"
 import { useState, useEffect } from "react"
 
 interface Tab {
@@ -23,6 +23,7 @@ const iconMap = {
   "credit-card": <CreditCard className="mr-2 h-4 w-4" />,
   building: <Building2 className="mr-2 h-4 w-4" />,
   truck: <Truck className="mr-2 h-4 w-4" />,
+  printer: <Printer className="mr-2 h-4 w-4" />,
 }
 
 export function SettingsTabs({ tabs, defaultTab }: SettingsTabsProps) {
@@ -41,7 +42,7 @@ export function SettingsTabs({ tabs, defaultTab }: SettingsTabsProps) {
       onValueChange={(val) => setActiveTab(val)}
       className="w-full"
     >
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 p-1">
         {tabs.map((tab) => (
           <TabsTrigger key={tab.id} value={tab.id} className="cursor-pointer">
             {iconMap[tab.icon as keyof typeof iconMap]}

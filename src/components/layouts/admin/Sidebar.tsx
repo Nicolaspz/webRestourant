@@ -8,26 +8,17 @@ import { useEffect, useState } from "react"
 import { parseCookies } from "nookies"
 import { useContext } from "react"
 import { AuthContext } from "@/contexts/AuthContext"
-import { API_BASE_URL, getMediaUrl } from "../../../../config"
+import { getMediaUrl } from "../../../../config"
 
 // Definir os tipos de roles
 type UserRole = 'SUPER ADMIN' | 'ADMIN' | 'GARCON' | 'CAIXA' | 'COZINHA' | 'BAR'
 
 import {
-  LayoutDashboard,
   Users,
   Package,
-  Receipt,
   Carrot,
   Warehouse,
   Settings,
-  CreditCard,
-  CookingPot,
-  Martini,
-  Bell,
-  Mail,
-  PlusSquare,
-  UserCircle,
   Table2,
   Archive,
   ChevronDown,
@@ -206,9 +197,6 @@ const menuStructure: MenuItem[] = [
   }
 ]
 
-// Footer icons
-const footerIcons = [Bell, Mail, UserCircle, PlusSquare]
-
 export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void }) {
   const pathname = usePathname()
   const [userRole, setUserRole] = useState<UserRole | null>(null)
@@ -261,8 +249,8 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
   // Se não tem role ainda, mostra menu vazio ou loading
   if (!userRole) {
     return (
-      <aside className="h-screen w-64 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col justify-between py-6 border-r border-[var(--sidebar-border)]">
-        <div className="flex flex-col items-center justify-center h-full">
+      <aside aria-label="Menu principal" className="h-screen w-64 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col py-6 border-r border-[var(--sidebar-border)]">
+        <div className="flex flex-col items-center justify-center h-full" role="status" aria-live="polite">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--sidebar-foreground)]"></div>
           <p className="mt-2 text-sm text-[var(--muted-foreground)]">Carregando...</p>
         </div>
@@ -271,11 +259,11 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
   }
 
   return (
-    <aside className="h-screen w-64 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col justify-between py-6 border-r border-[var(--sidebar-border)] overflow-y-auto">
+    <aside aria-label="Menu principal" className="h-screen w-64 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col py-6 border-r border-[var(--sidebar-border)] overflow-y-auto">
       {/* Fechar em mobile */}
       {closeSidebar && (
         <div className="flex justify-end px-4 cursor-pointer mb-4">
-          <button onClick={closeSidebar} className="text-[var(--sidebar-foreground)] text-xl hover:opacity-70 transition-opacity">×</button>
+          <button onClick={closeSidebar} aria-label="Fechar menu principal" className="min-h-11 min-w-11 rounded-md text-[var(--sidebar-foreground)] text-xl hover:bg-[var(--sidebar-accent)] transition-colors">×</button>
         </div>
       )}
 
@@ -331,7 +319,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
                   )}
                 >
                   <Link href={item.href} onClick={closeSidebar}>
-                    <item.icon className="w-5 h-5" />
+                    <item.icon className="w-5 h-5" aria-hidden="true" />
                     <span className="flex-1 text-left">{item.label}</span>
                   </Link>
                 </Button>
@@ -354,9 +342,11 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
                       (isMenuOpen || hasActiveSubItem) && "bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)]"
                     )}
                     onClick={() => toggleMenu(item.label)}
+                    aria-expanded={isMenuOpen}
+                    aria-controls={`menu-${item.label.replace(/\s+/g, '-').toLowerCase()}`}
                   >
                     <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className="w-5 h-5" aria-hidden="true" />
                       <span className="flex-1 text-left">{item.label}</span>
                     </div>
                     {isMenuOpen ? (
@@ -368,6 +358,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
 
                   {/* Subitems com transição suave */}
                   <div
+                    id={`menu-${item.label.replace(/\s+/g, '-').toLowerCase()}`}
                     className={cn(
                       "overflow-hidden transition-all duration-300 ease-in-out",
                       isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
@@ -390,7 +381,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
                             )}
                           >
                             <Link href={subItem.href} onClick={closeSidebar}>
-                              <SubIcon className="w-4 h-4" />
+                              <SubIcon className="w-4 h-4" aria-hidden="true" />
                               <span className="text-sm">{subItem.label}</span>
                             </Link>
                           </Button>
@@ -407,19 +398,6 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
         </nav>
       </div>
 
-      {/* Footer icons */}
-      <div className="flex items-center justify-evenly border-t border-[var(--sidebar-border)] pt-4 px-4 mt-4">
-        {footerIcons.map((Icon, i) => (
-          <Button
-            key={i}
-            variant="ghost"
-            size="icon"
-            className="text-[var(--muted-foreground)] hover:text-[var(--sidebar-accent-foreground)] hover:bg-[var(--sidebar-accent)] transition-all duration-200"
-          >
-            <Icon className="w-5 h-5" />
-          </Button>
-        ))}
-      </div>
     </aside>
   )
 }

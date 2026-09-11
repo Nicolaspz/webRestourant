@@ -1,23 +1,36 @@
 "use client";
 
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, Loader2, Eye, EyeOff, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { AuthContext } from "@/contexts/AuthContext";
 import { api } from "@/services/apiClients";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import logoImg from '../../../../public/Logo.png';
 
 export default function LoginPage() {
   const { signIn } = useContext(AuthContext);
+  const router = useRouter();
   const [credential, setCredential] = useState('');
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
+
+  useEffect(() => {
+    router.prefetch('/dashboard');
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    if (reason === 'inactivity') {
+      toast.info('A sessão terminou após 15 minutos sem atividade. Inicie sessão novamente.', {
+        toastId: 'session-ended-by-inactivity',
+      });
+      window.history.replaceState({}, '', '/login');
+    }
+  }, [router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +39,6 @@ export default function LoginPage() {
       await signIn({ credential, password });
     } catch (err) {
       console.error("Erro ao logar:", err);
-    } finally {
       setLoading(false);
     }
   }
@@ -118,6 +130,8 @@ export default function LoginPage() {
                   <Input
                     id="credential"
                     type="text"
+                    autoComplete="username"
+                    inputMode="email"
                     placeholder="seu@email.com"
                     className="h-12 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
                     value={credential}
@@ -134,6 +148,7 @@ export default function LoginPage() {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
                       placeholder="••••••••"
                       className="h-12 bg-white border-gray-300 pr-12 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
                       value={password}
@@ -143,7 +158,9 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                      aria-label={showPassword ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'}
+                      aria-pressed={showPassword}
+                      className="absolute inset-y-0 right-0 flex min-w-11 items-center justify-center text-gray-400 hover:text-gray-600"
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
@@ -167,7 +184,7 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      A Validar...
+                      A entrar no painel...
                     </>
                   ) : (
                     "Entrar"
@@ -209,6 +226,7 @@ export default function LoginPage() {
                   <Input
                     id="reset-email"
                     type="email"
+                    autoComplete="email"
                     placeholder="seu@email.com"
                     className="h-12 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
                     value={credential}

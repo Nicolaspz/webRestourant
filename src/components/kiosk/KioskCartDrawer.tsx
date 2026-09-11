@@ -9,10 +9,11 @@ interface KioskCartDrawerProps {
     total: number;
     onClose: () => void;
     onUpdateQuantity: (productId: string, delta: number) => void;
+    onUpdateNotes: (productId: string, notes: string) => void;
     onCheckout: () => void;
 }
 
-export function KioskCartDrawer({ isOpen, cart, total, onClose, onUpdateQuantity, onCheckout }: KioskCartDrawerProps) {
+export function KioskCartDrawer({ isOpen, cart, total, onClose, onUpdateQuantity, onUpdateNotes, onCheckout }: KioskCartDrawerProps) {
     if (!isOpen) return null;
 
     return (
@@ -64,6 +65,7 @@ export function KioskCartDrawer({ isOpen, cart, total, onClose, onUpdateQuantity
                                 <div className="flex-1 flex flex-col justify-between">
                                     <div>
                                         <h4 className="font-bold line-clamp-1 text-white">{item.product.name}</h4>
+                                        <label className="block text-xs text-gray-300 my-2">Observações / restrições alimentares (opcional)<textarea maxLength={500} value={item.notes || ""} onChange={e => onUpdateNotes(item.product.id, e.target.value)} placeholder="Ex.: sem amendoim; cliente 1 sem lactose" className="mt-1 w-full rounded border bg-[#333] p-2 text-white" /></label>
                                         <p className="text-sm text-gray-400">
                                             {(item.product.PrecoVenda[0]?.preco_venda * item.quantity).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                                         </p>

@@ -1,7 +1,7 @@
 // components/menu/ProductCard.tsx
 import { motion } from 'framer-motion';
 import { Utensils, Plus } from 'lucide-react';
-import { API_BASE_URL, getMediaUrl } from '../../../../config'; 
+import { getMediaUrl } from '../../../../config';
 
 interface ProductCardProps {
   product: {
@@ -25,20 +25,19 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
         whileTap={{ scale: 0.95 }}
       >
         <div
-          className="cursor-pointer h-full rounded-lg border-2 border-transparent hover:shadow-md transition-all duration-200 bg-white overflow-hidden"
+          className="h-full cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-xl"
           onClick={onAddToCart}
         >
-          <div className="p-3 pb-0">
-            <div className="aspect-square relative rounded-lg overflow-hidden bg-blue-50">
+          <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
               {product.banner ? (
                 <img
                   src={getMediaUrl(product.banner)}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Utensils className="w-8 h-8 text-blue-400" />
+                  <Utensils className="h-8 w-8 text-slate-300" />
                 </div>
               )}
               {/* Badges para Featured/New */}
@@ -54,14 +53,13 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
                   </span>
                 )}
               </div>
-            </div>
           </div>
-          <div className="p-3">
-            <h3 className="font-semibold text-sm line-clamp-2 mb-1 text-gray-900">
+          <div className="p-4">
+            <h3 className="mb-2 line-clamp-2 min-h-10 text-sm font-bold leading-snug text-slate-900">
               {product.name}
             </h3>
-            <p className="font-bold text-sm text-blue-600">
-              {(product.PrecoVenda[0]?.preco_venda || 0).toFixed(2)} Kz
+            <p className="text-base font-extrabold text-slate-950">
+              {(product.PrecoVenda[0]?.preco_venda || 0).toLocaleString('pt-AO')} Kz
             </p>
           </div>
         </div>
@@ -72,14 +70,14 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
   return (
     <motion.div whileHover={{ y: -4 }} transition={{ type: "spring", stiffness: 300 }}>
       <div
-        className={`cursor-pointer h-full rounded-lg overflow-hidden group border transition-all duration-300 bg-white hover:shadow-lg ${
+        className={`group h-full cursor-pointer overflow-hidden rounded-2xl border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
           product.isFeatured 
-            ? 'border-yellow-400 shadow-md ring-1 ring-yellow-400/20' 
-            : 'border-gray-300'
+            ? 'border-amber-300 ring-1 ring-amber-300/30'
+            : 'border-slate-200'
         }`}
         onClick={onAddToCart}
       >
-        <div className="relative aspect-video overflow-hidden">
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           {product.banner ? (
             <img
               src={getMediaUrl(product.banner)}
@@ -88,7 +86,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-blue-50">
-              <Utensils className="w-12 h-12 text-blue-400" />
+              <Utensils className="h-12 w-12 text-slate-300" />
             </div>
           )}
 
@@ -114,20 +112,20 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
         </div>
 
         <div className="p-4">
-          <h3 className="text-lg font-semibold line-clamp-1 mb-1 text-gray-900">
+          <h3 className="mb-1 line-clamp-1 text-lg font-bold text-slate-950">
             {product.name}
           </h3>
           {product.description && (
-            <p className="text-sm line-clamp-2 mb-2 text-gray-600">
+            <p className="mb-4 line-clamp-2 min-h-10 text-sm leading-relaxed text-slate-500">
               {product.description}
             </p>
           )}
           <div className="flex justify-between items-center">
-            <span className="font-bold text-lg text-blue-600">
-              {(product.PrecoVenda[0]?.preco_venda || 0).toFixed(2)} Kz
+            <span className="text-lg font-extrabold text-slate-950">
+              {(product.PrecoVenda[0]?.preco_venda || 0).toLocaleString('pt-AO')} Kz
             </span>
-            <button className="p-2 rounded-full border border-gray-300 hover:bg-blue-50 transition-colors">
-              <Plus className="w-4 h-4 text-blue-600" />
+            <button aria-label={`Adicionar ${product.name}`} className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-sm transition-colors hover:bg-amber-400">
+              <Plus className="h-5 w-5" strokeWidth={2.5} />
             </button>
           </div>
         </div>

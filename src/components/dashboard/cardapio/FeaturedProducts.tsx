@@ -1,4 +1,3 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, Clock, TrendingUp } from "lucide-react";
 import { ProductCard } from './ProductCard';
 
@@ -9,92 +8,44 @@ interface FeaturedProductsProps {
   onAddToCart: (product: any) => void;
 }
 
-export function FeaturedProducts({ 
-  products, 
-  activeTab, 
-  onTabChange, 
-  onAddToCart 
-}: FeaturedProductsProps) {
-  const getFeaturedProductsByTab = () => {
-    switch (activeTab) {
-      case 'popular':
-        // Filtra os que estão em destaque (isFeatured) ou os mais vendidos (orderCount)
-        return products
-          .filter(p => p.isFeatured || p.orderCount > 0)
-          .sort((a, b) => {
-            if (a.isFeatured && !b.isFeatured) return -1;
-            if (!a.isFeatured && b.isFeatured) return 1;
-            return (b.orderCount || 0) - (a.orderCount || 0);
-          })
-          .slice(0, 8);
-      case 'recent':
-        // Filtra os que são marcados como novos (isNew) ou por data
-        return products
-          .filter(p => p.isNew || (p.createdAt && new Date(p.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000))
-          .sort((a, b) => {
-            if (a.isNew && !b.isNew) return -1;
-            if (!a.isNew && b.isNew) return 1;
-            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-          })
-          .slice(0, 8);
-      case 'price':
-        return [...products].sort((a, b) => (a.PrecoVenda[0]?.preco_venda || 0) - (b.PrecoVenda[0]?.preco_venda || 0)).slice(0, 8);
-      default:
-        // Por padrão, mostra os destaques manuais primeiro
-        return products
-          .sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))
-          .slice(0, 8);
-    }
-  };
+export function FeaturedProducts({ products, activeTab, onTabChange, onAddToCart }: FeaturedProductsProps) {
+  const tabs = [
+    { value: 'popular', label: 'Populares', icon: Star },
+    { value: 'recent', label: 'Novidades', icon: Clock },
+    { value: 'price', label: 'Melhor preço', icon: TrendingUp }
+  ];
 
   return (
-    <section className="border-b border-gray-300 bg-white/90">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-2 text-gray-900">
-            Destaques do Cardápio
-          </h2>
-          <p className="text-lg text-blue-600">
-            Os favoritos dos nossos clientes
-          </p>
-        </div>
-
-        <div className="w-full">
-          <div className="flex gap-1 p-1 rounded-lg mb-6 bg-blue-50">
-            {[
-              { value: 'popular', label: 'Populares', icon: Star },
-              { value: 'recent', label: 'Novidades', icon: Clock },
-              { value: 'price', label: 'Melhor Preço', icon: TrendingUp }
-            ].map((tab) => {
+    <section className="border-b border-slate-200 bg-slate-50/80">
+      <div className="mx-auto max-w-[1480px] px-4 py-8 sm:px-6 lg:py-10">
+        <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-600">Seleção da casa</p>
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">Destaques do cardápio</h2>
+            <p className="mt-1 text-sm text-slate-500">Uma seleção rápida para facilitar a escolha.</p>
+          </div>
+          <div className="flex w-full gap-1 rounded-xl border border-slate-200 bg-white p-1 md:w-auto">
+            {tabs.map(tab => {
               const Icon = tab.icon;
               return (
-                <button
-                  key={tab.value}
-                  onClick={() => onTabChange(tab.value)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md flex-1 transition-all ${
-                    activeTab === tab.value
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-blue-600 hover:bg-white/50'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="font-medium">{tab.label}</span>
+                <button key={tab.value} onClick={() => onTabChange(tab.value)}
+                  className={`flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all md:flex-none ${activeTab === tab.value ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
+                  <Icon className="h-4 w-4" /><span>{tab.label}</span>
                 </button>
               );
             })}
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-            {getFeaturedProductsByTab().map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={() => onAddToCart(product)}
-                variant="featured"
-              />
+        {products.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 xl:gap-5">
+            {products.map(product => (
+              <ProductCard key={product.id} product={product} onAddToCart={() => onAddToCart(product)} variant="featured" />
             ))}
           </div>
-        </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center text-sm text-slate-500">Ainda não existem produtos nesta seleção.</div>
+        )}
       </div>
     </section>
   );

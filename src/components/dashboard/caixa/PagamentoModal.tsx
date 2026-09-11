@@ -1,5 +1,5 @@
 // components/caixa/PagamentoModal.tsx
-import React, { useContext, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { setupAPIClient } from '@/services/api';
 import { AuthContext } from '@/contexts/AuthContext';
 import { Fatura } from '@/types/product';
@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'react-toastify';
 import { gerarPDFReciboPago } from '../mesas/pdfNpago';
+import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
+import { usePosSettings } from '@/hooks/usePosSettings';
 
 interface PagamentoModalProps {
   fatura: Fatura;
@@ -27,12 +29,15 @@ interface PagamentoMultiplo {
 }
 
 const PagamentoModal = ({ fatura, onClose, onSuccess }: PagamentoModalProps) => {
+  const idempotencyKey = useRef(crypto.randomUUID());
   const [tipoPagamento, setTipoPagamento] = useState<'unico' | 'multiplo'>('unico');
   const [metodoPagamento, setMetodoPagamento] = useState('dinheiro');
   const [valorPago, setValorPago] = useState(fatura?.valorTotal || 0);
   const [trocoPara, setTrocoPara] = useState('');
   const { user } = useContext(AuthContext);
   const apiClient = setupAPIClient();
+  const { settings } = usePosSettings(user?.organizationId);
+  const { printPaidReceipt } = useReceiptPrinter(settings);
   const [pagamentosMultiplos, setPagamentosMultiplos] = useState<PagamentoMultiplo[]>([
     { metodo: 'dinheiro', valor: fatura?.valorTotal || 0, referencia: '' }
   ]);
@@ -48,7 +53,7 @@ const PagamentoModal = ({ fatura, onClose, onSuccess }: PagamentoModalProps) => 
 
   const calcularTroco = () => {
     if (metodoPagamento === 'dinheiro' && trocoPara && valorPago) {
-      return parseFloat(valorPago.toString()) - parseFloat(trocoPara);
+      return Math.max(0, parseFloat(trocoPara) - Number(fatura.valorTotal));
     }
     return 0;
   };
@@ -77,22 +82,28 @@ const PagamentoModal = ({ fatura, onClose, onSuccess }: PagamentoModalProps) => 
     try {
       const payload = tipoPagamento === 'unico'
         ? {
+          idempotencyKey: idempotencyKey.current,
           metodoPagamento,
           valorPago: parseFloat(valorPago.toString()),
           ...(metodoPagamento === 'dinheiro' && trocoPara && { trocoPara: parseFloat(trocoPara) })
         }
         : {
+          idempotencyKey: idempotencyKey.current,
+          metodoPagamento: pagamentosMultiplos[0]?.metodo,
+          valorPago: fatura.valorTotal,
           pagamentosMultiplos: pagamentosMultiplos.map(p => ({
             ...p,
             valor: parseFloat(p.valor.toString())
           }))
         };
 
-      await apiClient.post(`/faturas/${fatura.id}/pagamento?organizationId=${user?.organizationId}`, payload);
+      const { data: paidInvoice } = await apiClient.post(`/faturas/${fatura.id}/pagamento?organizationId=${user?.organizationId}`, payload);
       toast.success('Pagamento processado com sucesso!');
 
       // Gerar PDF da fatura paga
       const dadosSessao = {
+        faturaId: fatura.id,
+        fiscalStatus: paidInvoice?.fiscalSubmission?.status || null,
         mesaNumero: fatura.session.mesa.number,
         codigoAbertura: fatura.numero || fatura.session.codigoAbertura || 'N/A',
         abertaEm: new Date(fatura.criadaEm),
@@ -125,7 +136,11 @@ const PagamentoModal = ({ fatura, onClose, onSuccess }: PagamentoModalProps) => 
           valorPago: fatura.valorTotal
         };
 
-      gerarPDFReciboPago(dadosSessao as any, infoPagamento);
+      try {
+        await printPaidReceipt(dadosSessao, infoPagamento);
+      } catch (fiscalError: any) {
+        toast.warning(fiscalError.message);
+      }
 
       onSuccess();
     } catch (error: any) {

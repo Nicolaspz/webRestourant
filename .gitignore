@@ -16,9 +16,11 @@
 # next.js
 /.next/
 /out/
+/output/
 
 # production
 /build
+/public/pdfjs/
 
 # misc
 .DS_Store

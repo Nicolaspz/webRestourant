@@ -35,7 +35,9 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
-    ChevronsRight
+    ChevronsRight,
+    FolderTree,
+    CornerDownRight
 } from "lucide-react";
 import { setupAPIClient } from "@/services/api";
 import { AuthContext } from "@/contexts/AuthContext";
@@ -62,6 +64,7 @@ export function CategoryTable() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
 
     // Paginação
     const [currentPage, setCurrentPage] = useState(1);
@@ -114,12 +117,27 @@ export function CategoryTable() {
 
     function handleCreate() {
         setSelectedCategory(null);
+        setDefaultParentId(null);
+        setModalMode('create');
+        setIsModalOpen(true);
+    }
+
+    function handleCreateSubcategory(category: Category) {
+        setSelectedCategory(null);
+        setDefaultParentId(category.id);
         setModalMode('create');
         setIsModalOpen(true);
     }
 
     // Filtro por nome
-    const filteredCategories = categories.filter(cat =>
+    const orderedCategories = categories
+        .filter(category => !category.parentId)
+        .flatMap(parent => [
+            parent,
+            ...categories.filter(category => category.parentId === parent.id)
+        ]);
+    const orphanCategories = categories.filter(category => category.parentId && !categories.some(parent => parent.id === category.parentId));
+    const filteredCategories = [...orderedCategories, ...orphanCategories].filter(cat =>
         `${cat.name} ${cat.parent?.name || ''} ${cat.kind || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -172,13 +190,7 @@ export function CategoryTable() {
                     </Select>
                 </div>
 
-                <Button
-                    onClick={handleCreate}
-                    className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto transition-colors"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nova Categoria
-                </Button>
+                <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto transition-colors"><Plus className="w-4 h-4 mr-2" />Nova Categoria Principal</Button>
             </div>
 
             {/* Resumo */}
@@ -198,13 +210,15 @@ export function CategoryTable() {
                         <TableRow className="border-gray-200 dark:border-gray-700 hover:bg-transparent">
                             <TableHead className="text-gray-700 dark:text-gray-300 font-medium h-12 w-12">#</TableHead>
                             <TableHead className="text-gray-700 dark:text-gray-300 font-medium h-12">Nome da Categoria</TableHead>
+                            <TableHead className="text-gray-700 dark:text-gray-300 font-medium h-12">Nível</TableHead>
+                            <TableHead className="text-gray-700 dark:text-gray-300 font-medium h-12">Categoria principal</TableHead>
                             <TableHead className="text-gray-700 dark:text-gray-300 font-medium h-12 text-right">Operações</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={3} className="h-40 text-center">
+                                <TableCell colSpan={5} className="h-40 text-center">
                                     <div className="flex flex-col items-center gap-2">
                                         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                                         <span className="text-gray-600 dark:text-gray-400">A carregar categorias...</span>
@@ -213,7 +227,7 @@ export function CategoryTable() {
                             </TableRow>
                         ) : currentItems.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={3} className="h-40 text-center">
+                                <TableCell colSpan={5} className="h-40 text-center">
                                     <p className="text-gray-600 dark:text-gray-400">
                                         {categories.length === 0 ? 'Nenhuma categoria cadastrada.' : 'Nenhuma categoria encontrada.'}
                                     </p>
@@ -225,7 +239,9 @@ export function CategoryTable() {
                                     <TableCell className="text-gray-400 dark:text-gray-500 text-sm">
                                         {startIndex + index + 1}
                                     </TableCell>
-                                    <TableCell className="text-gray-900 dark:text-white py-4 font-medium">{category.name}</TableCell>
+                                    <TableCell className="text-gray-900 dark:text-white py-4 font-medium"><div className="flex items-center gap-2">{category.parentId ? <CornerDownRight className="h-4 w-4 text-muted-foreground" /> : <FolderTree className="h-4 w-4 text-blue-500" />}<span>{category.name}</span>{!category.parentId && category.children?.length ? <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600">{category.children.length} subcategoria(s)</span> : null}</div></TableCell>
+                                    <TableCell><span className={`rounded-full px-2 py-1 text-xs font-semibold ${category.parentId ? 'bg-violet-500/10 text-violet-600' : 'bg-blue-500/10 text-blue-600'}`}>{category.parentId ? 'Subcategoria' : 'Principal'}</span></TableCell>
+                                    <TableCell className="text-muted-foreground">{category.parent?.name || '—'}</TableCell>
                                     <TableCell className="text-right py-4">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -242,6 +258,7 @@ export function CategoryTable() {
                                                     <Edit2 className="mr-2 h-4 w-4 text-blue-500 dark:text-blue-400" />
                                                     Editar Categoria
                                                 </DropdownMenuItem>
+                                                {!category.parentId && <DropdownMenuItem onClick={() => handleCreateSubcategory(category)} className="focus:bg-gray-100 dark:focus:bg-gray-700 cursor-pointer"><CornerDownRight className="mr-2 h-4 w-4 text-violet-500" />Adicionar Subcategoria</DropdownMenuItem>}
                                                 <DropdownMenuItem
                                                     onClick={() => handleDelete(category.id)}
                                                     className="focus:bg-red-100 dark:focus:bg-red-900/50 text-red-600 dark:text-red-400 cursor-pointer"
@@ -316,6 +333,7 @@ export function CategoryTable() {
                 mode={modalMode}
                 organizationId={user?.organizationId || ''}
                 categories={categories}
+                defaultParentId={defaultParentId}
             />
         </div>
     );

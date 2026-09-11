@@ -68,7 +68,7 @@ export default function Header() {
               href="/register"
               className="bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold px-5 py-2 rounded-lg text-sm hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-md shadow-amber-500/20"
             >
-              Começar Grátis
+              Solicitar demo
             </Link>
           </nav>
 
@@ -115,7 +115,7 @@ export default function Header() {
                 onClick={() => setMobileOpen(false)}
                 className="bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold py-2.5 px-4 rounded-lg text-center hover:from-amber-600 hover:to-orange-700 transition-all"
               >
-                Começar Grátis
+                Solicitar demo
               </Link>
             </nav>
           </div>

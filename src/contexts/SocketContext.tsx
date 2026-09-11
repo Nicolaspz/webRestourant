@@ -17,12 +17,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
+        const { '@servFixe.token': token } = parseCookies();
+        if (!token) return;
+
         // URL direta do backend para WebSockets (proxy da Vercel nao suporta WebSockets)
         const socketUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
             ? 'https://server-restourant.onrender.com'
             : API_BASE_URL;
 
         const socketInstance = io(socketUrl, {
+            auth: { token },
             transports: ['websocket', 'polling'],
             reconnectionAttempts: 5,
             reconnectionDelay: 5000,
@@ -32,22 +36,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             console.log('Socket conectado:', socketInstance.id);
             setIsConnected(true);
 
-            // Entrar na sala da organização se o usuário estiver logado
-            const { '@servFixe.organizationId': orgId } = parseCookies();
-            if (orgId) {
-                socketInstance.emit('join', orgId);
-                console.log(`Solicitado entrada na sala: ${orgId}`);
-            }
         });
 
         socketInstance.on('disconnect', () => {
             console.log('Socket desconectado');
             setIsConnected(false);
-        });
-
-        // Log para debug de eventos recebidos
-        socketInstance.onAny((event, ...args) => {
-            console.log(`[Socket] Evento recebido: ${event}`, args);
         });
 
         setSocket(socketInstance);

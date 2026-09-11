@@ -37,6 +37,7 @@ export default function ProductMenu() {
     setShowTableModal,
     addToCart,
     updateQuantity,
+    updateNotes,
     handleCheckout,
     handleGuestConfirm
   } = useKioskMenu();
@@ -60,7 +61,7 @@ export default function ProductMenu() {
           onOpenCart={() => setCartOpen(true)}
         />
 
-        <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 pt-32 md:pt-0">
+        <div className="flex-1 overflow-y-auto px-3 pb-28 pt-[190px] sm:px-4 md:px-8 md:pb-12 md:pt-0">
           {activeCategory === 'Destaques' && !searchQuery && (
             <div className="mb-10">
               <KioskHighlights 
@@ -70,7 +71,7 @@ export default function ProductMenu() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:gap-5 lg:grid-cols-3 2xl:grid-cols-4">
             <AnimatePresence>
               {filteredProducts.map(product => (
                 <KioskProductCard
@@ -102,7 +103,7 @@ export default function ProductMenu() {
           cart={cart}
           total={cartTotal}
           onClose={() => setCartOpen(false)}
-          onUpdateQuantity={updateQuantity}
+          onUpdateNotes={updateNotes} onUpdateQuantity={updateQuantity}
           onCheckout={handleCheckout}
         />
       </AnimatePresence>

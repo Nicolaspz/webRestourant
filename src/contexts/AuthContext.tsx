@@ -1,5 +1,5 @@
 'use client'
-import { createContext, ReactNode, useState, useEffect, useCallback, Suspense } from "react";
+import { createContext, ReactNode, useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { destroyCookie, setCookie, parseCookies } from 'nookies'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
@@ -8,6 +8,7 @@ import { api } from '../services/apiClients';
 type AuthContextData = {
   user: UserProps | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   signIn: (credentials: SignInProps) => Promise<void>;
   signOut: () => void;
   signUp: (credentials: SignUpProps) => Promise<void>;
@@ -57,79 +58,67 @@ type AuthProviderProps = {
 
 export const AuthContext = createContext({} as AuthContextData)
 
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000;
+const INACTIVITY_WARNING_DELAY = 14 * 60 * 1000;
+const INACTIVITY_TOAST_ID = 'session-inactivity-warning';
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter()
   const [user, setUser] = useState<UserProps | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const isAuthenticated = !!user?.token;
 
-  const inactivityTimeout = 15 * 60 * 1000;
-  let inactivityTimer: NodeJS.Timeout;
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inactivityWarningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function signOut() {
+  const clearSession = useCallback(() => {
+    destroyCookie(undefined, '@servFixe.token', { path: '/' });
+    destroyCookie(undefined, '@servFixe.role', { path: '/' });
+    destroyCookie(undefined, '@servFixe.organizationId', { path: '/' });
+    setUser(null);
+    delete api.defaults.headers['Authorization'];
+  }, []);
+
+  const signOut = useCallback((reason?: 'inactivity') => {
     try {
-      console.log('🚪 Fazendo logout...');
+      clearSession();
+      toast.dismiss(INACTIVITY_TOAST_ID);
 
-      // Limpa cookies com configuração correta
-      const isProduction = process.env.NODE_ENV === 'production';
-
-      destroyCookie(undefined, '@servFixe.token', { path: '/' });
-      destroyCookie(undefined, '@servFixe.role', { path: '/' });
-      destroyCookie(undefined, '@servFixe.organizationId', { path: '/' });
-
-      // Limpa via document.cookie para garantir (sem restrição de domínio)
-      document.cookie = '@servFixe.token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = '@servFixe.role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = '@servFixe.organizationId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-      // Limpa o estado
-      setUser(null);
-      delete api.defaults.headers['Authorization'];
-
-      console.log('✅ Logout completo - cookies limpos');
-
-      // Só redireciona para login se estiver no dashboard
       const pathname = window.location.pathname;
       if (pathname.startsWith('/dashboard')) {
-        router.push('/login');
-      } else {
-        console.log('🔓 Rota pública — logout sem redirecionar');
+        const loginUrl = reason === 'inactivity' ? '/login?reason=inactivity' : '/login';
+        router.replace(loginUrl);
       }
-
     } catch (error) {
       console.error("Erro ao deslogar:", error);
-      const pathname = window.location.pathname;
-      if (pathname.startsWith('/dashboard')) {
-        router.push('/login');
-      }
+      router.replace('/login');
     }
-  }
+  }, [clearSession, router]);
 
-  const resetInactivityTimer = () => {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-      // Só faz logout por inatividade em rotas do dashboard
-      const pathname = window.location.pathname;
-      if (pathname.startsWith('/dashboard')) {
-        signOut();
-      }
-    }, inactivityTimeout);
-  };
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    if (inactivityWarningRef.current) clearTimeout(inactivityWarningRef.current);
+    toast.dismiss(INACTIVITY_TOAST_ID);
 
-  const handleUserInteraction = () => {
-    resetInactivityTimer();
-  };
+    if (!window.location.pathname.startsWith('/dashboard')) return;
+
+    inactivityWarningRef.current = setTimeout(() => {
+      toast.info('A sessão terminará em 1 minuto por inatividade. Interaja com a página para continuar.', {
+        toastId: INACTIVITY_TOAST_ID,
+        autoClose: false,
+      });
+    }, INACTIVITY_WARNING_DELAY);
+
+    inactivityTimerRef.current = setTimeout(() => {
+      signOut('inactivity');
+    }, INACTIVITY_TIMEOUT);
+  }, [signOut]);
 
   const checkToken = useCallback(async () => {
     try {
       const { '@servFixe.token': token, '@servFixe.role': role } = parseCookies();
 
-      console.log('🔍 Verificando token:', {
-        token: token ? token.substring(0, 10) + '...' : null,
-        role
-      });
-
       if (!token) {
-        console.log('❌ Sem token');
         return;
       }
 
@@ -154,8 +143,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         name_org: orgData.name || ''
       });
 
-      console.log('✅ Token válido, user setado:', { role: userRole });
-
     } catch (error) {
       console.error("❌ Erro ao verificar token:", error);
 
@@ -166,46 +153,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (pathname.startsWith('/dashboard')) {
           signOut();
         } else {
-          // Em rotas públicas, apenas limpar cookies inválidos sem redirecionar
-          console.log('🔓 Rota pública — limpando token expirado sem redirecionar');
-          destroyCookie(undefined, '@servFixe.token', { path: '/' });
-          destroyCookie(undefined, '@servFixe.role', { path: '/' });
-          destroyCookie(undefined, '@servFixe.organizationId', { path: '/' });
-          document.cookie = '@servFixe.token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = '@servFixe.role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = '@servFixe.organizationId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          setUser(null);
-          delete api.defaults.headers['Authorization'];
+          clearSession();
         }
       }
+    } finally {
+      setIsInitializing(false);
     }
-  }, []);
+  }, [clearSession, signOut]);
 
 
   useEffect(() => {
     checkToken();
 
-    window.addEventListener('mousemove', handleUserInteraction);
-    window.addEventListener('mousedown', handleUserInteraction);
-    window.addEventListener('keydown', handleUserInteraction);
+    const handleUserInteraction = () => resetInactivityTimer();
+    const interactionEvents: Array<keyof WindowEventMap> = ['mousedown', 'keydown', 'touchstart'];
+    interactionEvents.forEach(event => window.addEventListener(event, handleUserInteraction, { passive: true }));
 
     resetInactivityTimer();
 
     return () => {
-      window.removeEventListener('mousemove', handleUserInteraction);
-      window.removeEventListener('mousedown', handleUserInteraction);
-      window.removeEventListener('keydown', handleUserInteraction);
-      clearTimeout(inactivityTimer);
+      interactionEvents.forEach(event => window.removeEventListener(event, handleUserInteraction));
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      if (inactivityWarningRef.current) clearTimeout(inactivityWarningRef.current);
     };
-  }, [checkToken]);
+  }, [checkToken, resetInactivityTimer]);
 
   async function signIn({ credential, password }: SignInProps) {
     try {
       const response = await api.post('/session', { credential, password });
       const { id, name, email, role, organizationId, user_name, token } = response.data;
       const orgData = response.data.Organization || {};
-
-      toast.success("Login feito com sucesso!");
 
       // 🔐 CONFIGURAÇÃO CORRETA PARA PRODUÇÃO (HTTPS)
       const isProduction = process.env.NODE_ENV === 'production';
@@ -247,20 +224,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         name_org: orgData.name || ''
       });
 
-      console.log("✅ Login realizado:", { token: token?.substring(0, 10) + '...', role });
-
       // Redireciona baseado na role
-      if (role?.toUpperCase() === 'CAIXA') {
-        router.push("/dashboard/caixa");
-      } else if (role?.toUpperCase() === 'GARCON') {
-        router.push("/dashboard/mesa");
-      } else if (role?.toUpperCase() === 'COZINHA') {
-        router.push("/dashboard/cozinha");
-      } else if (role?.toUpperCase() === 'BAR') {
-        router.push("/dashboard/bar");
-      } else {
-        router.push("/dashboard");
-      }
+      const destination = role?.toUpperCase() === 'CAIXA' ? '/dashboard/caixa'
+        : role?.toUpperCase() === 'GARCON' ? '/dashboard/mesa'
+          : role?.toUpperCase() === 'COZINHA' ? '/dashboard/cozinha'
+            : role?.toUpperCase() === 'BAR' ? '/dashboard/bar'
+              : '/dashboard';
+      router.replace(destination);
 
     } catch (err: any) {
       const errorMessage =
@@ -282,7 +252,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       toast.success("Cadastrado com sucesso!");
-      router.push('/sign-in');
+      router.push('/login');
     } catch (err) {
       toast.error("Erro ao se Cadastrar");
     }
@@ -290,7 +260,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   return (
     <Suspense>
-      <AuthContext.Provider value={{ user, isAuthenticated, signIn, signOut, signUp }}>
+      <AuthContext.Provider value={{ user, isAuthenticated, isInitializing, signIn, signOut, signUp }}>
         {children}
       </AuthContext.Provider>
     </Suspense>

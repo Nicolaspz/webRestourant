@@ -8,10 +8,16 @@ import { Fatura } from '@/types/product';
 interface FaturaCardProps {
   fatura: Fatura;
   onPagamento: () => void;
-  onProforma?: () => void;
+  onPreConta?: () => void;
+  onPrint?: () => void;
+  onFiscalSync?: () => void;
+  onFiscalQRCode?: () => void;
 }
 
-const FaturaCard = ({ fatura, onPagamento, onProforma }: FaturaCardProps) => {
+const FaturaCard = ({ fatura, onPagamento, onPreConta, onPrint, onFiscalSync, onFiscalQRCode }: FaturaCardProps) => {
+  const fiscalStatus = fatura.fiscalSubmission?.status;
+  const fiscalFinal = fiscalStatus && !['PENDING_SUBMISSION', 'RECEIVED', 'SENT_TO_AGT', 'PROCESSING'].includes(fiscalStatus);
+  const fiscalAccepted = fiscalStatus && ['VALID', 'VALID_PENALTY', 'SUCCESS', 'COMPLETED'].includes(fiscalStatus);
   const getStatusVariant = (status: string) => {
     const variants = {
       pendente: "destructive",
@@ -72,6 +78,18 @@ const FaturaCard = ({ fatura, onPagamento, onProforma }: FaturaCardProps) => {
             </div>
           )}
 
+          {fiscalStatus && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span>Estado fiscal:</span>
+              <Badge variant={fiscalAccepted ? 'default' : fiscalFinal ? 'destructive' : 'secondary'}>
+                {fiscalStatus.replaceAll('_', ' ')}
+              </Badge>
+              {fatura.fiscalSubmission?.documentNo && (
+                <span className="font-medium">{fatura.fiscalSubmission.documentNo}</span>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -87,9 +105,9 @@ const FaturaCard = ({ fatura, onPagamento, onProforma }: FaturaCardProps) => {
           
           {fatura.status === 'pendente' && (
             <div className="flex items-center gap-2">
-              {onProforma && (
-                <Button onClick={onProforma} variant="outline" className="gap-2" size="sm">
-                  Proforma
+              {onPreConta && (
+                <Button onClick={onPreConta} variant="outline" className="gap-2" size="sm">
+                  Pré-conta
                 </Button>
               )}
               <Button onClick={onPagamento} className="gap-2" size="sm">
@@ -102,8 +120,19 @@ const FaturaCard = ({ fatura, onPagamento, onProforma }: FaturaCardProps) => {
           )}
           
           {fatura.status === 'paga' && fatura.metodoPagamento && (
-            <div className="text-sm text-muted-foreground capitalize bg-muted px-2 py-1 rounded">
-              {fatura.metodoPagamento.replace('_', ' ')}
+            <div className="flex flex-wrap justify-end gap-2">
+              <div className="text-sm text-muted-foreground capitalize bg-muted px-2 py-1 rounded">
+                {fatura.metodoPagamento.replace('_', ' ')}
+              </div>
+              {onPrint && <Button variant="outline" size="sm" onClick={onPrint}>Imprimir fatura</Button>}
+              {fatura.fiscalSubmission && onFiscalSync && (
+                <Button variant="outline" size="sm" onClick={onFiscalSync}>
+                  {fatura.fiscalSubmission.requestId ? 'Atualizar estado fiscal' : 'Tentar submissão fiscal'}
+                </Button>
+              )}
+              {fiscalAccepted && fatura.fiscalSubmission?.agtRequestId && onFiscalQRCode && (
+                <Button variant="outline" size="sm" onClick={onFiscalQRCode}>QR Code AGT</Button>
+              )}
             </div>
           )}
         </div>

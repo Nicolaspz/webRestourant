@@ -13,7 +13,7 @@ export function KioskWelcomeModal({ isOpen, onConfirm }: KioskWelcomeModalProps)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (phone.length >= 9) {
+        if (!phone || phone.replace(/\D/g, '').length >= 9) {
             onConfirm(name, phone);
         }
     };
@@ -45,8 +45,8 @@ export function KioskWelcomeModal({ isOpen, onConfirm }: KioskWelcomeModalProps)
                                 BEM-VINDO AO<br />
                                 <span className="text-orange-500">NOSSO MENU</span>
                             </h2>
-                            <p className="text-gray-500 font-medium">
-                                Identifique-se rapidamente para uma experiência personalizada e segura.
+                            <p className="text-gray-400 font-medium">
+                                Consulte o cardápio agora. Os dados abaixo são opcionais e ajudam no atendimento.
                             </p>
                         </div>
 
@@ -66,8 +66,7 @@ export function KioskWelcomeModal({ isOpen, onConfirm }: KioskWelcomeModalProps)
                                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-orange-500 transition-colors" size={20} />
                                 <input
                                     type="tel"
-                                    required
-                                    placeholder="Telemóvel (Obrigatório)"
+                                    placeholder="Telemóvel (Opcional)"
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-6 text-white outline-none focus:ring-2 ring-orange-500/50 transition-all font-bold placeholder:text-gray-700"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
@@ -76,16 +75,16 @@ export function KioskWelcomeModal({ isOpen, onConfirm }: KioskWelcomeModalProps)
 
                             <button
                                 type="submit"
-                                disabled={phone.length < 9}
+                                disabled={Boolean(phone) && phone.replace(/\D/g, '').length < 9}
                                 className="w-full bg-orange-500 hover:bg-orange-400 disabled:bg-gray-800 disabled:text-gray-600 font-black text-black py-5 rounded-2xl text-lg flex items-center justify-center gap-3 shadow-2xl shadow-orange-500/20 transition-all active:scale-[0.98]"
                             >
-                                COMEÇAR AGORA
+                                VER CARDÁPIO
                                 <ArrowRight size={24} strokeWidth={3} />
                             </button>
                         </form>
 
                         <p className="text-center mt-8 text-[10px] text-gray-600 uppercase tracking-widest font-bold">
-                            Privacidade garantida • Sem registos chatos
+                            Pode continuar sem preencher os dados
                         </p>
                     </motion.div>
                 </motion.div>

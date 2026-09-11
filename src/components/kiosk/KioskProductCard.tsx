@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Star, Utensils, Heart, TrendingUp } from "lucide-react";
+import { Plus, Star, Utensils, TrendingUp } from "lucide-react";
 import { API_BASE_URL, getMediaUrl } from "../../../config";
 import { Product, theme } from "../hooks/useKioskMenu";
 
@@ -13,11 +13,11 @@ export function KioskProductCard({ product, onSelect, onAdd }: KioskProductCardP
     return (
         <motion.div
             layoutId={product.id}
-            className="group relative overflow-hidden rounded-[2rem] cursor-pointer bg-[#1E1E1E] border border-white/5 hover:border-orange-500/50 transition-colors"
-            whileHover={{ y: -8, transition: { duration: 0.3 } }}
+            className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-[#1E1E1E] shadow-sm transition-colors hover:border-orange-500/60"
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
             onClick={() => onSelect(product)}
         >
-            <div className="aspect-[1/1] w-full overflow-hidden bg-[#2A2A2A] relative">
+            <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#2A2A2A]">
                 {product.banner ? (
                     <img
                         src={getMediaUrl(product.banner)}
@@ -33,12 +33,6 @@ export function KioskProductCard({ product, onSelect, onAdd }: KioskProductCardP
                 {/* Overlay Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
 
-                <div className="absolute top-4 right-4 z-10">
-                    <button className="p-2 rounded-full bg-black/20 backdrop-blur-md text-white/70 hover:text-red-500 transition-colors">
-                        <Heart size={18} />
-                    </button>
-                </div>
-
                 {product.isNew && (
                     <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-orange-500 text-black text-[10px] font-black rounded-full shadow-xl flex items-center gap-1">
                         <Star size={10} fill="currentColor" /> NOVO
@@ -51,26 +45,26 @@ export function KioskProductCard({ product, onSelect, onAdd }: KioskProductCardP
                     </div>
                 )}
 
-                <div className="absolute bottom-4 left-4 right-4">
-                    <span className="text-orange-500 font-black text-xl md:text-2xl drop-shadow-lg">
+                <div className="absolute bottom-3 left-3 right-3">
+                    <span className="text-lg font-black text-white drop-shadow-lg md:text-xl">
                         {(product.PrecoVenda[0]?.preco_venda || 0).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                     </span>
                 </div>
             </div>
 
-            <div className="p-6">
-                <div className="mb-4">
-                    <h3 className="font-black text-xl leading-tight text-white mb-2 group-hover:text-orange-500 transition-colors line-clamp-1">
+            <div className="p-4">
+                <div className="mb-3">
+                    <h3 className="mb-1 line-clamp-2 min-h-12 text-base font-black leading-tight text-white transition-colors group-hover:text-orange-500 md:text-lg">
                         {product.name}
                     </h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed h-10">
+                    <p className="line-clamp-2 h-9 text-xs leading-relaxed text-gray-400 md:text-sm">
                         {product.description || 'Nenhuma descrição disponível para este prato.'}
                     </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <button
-                        className="flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-white/5 hover:bg-orange-500 hover:text-black hover:shadow-lg hover:shadow-orange-500/20 text-white"
+                        className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-orange-500 px-3 py-3 text-xs font-black uppercase tracking-wide text-black transition-all hover:bg-orange-400 hover:shadow-lg hover:shadow-orange-500/20"
                         onClick={(e) => {
                             e.stopPropagation();
                             onAdd(product);

@@ -10,6 +10,8 @@ import { SupplierSection } from "@/components/settings/SupplierSection"
 import AreasPage from '../economato/areas/page'
 import Head from 'next/head'
 import { setupAPIClient } from "@/services/api"
+import { PrinterSettingsSection } from '@/components/settings/PrinterSettingsSection'
+import { OnlinePaymentSettingsSection } from '@/components/settings/OnlinePaymentSettingsSection'
 
 export default function SettingsPage() {
   const { user } = useContext(AuthContext)
@@ -57,6 +59,7 @@ export default function SettingsPage() {
           address: user.address || '',
           nif: user.nif || '',
           imageLogo: user.imageLogo || null,
+          posSettings: null,
         }
         //console.log('📦 Org data from user:', orgData)
 
@@ -73,7 +76,8 @@ export default function SettingsPage() {
             name: detailedOrg.name,
             address: detailedOrg.address || '',
             nif: detailedOrg.nif || '',
-            imageLogo: detailedOrg.imageLogo || null
+            imageLogo: detailedOrg.imageLogo || null,
+            posSettings: detailedOrg.posSettings || null
           }
           
           //console.log('📦 Dados mapeados:', mappedOrg)
@@ -130,6 +134,18 @@ export default function SettingsPage() {
       ) : (
         <SkeletonLoader />
       )
+    },
+    {
+      id: "printing",
+      label: "Impressão POS",
+      icon: "printer",
+      content: organization ? <PrinterSettingsSection organization={organization} onUpdateSuccess={handleUpdateSuccess} /> : <SkeletonLoader />
+    },
+    {
+      id: "payments",
+      label: "Pagamentos",
+      icon: "credit-card",
+      content: <OnlinePaymentSettingsSection />
     },
     {
       id: "account",

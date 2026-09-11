@@ -10,10 +10,13 @@ interface FaturaListProps {
   faturas: Fatura[];
   loading: boolean;
   onPagamentoSuccess: () => void;
-  onProforma?: (fatura: Fatura) => void;
+  onPreConta?: (fatura: Fatura) => void;
+  onPrint?: (fatura: Fatura) => void;
+  onFiscalSync?: (fatura: Fatura) => void;
+  onFiscalQRCode?: (fatura: Fatura) => void;
 }
 
-const FaturaList = ({ faturas, loading, onPagamentoSuccess, onProforma }: FaturaListProps) => {
+const FaturaList = ({ faturas, loading, onPagamentoSuccess, onPreConta, onPrint, onFiscalSync, onFiscalQRCode }: FaturaListProps) => {
   const [faturaSelecionada, setFaturaSelecionada] = useState<Fatura | null>(null);
   const [showPagamentoModal, setShowPagamentoModal] = useState(false);
 
@@ -82,7 +85,10 @@ const FaturaList = ({ faturas, loading, onPagamentoSuccess, onProforma }: Fatura
                 key={fatura.id}
                 fatura={fatura}
                 onPagamento={() => handlePagamento(fatura)}
-                onProforma={onProforma ? () => onProforma(fatura) : undefined}
+                onPreConta={onPreConta ? () => onPreConta(fatura) : undefined}
+                onPrint={onPrint ? () => onPrint(fatura) : undefined}
+                onFiscalSync={onFiscalSync ? () => onFiscalSync(fatura) : undefined}
+                onFiscalQRCode={onFiscalQRCode ? () => onFiscalQRCode(fatura) : undefined}
               />
             ))}
           </div>

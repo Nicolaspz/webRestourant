@@ -121,7 +121,7 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 mb-8">
               <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-              <span className="text-white/90 text-sm font-medium">Plataforma #1 de Gestão para Restaurantes em Angola</span>
+              <span className="text-white/90 text-sm font-medium">Gestão de restauração pensada para Angola</span>
             </div>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
@@ -141,7 +141,7 @@ export default function HomePage() {
                 href="/register"
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold px-8 py-4 rounded-xl text-lg hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:-translate-y-0.5"
               >
-                Comece Grátis
+                Solicitar demonstração
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
@@ -150,6 +150,11 @@ export default function HomePage() {
               >
                 Saber Mais
               </Link>
+            </div>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-medium text-white/70">
+              <span className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Implementação acompanhada</span>
+              <span className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Perfis por função</span>
+              <span className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Operação em tempo real</span>
             </div>
           </div>
         </div>
@@ -197,7 +202,7 @@ export default function HomePage() {
               Escolha o plano ideal
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Comece com o plano gratuito e faça upgrade quando precisar. Sem surpresas.
+              Escolha a configuração adequada ao tamanho e à operação do seu restaurante.
             </p>
           </div>
 
@@ -274,14 +279,13 @@ export default function HomePage() {
             Pronto para modernizar o seu restaurante?
           </h2>
           <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-            Junte-se a dezenas de restaurantes em Angola que já usam o Serve Fixe.
-            Teste grátis durante 14 dias.
+            Conheça o fluxo completo e veja como o Serve Fixe se adapta à sua operação.
           </p>
           <Link
             href="/register"
             className="inline-flex items-center gap-2 bg-white text-amber-700 font-bold px-8 py-4 rounded-xl text-lg hover:bg-gray-100 transition-all duration-300 shadow-xl hover:-translate-y-0.5"
           >
-            Criar Conta Grátis
+            Solicitar demonstração
             <ArrowRight className="h-5 w-5" />
           </Link>
         </div>
@@ -303,7 +307,7 @@ export default function HomePage() {
                 <span className="text-xl font-bold">Serve Fixe</span>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Sistema completo para gestão de restaurantes, bares e lanchonetes em Angola.
+                Sistema completo para gestão de restaurantes e bares em Angola.
               </p>
             </div>
 

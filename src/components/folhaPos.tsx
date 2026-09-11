@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Download, X, CheckCircle, Clock, CreditCard, DollarSign } from 'lucide-react';
 import { PosData } from '@/types/pos';
+import { toast } from 'react-toastify';
 
 interface SimplePosReceiptProps {
   isOpen: boolean;
@@ -22,9 +23,9 @@ export default function PosReceipt({ isOpen, onClose, data, onConfirmPayment }: 
   if (!isOpen) return null;
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', {
+    return new Intl.NumberFormat('pt-AO', {
       style: 'currency',
-      currency: 'EUR',
+      currency: 'AOA',
     }).format(value);
   };
 
@@ -51,12 +52,12 @@ export default function PosReceipt({ isOpen, onClose, data, onConfirmPayment }: 
 
   const handleConfirmPayment = async () => {
     if (!selectedPayment) {
-      alert('Selecione um método de pagamento');
+      toast.warning('Selecione um método de pagamento.');
       return;
     }
 
     if (selectedPayment === 'dinheiro' && (!cashAmount || parseFloat(cashAmount) < data.totalGeral)) {
-      alert('Valor em dinheiro insuficiente');
+      toast.warning('O valor em dinheiro é insuficiente.');
       return;
     }
 
@@ -66,7 +67,7 @@ export default function PosReceipt({ isOpen, onClose, data, onConfirmPayment }: 
       onClose();
     } catch (error) {
       console.error('Erro ao processar pagamento:', error);
-      alert('Erro ao processar pagamento');
+      toast.error('Não foi possível processar o pagamento. Tente novamente.');
     } finally {
       setIsProcessing(false);
     }

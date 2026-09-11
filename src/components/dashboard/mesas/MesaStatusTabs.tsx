@@ -97,10 +97,11 @@ const MesaStatusTabs = ({
                   <QRCodePrinter
                     organizationId={user?.organizationId}
                     mesaNumber={mesa.number}
+                    publicOrderToken={mesa.publicOrderToken}
                   />
                 )}
                 <p className="text-xs text-gray-500 mt-2 text-center">
-                  URL:{user?.organizationId}/{mesa.number}
+                  URL: /menu/{user?.organizationId}/{mesa.number}?access={mesa.publicOrderToken}
                 </p>
               </CardContent>
 
@@ -154,6 +155,7 @@ const MesaStatusTabs = ({
                     <QRCodePrinter
                       organizationId={user?.organizationId}
                       mesaNumber={mesa.number}
+                      publicOrderToken={mesa.publicOrderToken}
                     />
                   )}
                   {/* Apenas CAIXA ou superiores podem fechar ou consultar faturação */}
@@ -204,6 +206,7 @@ const MesaStatusTabs = ({
                       <QRCodePrinter
                         organizationId={user?.organizationId}
                         mesaNumber={mesa.number}
+                        publicOrderToken={mesa.publicOrderToken}
                       />
                     </div>
                   </div>

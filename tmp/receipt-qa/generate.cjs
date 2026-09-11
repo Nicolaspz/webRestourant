@@ -1,0 +1,9 @@
+const fs=require('fs'), path=require('path');
+const root=path.resolve(__dirname,'../../..');
+const esbuild=require(path.join(root,'FullRestourant/backend/node_modules/esbuild'));
+esbuild.buildSync({entryPoints:[path.join(root,'webRestourant/src/components/dashboard/mesas/pdfNpago.tsx')],outfile:path.join(__dirname,'receipt.cjs'),platform:'node',format:'cjs',bundle:true,packages:'external',tsconfig:path.join(root,'webRestourant/tsconfig.json')});
+const {buildReceiptPdf}=require('./receipt.cjs');
+const data={mesaNumero:2,codigoAbertura:'SESS-MESA-2-EXEMPLO-20260911',abertaEm:new Date('2026-09-11T11:30:00+01:00'),fechadaEm:new Date('2026-09-11T12:30:00+01:00'),organization:{name:'Restaurante Exemplo',nif:'5000000000',address:'Rua da Independência, Luanda',phone:'+244 900 000 000',imageLogo:null},clienteNome:'Cliente de demonstração com nome comprido',clienteNif:'999999999',pedidos:[{id:'test',nomePedido:'Pedido 1',atendidoPor:'Manuel',items:[{produto:'Frango grelhado com arroz e salada',quantidade:2,precoUnitario:4500,subtotal:9000},{produto:'Sumo natural de maracujá',quantidade:3,precoUnitario:1500,subtotal:4500}]}],totalGeral:13500};
+for(const format of ['58','80',false])for(const paid of [true,false]){const doc=buildReceiptPdf(data,{metodo:'dinheiro',valorPago:13500,trocoPara:15000},format,paid);fs.writeFileSync(path.join(__dirname,(paid?'pago':'consulta')+'-'+(format||'a4')+'.pdf'),Buffer.from(doc.output('arraybuffer')));console.log(format||'a4',paid?'pago':'consulta',doc.getNumberOfPages());}
+const long={...data,pedidos:[{...data.pedidos[0],items:Array.from({length:45},(_,i)=>({...data.pedidos[0].items[0],produto:'Produto '+(i+1)+' - frango grelhado com arroz e salada'}))}],totalGeral:405000};
+const doc=buildReceiptPdf(long,{metodo:'cartao',valorPago:405000},'58',true);fs.writeFileSync(path.join(__dirname,'long-58.pdf'),Buffer.from(doc.output('arraybuffer')));console.log('45 produtos, páginas:',doc.getNumberOfPages());

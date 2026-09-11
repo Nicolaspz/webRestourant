@@ -3,10 +3,9 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { setupAPIClient } from '@/services/api';
 import { toast } from 'react-toastify';
-import { useClientToken } from '@/types/useClientToken'; 
 
 interface Product {
   id: string;
@@ -48,8 +47,8 @@ const CartSidebar = ({
   organizationId,
   user
 }: CartSidebarProps) => {
+  const idempotencyKeyRef = useRef<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const clientToken = useClientToken();
   const apiClient = setupAPIClient();
 
   const customColors = {
@@ -66,6 +65,8 @@ const CartSidebar = ({
     setIsSubmitting(true);
     
     try {
+      const idempotencyKey = idempotencyKeyRef.current ?? crypto.randomUUID();
+      idempotencyKeyRef.current = idempotencyKey;
       const items = cart.map(item => ({
         productId: item.product.id,
         amount: item.quantity
@@ -76,10 +77,11 @@ const CartSidebar = ({
         organizationId: organizationId,
         items,
         customerName: tableNumber === 'TAKEAWAY' ? 'Pedido Takeaway' : `Pedido Mesa ${tableNumber}`,
-        clientToken: clientToken // ← ENVIANDO O CLIENT TOKEN
+        idempotencyKey
       });
 
       if (response.data.success) {
+        idempotencyKeyRef.current = null;
         toast.success('Pedido criado com sucesso!');
         // Limpar carrinho localmente
         cart.forEach(item => onRemoveItem(item.product.id));

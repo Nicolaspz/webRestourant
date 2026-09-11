@@ -6,15 +6,18 @@ import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import { Button } from "@/components/ui/button";
 import { Printer, Loader2, QrCode } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface QRCodePrinterProps {
   organizationId: string;
   mesaNumber: number;
+  publicOrderToken: string;
 }
 
 const QRCodePrinter = ({
   organizationId,
-  mesaNumber
+  mesaNumber,
+  publicOrderToken,
 }: QRCodePrinterProps) => {
   const [generating, setGenerating] = useState(false);
 
@@ -25,7 +28,7 @@ const QRCodePrinter = ({
 
       // URL completa do cardápio
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-      const cardapioUrl = `${baseUrl}/${organizationId}/${mesaNumber}`;
+      const cardapioUrl = `${baseUrl}/menu/${organizationId}/${mesaNumber}?access=${encodeURIComponent(publicOrderToken)}`;
 
       // Gerar QR Code
       const qrCodeDataUrl = await QRCode.toDataURL(cardapioUrl, {
@@ -152,7 +155,7 @@ const QRCodePrinter = ({
 
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      alert('Erro ao gerar o PDF. Tente novamente.');
+      toast.error('Não foi possível gerar o PDF. Tente novamente.');
     } finally {
       setGenerating(false);
     }

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { setupAPIClient } from '@/services/api';
 import { toast } from 'react-toastify';
 import { useClientToken } from '@/types/useClientToken';
@@ -24,6 +24,7 @@ export type Product = {
 export type CartItem = {
     product: Product;
     quantity: number;
+    notes?: string;
 };
 
 export const theme = {
@@ -39,6 +40,7 @@ export const theme = {
 };
 
 export function useKioskMenu() {
+    const idempotencyKeyRef = useRef<string | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [organizationData, setOrganizationData] = useState<any>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -56,8 +58,10 @@ export function useKioskMenu() {
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
     const params = useParams();
+    const searchParams = useSearchParams();
     const organizationId = params.organizationId as string;
     const tableNumberFromUrl = params.tableNumber || params.number; // number para dashboard, tableNumber para root pública
+    const publicOrderToken = searchParams.get('access') || undefined;
     const apiClient = setupAPIClient();
 
     const { clientToken, isLoading: tokenLoading } = useClientToken(tableNumberFromUrl as string);
@@ -79,7 +83,9 @@ export function useKioskMenu() {
     const handleGuestConfirm = async (name: string, phone: string) => {
         setGuestName(name);
         setGuestPhone(phone);
-        localStorage.setItem('guestInfo', JSON.stringify({ name, phone }));
+        if (name || phone) {
+            localStorage.setItem('guestInfo', JSON.stringify({ name, phone }));
+        }
         setShowWelcomeModal(false);
         toast.success(`Bem-vindo, ${name || 'Cliente'}!`, { theme: 'dark' });
 
@@ -148,7 +154,8 @@ export function useKioskMenu() {
                 await apiClient.post('/token/verify', {
                     tableNumber: Number(tableNumberFromUrl),
                     organizationId,
-                    clientToken
+                    clientToken,
+                    qrToken: publicOrderToken,
                 });
                 setSessionConflict(null);
             } catch (error: any) {
@@ -160,7 +167,7 @@ export function useKioskMenu() {
         };
 
         verifySession();
-    }, [clientToken, tokenLoading, organizationId, tableNumberFromUrl]);
+    }, [clientToken, tokenLoading, organizationId, publicOrderToken, tableNumberFromUrl]);
 
     const categories = useMemo(() => {
         const cats = Array.from(new Set(products.map(p => {
@@ -181,7 +188,8 @@ export function useKioskMenu() {
         let filtered = products;
 
         if (activeCategory === 'Destaques') {
-            return products.filter(p => p.isFeatured || p.isNew || (p.orderCount && p.orderCount > 50));
+            const highlighted = products.filter(p => p.isFeatured || p.isNew || (p.orderCount && p.orderCount > 50));
+            filtered = highlighted.length > 0 ? highlighted : products.slice(0, 8);
         } else {
             filtered = products.filter(p => {
                 const catName = p.Category?.name || (p.isDerived ? 'Pratos' : 'Outros');
@@ -206,6 +214,8 @@ export function useKioskMenu() {
             return acc + (item.product.PrecoVenda[0]?.preco_venda || 0) * item.quantity;
         }, 0);
     }, [cart]);
+
+    const updateNotes = (productId: string, notes: string) => setCart(prev => prev.map(item => item.product.id === productId ? { ...item, notes } : item));
 
     const addToCart = (product: any, quantity = 1) => {
         // Cálculo de Stock Disponível no Frontend (Dica para o Cliente)
@@ -250,7 +260,6 @@ export function useKioskMenu() {
             }
             return [...prev, { product, quantity }];
         });
-        setCartOpen(true);
         setSelectedProduct(null);
     };
 
@@ -279,9 +288,11 @@ export function useKioskMenu() {
 
         setIsSubmitting(true);
         try {
+            const idempotencyKey = idempotencyKeyRef.current ?? crypto.randomUUID();
+            idempotencyKeyRef.current = idempotencyKey;
             const items = cart.map(item => ({
                 productId: item.product.id,
-                amount: item.quantity
+                amount: item.quantity, notes: item.notes
             }));
 
             await apiClient.post('/orders/with-stock', {
@@ -290,7 +301,9 @@ export function useKioskMenu() {
                 items,
                 customerName: guestName || (finalTableNumber === 'TAKEAWAY' ? 'Kiosk Takeaway' : `Mesa ${finalTableNumber}`),
                 customerPhone: guestPhone,
-                clientToken
+                clientToken,
+                qrToken: publicOrderToken,
+                idempotencyKey,
             });
 
             toast.success('Pedido enviado com sucesso! Aguarde...', {
@@ -301,6 +314,7 @@ export function useKioskMenu() {
             setCart([]);
             setCartOpen(false);
             setShowTableModal(false);
+            idempotencyKeyRef.current = null;
         } catch (error: any) {
             console.error(error);
             toast.error(error.response?.data?.error || 'Erro ao enviar pedido.');
@@ -338,6 +352,7 @@ export function useKioskMenu() {
         setShowTableModal,
         addToCart,
         updateQuantity,
+        updateNotes,
         handleCheckout,
         setSessionConflict,
         handleGuestConfirm

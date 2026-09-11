@@ -11,13 +11,13 @@ interface KioskHeaderProps {
 
 export function KioskHeader({ activeCategory, searchQuery, cartItemCount, onSearchChange, onOpenCart }: KioskHeaderProps) {
     return (
-        <header className="fixed top-0 left-0 right-0 z-40 md:relative p-4 md:p-8 flex flex-col md:flex-row items-center justify-between bg-[#121212]/80 backdrop-blur-lg border-b border-white/5 md:border-none md:bg-transparent">
+        <header className="fixed left-0 right-0 top-0 z-40 flex flex-col items-center justify-between border-b border-white/5 bg-[#121212]/95 p-3 backdrop-blur-lg md:relative md:flex-row md:border-none md:bg-transparent md:p-8">
             <div className="w-full md:flex-1 mb-4 md:mb-0 flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl md:text-4xl font-black tracking-tight text-white">
+                    <h2 className="text-lg font-black tracking-tight text-white md:text-4xl">
                         {activeCategory === 'Destaques' ? '🔥 OS MAIS PEDIDOS' : activeCategory.toUpperCase()}
                     </h2>
-                    <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-widest font-bold">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 md:text-sm">
                         Sabores incríveis à sua espera
                     </p>
                 </div>
@@ -44,7 +44,7 @@ export function KioskHeader({ activeCategory, searchQuery, cartItemCount, onSear
                         placeholder="Pesquisar..."
                         value={searchQuery}
                         onChange={e => onSearchChange(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-white w-full md:w-64 focus:ring-2 ring-orange-500 outline-none transition-all placeholder:text-gray-600"
+                        className="min-h-12 w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-white outline-none ring-orange-500 transition-all placeholder:text-gray-500 focus:ring-2 md:w-72"
                     />
                 </div>
                 <button

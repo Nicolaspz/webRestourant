@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useContext, useEffect, useState } from "react";
+import dynamic from 'next/dynamic';
 import { 
   DollarSign, 
   Coffee, 
@@ -19,11 +20,14 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
 import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
-import { ChartsSection } from "@/components/dashboard/ChartsSection";
 import { RecentOrdersTable } from "@/components/dashboard/RecentOrdersTable";
 import { PopularItems } from "@/components/dashboard/PopularItems";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { API_BASE_URL } from "../../../../config"; 
+
+const ChartsSection = dynamic(
+  () => import('@/components/dashboard/ChartsSection').then(module => module.ChartsSection),
+  { ssr: false, loading: () => <div className="grid gap-6 lg:grid-cols-2"><div className="h-80 animate-pulse rounded-xl bg-muted" /><div className="h-80 animate-pulse rounded-xl bg-muted" /></div> },
+);
 
 interface DashboardData {
   metrics: {
@@ -139,8 +143,6 @@ export default function Dashboard() {
   const fetchDashboard = async () => {
     if (!user?.organizationId || !user?.token) {
 
-      console.log('URL que estás a usar:', API_BASE_URL);
-      console.log('URL completa da imagem:', `${API_BASE_URL}/files/33585bc0744bceb27b914d1c2ec8cceb-pudim.webp`);
       setIsLoading(false);
       // Se não tem usuário, usa dados padrão
       setDashboardData(defaultDashboardData);
@@ -166,7 +168,6 @@ export default function Dashboard() {
 
       // Se a resposta vier vazia ou com estrutura incompleta, usa dados padrão
       const data = response.data || defaultDashboardData;
-      console.log("dados dash", data)
       setDashboardData({
         ...defaultDashboardData,
         ...data,

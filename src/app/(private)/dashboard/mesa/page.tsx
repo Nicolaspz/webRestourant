@@ -14,7 +14,8 @@ import ModalPagamento from '@/components/dashboard/mesas/ModalPagamento';
 // Types
 import { Mesa } from '@/types/product';
 import { parseCookies } from 'nookies';
-import { gerarPDFReciboNaoPago, gerarPDFReciboPago } from '@/components/dashboard/mesas/pdfNpago';
+import { usePosSettings } from '@/hooks/usePosSettings';
+import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
 
 
 export default function GerenciamentoMesasPage() {
@@ -41,10 +42,13 @@ export default function GerenciamentoMesasPage() {
 
   const { user } = useContext(AuthContext);
   const apiClient = setupAPIClient();
+  const { settings: posSettings } = usePosSettings(user?.organizationId);
+  const { printPaidReceipt } = useReceiptPrinter(posSettings);
 
   useEffect(() => {
+    if (!user?.organizationId) return;
     fetchMesas();
-  }, []);
+  }, [user?.organizationId]);
 
   const fetchMesas = async () => {
     try {
@@ -159,7 +163,7 @@ export default function GerenciamentoMesasPage() {
   };
 
   // Callback após pagamento confirmado com sucesso
-  const handlePagamentoSucesso = (dadosFechamento: any) => {
+  const handlePagamentoSucesso = async (dadosFechamento: any) => {
     fetchMesas();
     // Gerar PDF do recibo já pago
     if (dadosFechamento) {
@@ -169,12 +173,9 @@ export default function GerenciamentoMesasPage() {
         trocoPara: dadosFechamento.trocoPara
       };
       
-      // Gera a versão Térmica (POS) por padrão agora
-      gerarPDFReciboPago(dadosFechamento, infoPagamento, true);
-      
-      // Gera a versão A4 também para backup
-      gerarPDFReciboPago(dadosFechamento, infoPagamento, false);
+      return await printPaidReceipt(dadosFechamento, infoPagamento);
     }
+    return false;
   };
 
 
@@ -199,10 +200,11 @@ export default function GerenciamentoMesasPage() {
 
       const dadosSessao = response.data;
 
-      toast.info('A gerar PDF do consumo...');
+      toast.info('A preparar a impressão da consulta...');
 
       // Gerar apenas o PDF de consulta - sem fechar mesa nem atualizar
-      gerarPDFReciboNaoPago(dadosSessao);
+      const { gerarPDFReciboNaoPago } = await import('@/components/dashboard/mesas/pdfNpago');
+      await gerarPDFReciboNaoPago(posSettings.printLogo ? dadosSessao : {...dadosSessao, organization: {...dadosSessao.organization, imageLogo:null}}, posSettings.paperWidth === 'a4' ? false : posSettings.paperWidth, true);
 
     } catch (error: any) {
       console.error('Erro ao consultar consumo:', error);

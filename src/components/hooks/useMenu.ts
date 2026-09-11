@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { AuthContext } from "@/contexts/AuthContext";
 import { setupAPIClient } from '@/services/api';
@@ -17,11 +17,15 @@ export type Product = {
   Category: { name: string; id: string };
   orderCount?: number;
   createdAt?: string;
+  created_at?: string;
+  isFeatured?: boolean;
+  isNew?: boolean;
 };
 
 export type CartItem = {
   product: Product;
   quantity: number;
+  notes?: string;
 };
 
 export type SessionConflict = {
@@ -30,6 +34,26 @@ export type SessionConflict = {
   existingClientToken?: string;
   sessionId?: string;
   mesaId?: string;
+};
+
+const PRIORITY_CATEGORIES = ['Pratos', 'Pratos Principais', 'Entradas', 'Pizzas', 'Destaques'];
+
+const groupProducts = (products: Product[]) => {
+  const grouped = products.reduce<Record<string, Product[]>>((result, product) => {
+    const category = product.Category?.name || (product.isDerived ? 'Pratos' : 'Sem Categoria');
+    if (['ingrediente', 'ingredientes'].includes(category.toLowerCase())) return result;
+    (result[category] ||= []).push(product);
+    return result;
+  }, {});
+
+  return Object.fromEntries(Object.entries(grouped).sort(([a], [b]) => {
+    const priorityA = PRIORITY_CATEGORIES.indexOf(a);
+    const priorityB = PRIORITY_CATEGORIES.indexOf(b);
+    if (priorityA === -1 && priorityB === -1) return a.localeCompare(b, 'pt');
+    if (priorityA === -1) return 1;
+    if (priorityB === -1) return -1;
+    return priorityA - priorityB;
+  }));
 };
 
 // Funções de localStorage
@@ -72,20 +96,21 @@ const clearCartFromStorage = () => {
 };
 
 export const useMenu = () => {
+  const idempotencyKeyRef = useRef<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [groupedProducts, setGroupedProducts] = useState<Record<string, Product[]>>({});
 
   // Carrinho inicializado do localStorage
   const [cart, setCart] = useState<CartItem[]>(() => getCartFromStorage());
 
   const [showCart, setShowCart] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('popular');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sessionConflict, setSessionConflict] = useState<SessionConflict | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const [productsLoaded, setProductsLoaded] = useState(false);
+  const [sessionCheckComplete, setSessionCheckComplete] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [shouldVerifySession, setShouldVerifySession] = useState(false);
 
   const { user } = useContext(AuthContext);
@@ -95,6 +120,7 @@ export const useMenu = () => {
   const organizationId = user?.organizationId;
   const tableNumber = params.number as string;
   const { clientToken, isLoading: tokenLoading } = useClientToken(tableNumber);
+  const groupedProducts = useMemo(() => groupProducts(products), [products]);
 
   // Funções de cookie (mantidas para compatibilidade)
   const setCookie = (name: string, value: string, hours: number = 24) => {
@@ -123,6 +149,7 @@ export const useMenu = () => {
 
   // Funções principais
   const fetchProducts = async () => {
+    setProductsLoaded(false);
     try {
       if (!organizationId) {
         toast.error('Organização não encontrada');
@@ -140,69 +167,36 @@ export const useMenu = () => {
                                       product.Category?.name?.toLowerCase() === 'ingrediente';
           return product.isIgredient === false && !isIngredienteCategory;
         })
-        .map((product: Product, index: number) => ({
+        .map((product: Product) => ({
           ...product,
           PrecoVenda: product.PrecoVenda || [{ preco_venda: 0 }],
-          orderCount: Math.floor(Math.random() * 100),
-          createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString()
+          orderCount: product.orderCount || 0,
+          createdAt: product.createdAt || product.created_at
         }));
 
       setProducts(processedProducts);
-      groupProductsByCategory(processedProducts);
     } catch (error) {
       console.error("Error fetching data:", error);
-      toast.error('Erro ao carregar produtos');
+      setLoadError('Não foi possível carregar os produtos do cardápio.');
+    } finally {
+      setProductsLoaded(true);
     }
   };
 
-  const groupProductsByCategory = (products: Product[]) => {
-    const grouped: Record<string, Product[]> = {};
-    products.forEach(product => {
-      let categoryName = product.Category?.name || (product.isDerived ? 'Pratos' : 'Sem Categoria');
-      
-      if (categoryName.toLowerCase() === 'ingredientes' || categoryName.toLowerCase() === 'ingrediente') {
-        return; // Pula ingredientes (redundante com o filtro anterior, mas garante)
-      }
-
-      if (!grouped[categoryName]) {
-        grouped[categoryName] = [];
-      }
-      grouped[categoryName].push(product);
-    });
-    
-    // Ordenação: Se existir "Pratos", "Entradas", "Pizzas", colocá-los primeiro
-    const sortedGrouped: Record<string, Product[]> = {};
-    const priorityCategories = ['Pratos', 'Pratos Principais', 'Entradas', 'Pizzas', 'Destaques'];
-    
-    // Adiciona categorias prioritárias primeiro
-    priorityCategories.forEach(cat => {
-      if (grouped[cat]) {
-        sortedGrouped[cat] = grouped[cat];
-      }
-    });
-
-    // Adiciona as restantes
-    Object.keys(grouped).forEach(cat => {
-      if (!priorityCategories.includes(cat)) {
-        sortedGrouped[cat] = grouped[cat];
-      }
-    });
-
-    setGroupedProducts(sortedGrouped);
-
-    const firstCategory = Object.keys(sortedGrouped)[0];
-    setActiveCategory(firstCategory);
-  };
-
   const checkToken = async () => {
-    if (tokenLoading || !clientToken) return;
-    if (!clientToken || clientToken === '') return;
+    if (tokenLoading) return;
+    if (!clientToken) {
+      setLoadError('Não foi possível preparar a identificação desta mesa.');
+      setSessionCheckComplete(true);
+      return;
+    }
     if (!user || !tableNumber || !organizationId) {
       toast.error('Dados incompletos para acessar o cardápio');
       return;
     }
 
     setIsCheckingSession(true);
+    setSessionCheckComplete(false);
     try {
       const response = await apiClient.post('/token/verify', {
         tableNumber: Number(tableNumber),
@@ -225,9 +219,12 @@ export const useMenu = () => {
           sessionId
         });
         toast.warning('Esta mesa já tem um pedido em andamento');
+      } else {
+        setLoadError(error.response?.data?.error || 'Não foi possível validar a mesa.');
       }
     } finally {
       setIsCheckingSession(false);
+      setSessionCheckComplete(true);
     }
   };
 
@@ -286,30 +283,18 @@ export const useMenu = () => {
     }
   };
 
-  const addToCart = (product: Product) => {
-    setSelectedProduct(product);
-    setQuantity(1);
-  };
-
-  const confirmAddToCart = () => {
-    if (!selectedProduct) return;
-
+  const addToCart = useCallback((product: Product) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.product.id === selectedProduct.id);
-      const updatedCart = existingItem
+      const existingItem = prevCart.find(item => item.product.id === product.id);
+      return existingItem
         ? prevCart.map(item =>
-          item.product.id === selectedProduct.id
-            ? { ...item, quantity: item.quantity + quantity }
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         )
-        : [...prevCart, { product: selectedProduct, quantity }];
-
-      return updatedCart;
+        : [...prevCart, { product, quantity: 1 }];
     });
-
-    toast.success(`${quantity}x ${selectedProduct.name} adicionado ao carrinho!`);
-    setSelectedProduct(null);
-  };
+  }, []);
 
   const updateCartItem = (productId: string, newQuantity: number) => {
     if (newQuantity < 1) {
@@ -326,6 +311,7 @@ export const useMenu = () => {
     );
   };
 
+  const updateCartNotes = (productId: string, notes: string) => { setCart(prev => prev.map(item => item.product.id === productId ? { ...item, notes } : item)); };
   const removeFromCart = (productId: string) => {
     setCart(prevCart => prevCart.filter(item => item.product.id !== productId));
   };
@@ -334,7 +320,6 @@ export const useMenu = () => {
   const clearCart = () => {
     setCart([]);
     clearCartFromStorage();
-    toast.success('Carrinho limpo com sucesso!');
   };
 
   const submitOrder = async () => {
@@ -350,9 +335,11 @@ export const useMenu = () => {
 
     setIsSubmitting(true);
     try {
+      const idempotencyKey = idempotencyKeyRef.current ?? crypto.randomUUID();
+      idempotencyKeyRef.current = idempotencyKey;
       const items = cart.map(item => ({
         productId: item.product.id,
-        amount: item.quantity
+        amount: item.quantity, notes: item.notes
       }));
 
       const response = await apiClient.post('/orders/with-stock', {
@@ -361,9 +348,7 @@ export const useMenu = () => {
         items,
         customerName: tableNumber === 'TAKEAWAY' ? 'Pedido Takeaway' : `Pedido Mesa ${tableNumber}`,
         clientToken: clientToken,
-        qrToken: clientToken,
-        tipoSessao: '',
-        userId: user.id
+        idempotencyKey
       });
 
       if (response.data.success) {
@@ -373,6 +358,7 @@ export const useMenu = () => {
         clearCartFromStorage();
         setCart([]);
         setShowCart(false);
+        idempotencyKeyRef.current = null;
       }
     } catch (error: any) {
       console.error("Error submitting order:", error);
@@ -393,25 +379,29 @@ export const useMenu = () => {
     }
   };
 
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => {
+  const cartTotal = useMemo(() => cart.reduce((total, item) => {
       const price = item.product.PrecoVenda[0]?.preco_venda || 0;
       return total + (price * item.quantity);
-    }, 0);
-  };
+    }, 0), [cart]);
 
-  const getFeaturedProductsByTab = () => {
+  const featuredProducts = useMemo(() => {
     switch (activeTab) {
       case 'popular':
-        return [...products].sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0)).slice(0, 8);
+        return products.filter(product => product.isFeatured || (product.orderCount || 0) > 0)
+          .sort((a, b) => Number(Boolean(b.isFeatured)) - Number(Boolean(a.isFeatured)) || (b.orderCount || 0) - (a.orderCount || 0)).slice(0, 6);
       case 'recent':
-        return [...products].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()).slice(0, 8);
+        return products.filter(product => product.isNew || (product.createdAt && new Date(product.createdAt).getTime() > Date.now() - 7 * 86400000))
+          .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()).slice(0, 6);
       case 'price':
-        return [...products].sort((a, b) => (a.PrecoVenda[0]?.preco_venda || 0) - (b.PrecoVenda[0]?.preco_venda || 0)).slice(0, 8);
+        return [...products].sort((a, b) => (a.PrecoVenda[0]?.preco_venda || 0) - (b.PrecoVenda[0]?.preco_venda || 0)).slice(0, 6);
       default:
-        return products.slice(0, 8);
+        return products.slice(0, 6);
     }
-  };
+  }, [activeTab, products]);
+
+  const calculateTotal = useCallback(() => cartTotal, [cartTotal]);
+  const getFeaturedProductsByTab = useCallback(() => featuredProducts, [featuredProducts]);
+  const isReady = productsLoaded && !tokenLoading && sessionCheckComplete;
 
   // Efeitos
   useEffect(() => {
@@ -421,7 +411,12 @@ export const useMenu = () => {
   }, [user, organizationId]);
 
   useEffect(() => {
-    if (!tokenLoading && clientToken && user && organizationId && tableNumber && !shouldVerifySession) {
+    const categories = Object.keys(groupedProducts);
+    setActiveCategory(current => current && groupedProducts[current] ? current : categories[0] || null);
+  }, [groupedProducts]);
+
+  useEffect(() => {
+    if (!tokenLoading && user && organizationId && tableNumber && !shouldVerifySession) {
       checkToken();
     }
   }, [tokenLoading, clientToken, user, organizationId, tableNumber, shouldVerifySession]);
@@ -432,8 +427,6 @@ export const useMenu = () => {
     groupedProducts,
     cart,
     showCart,
-    selectedProduct,
-    quantity,
     activeCategory,
     activeTab,
     isSubmitting,
@@ -442,11 +435,11 @@ export const useMenu = () => {
     tableNumber,
     clientToken,
     tokenLoading,
+    isReady,
+    loadError,
 
     // Setters
     setShowCart,
-    setSelectedProduct,
-    setQuantity,
     setActiveCategory,
     setActiveTab,
 
@@ -455,8 +448,8 @@ export const useMenu = () => {
     syncWithExistingSession,
     createNewSession,
     addToCart,
-    confirmAddToCart,
     updateCartItem,
+    updateCartNotes,
     removeFromCart,
     clearCart,
     submitOrder,

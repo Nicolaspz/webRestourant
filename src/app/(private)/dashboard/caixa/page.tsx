@@ -1,18 +1,22 @@
 'use client'
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import CaixaHeader from '@/components/dashboard/caixa/CaixaHeader';
-import FaturaList from '@/components/dashboard/caixa/FaturaList';
-import Estatisticas from '@/components/dashboard/caixa/Estatisticas';
 import { AuthContext } from '@/contexts/AuthContext';
 import { setupAPIClient } from '@/services/api';
 import { useSocket } from '@/contexts/SocketContext';
 import { Fatura, Mesa } from '@/types/product';
-import ModalPagamento from '@/components/dashboard/mesas/ModalPagamento';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { gerarPDFReciboPago } from '@/components/dashboard/mesas/pdfNpago';
 import { toast } from 'react-toastify';
+import { CreditCard, X } from 'lucide-react';
+import { usePosSettings } from '@/hooks/usePosSettings';
+import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
+
+const FaturaList = dynamic(() => import('@/components/dashboard/caixa/FaturaList'));
+const Estatisticas = dynamic(() => import('@/components/dashboard/caixa/Estatisticas'));
+const ModalPagamento = dynamic(() => import('@/components/dashboard/mesas/ModalPagamento'), { ssr: false });
 
 // Definir interface para os parâmetros
 interface FaturaParams {
@@ -22,6 +26,9 @@ interface FaturaParams {
   status?: string;
 }
 
+const CACHE_TTL = 30_000;
+type CacheEntry<T> = { data: T; updatedAt: number };
+
 const Caixa = () => {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [mesas, setMesas] = useState<Mesa[]>([]);
@@ -29,26 +36,34 @@ const Caixa = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState('abertas');
   const [estatisticas, setEstatisticas] = useState(null);
+  const mesasCache = useRef<CacheEntry<Mesa[]> | null>(null);
+  const faturasCache = useRef<Record<string, CacheEntry<Fatura[]>>>({});
+  const estatisticasCache = useRef<Record<string, CacheEntry<any>>>({});
 
   // Estado do modal de pagamento para mesas abertas
-  const [modalPagamentoMesa, setModalPagamentoMesa] = useState<{
-    open: boolean;
+  const [fechosAbertos, setFechosAbertos] = useState<Array<{
     mesaId: string;
     mesaNumber: number;
-  }>({ open: false, mesaId: '', mesaNumber: 0 });
+  }>>([]);
+  const [fechoAtivo, setFechoAtivo] = useState<number | null>(null);
 
   const { user } = useContext(AuthContext);
   const { socket } = useSocket();
   const apiClient = setupAPIClient();
+  const { settings: posSettings } = usePosSettings(user?.organizationId);
+  const { printPaidReceipt } = useReceiptPrinter(posSettings);
 
   // Função para formatar data
   const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
-  const fetchMesas = async () => {
+  const fetchMesas = async (silent = false) => {
     if (!user?.organizationId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const response = await apiClient.get('/mesas', {
         params: { organizationId: user.organizationId }
@@ -56,38 +71,49 @@ const Caixa = () => {
       // Filtrar apenas mesas ocupadas para o checkout no caixa
       const mesasOcupadas = response.data.filter((m: Mesa) => m.status === 'ocupada');
       setMesas(mesasOcupadas);
+      mesasCache.current = { data: mesasOcupadas, updatedAt: Date.now() };
     } catch (error) {
-      console.error('❌ Erro ao buscar mesas:', error);
-      setMesas([]);
+      console.error('Erro ao buscar mesas:', error);
+      if (!silent) {
+        setMesas([]);
+        toast.error('Não foi possível carregar as mesas abertas.');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
-  const fetchFaturas = async (date: Date, status: string | undefined) => {
+  const fetchFaturas = async (date: Date, status: string | undefined, silent = false) => {
     if (!user?.organizationId) {
-      console.error('❌ OrganizationId não encontrado');
+      console.error('Organização não encontrada');
       return;
     }
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const dataInicio = formatDate(date);
       const dataFim = formatDate(date);
 
-      const url = `/faturas?organizationId=${user.organizationId}&dataInicio=${dataInicio}&dataFim%3A=${dataFim}${status && status !== 'todas' ? `&status=${status}` : ''}`;
-
-      console.log('🌐 URL correta:', url);
-
-      const response = await apiClient.get(url);
-      console.log("✅ Faturas recebidas:", response.data);
+      const response = await apiClient.get('/faturas', {
+        params: {
+          organizationId: user.organizationId,
+          dataInicio,
+          dataFim,
+          ...(status && status !== 'todas' ? { status } : {}),
+        },
+      });
 
       setFaturas(response.data || []);
+      const cacheKey = `${formatDate(date)}:${status || 'todas'}`;
+      faturasCache.current[cacheKey] = { data: response.data || [], updatedAt: Date.now() };
     } catch (error: any) {
       console.error('❌ Erro:', error.response?.data);
-      setFaturas([]);
+      if (!silent) {
+        setFaturas([]);
+        toast.error(error.response?.data?.error || 'Não foi possível carregar as faturas.');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -106,9 +132,9 @@ const Caixa = () => {
         }
       });
       setEstatisticas(response.data);
-      console.log("📊 Estatistica venda:", response.data);
+      estatisticasCache.current[formatDate(date)] = { data: response.data, updatedAt: Date.now() };
     } catch (error) {
-      console.error('❌ Erro ao buscar estatísticas:', error);
+      console.error('Erro ao buscar estatísticas:', error);
       setEstatisticas(null);
     }
   };
@@ -130,9 +156,9 @@ const Caixa = () => {
 
           const currentStatus = statusMap[activeTab as keyof typeof statusMap];
           if (activeTab === 'abertas') {
-            fetchMesas();
+            fetchMesas(true);
           } else {
-            fetchFaturas(selectedDate, currentStatus);
+            fetchFaturas(selectedDate, currentStatus, true);
           }
           fetchEstatisticas(selectedDate);
         }
@@ -158,23 +184,60 @@ const Caixa = () => {
 
       const currentStatus = statusMap[activeTab as keyof typeof statusMap];
       if (activeTab === 'abertas') {
-        fetchMesas();
+        const cached = mesasCache.current;
+        if (cached) setMesas(cached.data);
+        if (!cached || Date.now() - cached.updatedAt >= CACHE_TTL) fetchMesas(Boolean(cached));
       } else {
-        fetchFaturas(selectedDate, currentStatus);
+        const cacheKey = `${formatDate(selectedDate)}:${currentStatus || 'todas'}`;
+        const cached = faturasCache.current[cacheKey];
+        if (cached) setFaturas(cached.data);
+        if (!cached || Date.now() - cached.updatedAt >= CACHE_TTL) {
+          fetchFaturas(selectedDate, currentStatus, Boolean(cached));
+        }
       }
-      fetchEstatisticas(selectedDate);
+      const statsKey = formatDate(selectedDate);
+      const cachedStats = estatisticasCache.current[statsKey];
+      if (cachedStats) setEstatisticas(cachedStats.data);
+      if (!cachedStats || Date.now() - cachedStats.updatedAt >= CACHE_TTL) fetchEstatisticas(selectedDate);
     }
   }, [selectedDate, activeTab, user?.organizationId]);
 
-  const handlePagamentoSuccess = (dadosFechamento?: any) => {
+  // O socket dá resposta imediata; este fallback cobre reconexões, outros
+  // dispositivos e eventos perdidos sem apagar o conteúdo que já está visível.
+  useEffect(() => {
+    if (!user?.organizationId) return;
+    const refreshCurrentView = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (activeTab === 'abertas') void fetchMesas(true);
+      else {
+        const statusMap: Record<string, string | undefined> = {
+          pendentes: 'pendente', pagas: 'paga', canceladas: 'cancelada', todas: undefined,
+        };
+        void fetchFaturas(selectedDate, statusMap[activeTab], true);
+      }
+    };
+    const timer = window.setInterval(refreshCurrentView, CACHE_TTL);
+    window.addEventListener('focus', refreshCurrentView);
+    document.addEventListener('visibilitychange', refreshCurrentView);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshCurrentView);
+      document.removeEventListener('visibilitychange', refreshCurrentView);
+    };
+  }, [activeTab, selectedDate, user?.organizationId]);
+
+  const handlePagamentoSuccess = async (dadosFechamento?: any) => {
     if (activeTab === 'abertas' && dadosFechamento) {
-      // Gerar recibo pago para mesas fechadas agora
-      gerarPDFReciboPago(dadosFechamento, {
-        metodo: dadosFechamento.metodoPagamento,
-        valorPago: dadosFechamento.valorPago,
-        trocoPara: dadosFechamento.trocoPara
-      });
-      fetchMesas();
+      const [printed] = await Promise.all([
+        printPaidReceipt(dadosFechamento, {
+          metodo: dadosFechamento.metodoPagamento,
+          valorPago: dadosFechamento.valorPago,
+          trocoPara: dadosFechamento.trocoPara
+        }),
+        fetchMesas(true),
+        fetchEstatisticas(selectedDate),
+      ]);
+      return printed;
     } else if (activeTab === 'abertas') {
       fetchMesas();
     } else {
@@ -187,41 +250,67 @@ const Caixa = () => {
       fetchFaturas(selectedDate, statusMap[activeTab as keyof typeof statusMap]);
     }
     fetchEstatisticas(selectedDate);
+    return false;
   };
 
   const openCheckoutMesa = (mesa: Mesa) => {
-    setModalPagamentoMesa({
-      open: true,
-      mesaId: mesa.id,
-      mesaNumber: mesa.number
-    });
+    setFechosAbertos(current => current.some(item => item.mesaNumber === mesa.number)
+      ? current
+      : [...current, { mesaId: mesa.id, mesaNumber: mesa.number }]);
+    setFechoAtivo(mesa.number);
   };
 
-  const gerarProformaMesa = async (mesaNumber: number) => {
-    if (!user?.organizationId) return;
+  const fecharJanelaConta = (mesaNumber: number) => {
+    setFechosAbertos(current => current.filter(item => item.mesaNumber !== mesaNumber));
+    setFechoAtivo(current => current === mesaNumber ? null : current);
+  };
 
+  const consultaEmCurso = useRef(false);
+  const [imprimindoPreConta, setImprimindoPreConta] = useState(false);
+
+  const imprimirPreConta = async (endpoint: string) => {
+    if (!user?.organizationId || consultaEmCurso.current) return;
+    consultaEmCurso.current = true;
+    setImprimindoPreConta(true);
     try {
-      const response = await apiClient.post('/proformas', {
-        organizationId: user.organizationId,
-        mesaNumber
+      const { data } = await apiClient.get(endpoint, {
+        params: { organizationId: user.organizationId },
       });
-      toast.success(`Proforma ${response.data.numero} emitida com sucesso.`);
+      const { gerarPDFReciboNaoPago } = await import('@/components/dashboard/mesas/pdfNpago');
+      await gerarPDFReciboNaoPago(
+        posSettings.printLogo ? data : { ...data, organization: { ...data.organization, imageLogo: null } },
+        posSettings.paperWidth === 'a4' ? false : posSettings.paperWidth,
+        true,
+      );
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erro ao emitir proforma.');
+      toast.error(error.response?.data?.error || error.message || 'Erro ao imprimir a pré-conta.');
+    } finally {
+      consultaEmCurso.current = false;
+      setImprimindoPreConta(false);
     }
   };
 
-  const gerarProformaFatura = async (fatura: Fatura) => {
-    if (!user?.organizationId) return;
-
+  const atualizarEstadoFiscal = async (fatura: Fatura) => {
     try {
-      const response = await apiClient.post('/proformas', {
-        organizationId: user.organizationId,
-        sessionId: fatura.session.id
-      });
-      toast.success(`Proforma ${response.data.numero} emitida com sucesso.`);
+      const action = fatura.fiscalSubmission?.requestId ? 'sync' : 'retry';
+      await apiClient.post(`/faturas/${fatura.id}/fiscal/${action}`);
+      toast.success(action === 'sync' ? 'Estado fiscal atualizado.' : 'Submissão fiscal reenviada.');
+      await fetchFaturas(selectedDate, activeTab === 'pagas' ? 'paga' : undefined);
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erro ao emitir proforma.');
+      toast.error(error.response?.data?.error || 'Não foi possível atualizar o estado fiscal.');
+    }
+  };
+
+  const abrirQRCodeFiscal = async (fatura: Fatura) => {
+    try {
+      const response = await apiClient.get(`/faturas/${fatura.id}/fiscal/qrcode`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(response.data);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'O QR Code fiscal ainda não está disponível.');
     }
   };
 
@@ -274,9 +363,10 @@ const Caixa = () => {
                         <Button
                           variant="outline"
                           className="w-full gap-2"
-                          onClick={() => gerarProformaMesa(mesa.number)}
+                          disabled={imprimindoPreConta}
+                          onClick={() => imprimirPreConta(`/fact/${mesa.number}`)}
                         >
-                          Proforma
+                          Pré-conta
                         </Button>
                         <Button className="w-full gap-2 bg-green-600 hover:bg-green-700" onClick={() => openCheckoutMesa(mesa)}>
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -299,7 +389,15 @@ const Caixa = () => {
                 faturas={faturas}
                 loading={loading}
                 onPagamentoSuccess={handlePagamentoSuccess}
-                onProforma={gerarProformaFatura}
+                onPreConta={fatura => imprimirPreConta(`/factid/${fatura.id}`)}
+                onFiscalSync={atualizarEstadoFiscal}
+                onPrint={async fatura => {
+                  try {
+                    const {data} = await apiClient.get('/factid/'+fatura.id, {params:{organizationId:user?.organizationId}});
+                    await printPaidReceipt({...data, fiscalStatus:fatura.fiscalSubmission?.status, agtDocumentNo:fatura.fiscalSubmission?.documentNo || fatura.numero}, {metodo:data.metodoPagamento,valorPago:Number(data.valorPago),trocoPara:Number(data.trocoPara)||undefined}, true);
+                  } catch(error:any) { toast.error(error.response?.data?.error || 'Não foi possível carregar a fatura para impressão'); }
+                }}
+                onFiscalQRCode={abrirQRCodeFiscal}
               />
             )}
           </div>
@@ -310,15 +408,29 @@ const Caixa = () => {
         </div>
       </div>
 
-      {modalPagamentoMesa.open && (
+      {fechosAbertos.map(fecho => (
         <ModalPagamento
-          open={modalPagamentoMesa.open}
-          mesaId={modalPagamentoMesa.mesaId}
-          mesaNumber={modalPagamentoMesa.mesaNumber}
+          key={fecho.mesaId}
+          open
+          visible={fechoAtivo === fecho.mesaNumber}
+          mesaId={fecho.mesaId}
+          mesaNumber={fecho.mesaNumber}
           organizationId={user?.organizationId || ''}
-          onClose={() => setModalPagamentoMesa(prev => ({ ...prev, open: false }))}
-          onSuccess={handlePagamentoSuccess}
+          onMinimize={() => setFechoAtivo(null)}
+          onClose={() => fecharJanelaConta(fecho.mesaNumber)}
+          onSuccess={async (dados) => { const printed = await handlePagamentoSuccess(dados); fecharJanelaConta(fecho.mesaNumber); return printed; }}
         />
+      ))}
+
+      {fechosAbertos.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 z-[90] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 gap-2 overflow-x-auto rounded-2xl border bg-background/95 p-2 shadow-2xl backdrop-blur">
+          {fechosAbertos.map(fecho => (
+            <div key={fecho.mesaId} className={`flex min-w-max items-center rounded-xl border ${fechoAtivo === fecho.mesaNumber ? 'border-primary bg-primary/10' : 'bg-muted/40'}`}>
+              <button type="button" onClick={() => setFechoAtivo(fecho.mesaNumber)} className="flex min-h-12 items-center gap-2 px-4 font-semibold"><CreditCard className="h-4 w-4" />Mesa {fecho.mesaNumber}</button>
+              <button type="button" onClick={() => fecharJanelaConta(fecho.mesaNumber)} aria-label={`Fechar pagamento da mesa ${fecho.mesaNumber}`} className="mr-1 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><X className="h-4 w-4" /></button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

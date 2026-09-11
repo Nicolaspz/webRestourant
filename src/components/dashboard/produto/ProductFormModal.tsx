@@ -55,6 +55,8 @@ export function ProductFormModal({
     price: 0,
     existingBanner: '',
     defaultAreaId: '',
+    taxPercentage: 14,
+    taxExemptionCode: '',
   });
 
   const { user } = useContext(AuthContext);
@@ -69,6 +71,9 @@ export function ProductFormModal({
 
     return category.kind === 'MENU' || !category.kind;
   });
+  const categoryLabel = (category: Category) => category.parent
+    ? `${category.parent.name} › ${category.name}`
+    : category.name;
 
   const fetchAreas = async () => {
     if (!user?.organizationId) return;
@@ -130,7 +135,9 @@ export function ProductFormModal({
           previewImage: initialData.banner ? getMediaUrl(initialData.banner) : '',
           price: initialData.PrecoVenda?.[0]?.preco_venda || 0,
           existingBanner: initialData.banner || '',
-          defaultAreaId: areaId // ← Usando o valor correto
+          defaultAreaId: areaId,
+          taxPercentage: Number(initialData.taxPercentage ?? 14),
+          taxExemptionCode: initialData.taxExemptionCode || '',
         });
 
         console.log("✅ FormData setado:", {
@@ -155,6 +162,8 @@ export function ProductFormModal({
           price: 0,
           existingBanner: '',
           defaultAreaId: '',
+          taxPercentage: 14,
+          taxExemptionCode: '',
         });
       }
 
@@ -212,6 +221,8 @@ export function ProductFormModal({
       formPayload.append('isFeatured', formData.isFeatured.toString());
       formPayload.append('isNew', formData.isNew.toString());
       formPayload.append('productKind', formData.productKind);
+      formPayload.append('taxPercentage', String(formData.taxPercentage));
+      formPayload.append('taxExemptionCode', formData.taxExemptionCode);
 
       if (formData.categoryId) {
         formPayload.append('categoryId', formData.categoryId);
@@ -380,6 +391,7 @@ export function ProductFormModal({
               }
             </p>
           </div>
+
           <Button
             variant="ghost"
             size="sm"
@@ -411,6 +423,22 @@ export function ProductFormModal({
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Ingredientes entram no stock/receitas. Produtos e pratos aparecem no cardapio.
             </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="taxPercentage">IVA (%)</Label>
+              <Input id="taxPercentage" type="number" min="0" max="100" step="0.01"
+                value={formData.taxPercentage}
+                onChange={(event) => handleInputChange('taxPercentage', Number(event.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="taxExemptionCode">Código de isenção</Label>
+              <Input id="taxExemptionCode" value={formData.taxExemptionCode}
+                disabled={Number(formData.taxPercentage) !== 0}
+                placeholder={Number(formData.taxPercentage) === 0 ? 'Ex.: M00' : 'Não aplicável'}
+                onChange={(event) => handleInputChange('taxExemptionCode', event.target.value)} />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -478,7 +506,7 @@ export function ProductFormModal({
               >
                 <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue placeholder="Selecione uma categoria">
-                    {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.name}
+                    {formData.categoryId && categories.find(cat => cat.id === formData.categoryId) && categoryLabel(categories.find(cat => cat.id === formData.categoryId)!)}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
@@ -488,7 +516,7 @@ export function ProductFormModal({
                       value={category.id}
                       className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
-                      {category.parentId ? `  - ${category.name}` : category.name}
+                      {categoryLabel(category)}
                     </SelectItem>
                   ))}
                 </SelectContent>

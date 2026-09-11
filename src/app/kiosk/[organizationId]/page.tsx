@@ -34,6 +34,7 @@ export default function KioskMenu() {
         setShowTableModal,
         addToCart,
         updateQuantity,
+    updateNotes,
         handleCheckout
     } = useKioskMenu();
 
@@ -87,7 +88,7 @@ export default function KioskMenu() {
                     cart={cart}
                     total={cartTotal}
                     onClose={() => setCartOpen(false)}
-                    onUpdateQuantity={updateQuantity}
+                    onUpdateNotes={updateNotes} onUpdateQuantity={updateQuantity}
                     onCheckout={() => setShowTableModal(true)}
                 />
             </AnimatePresence>

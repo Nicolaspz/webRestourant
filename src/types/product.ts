@@ -47,6 +47,8 @@ export interface Product {
   isFeatured: boolean;
   isNew: boolean;
   productKind?: 'INGREDIENT' | 'SIMPLE_PRODUCT' | 'RECIPE_PRODUCT';
+  taxPercentage?: number;
+  taxExemptionCode?: string | null;
   PrecoVenda: PrecoVenda[];
   recipeItems: RecipeItem[];
   categoryId: string;
@@ -88,6 +90,8 @@ export interface ProductFormData {
   price: number;
   existingBanner?: string;
   defaultAreaId: string;
+  taxPercentage: number;
+  taxExemptionCode: string;
 }
 export interface Ingredient {
   id: string;
@@ -130,6 +134,17 @@ export interface Fatura {
   criadaEm: string;
   pagaEm: string;
   metodoPagamento: string;
+  fiscalSubmission?: {
+    id: string;
+    documentNo?: string | null;
+    requestId?: string | null;
+    agtRequestId?: string | null;
+    status: string;
+    message?: string | null;
+    attempts: number;
+    submittedAt?: string | null;
+    completedAt?: string | null;
+  } | null;
   session: {
     id: string;
     codigoAbertura: string;
@@ -161,6 +176,7 @@ export interface Mesa {
   capacidade: number;
   status: 'livre' | 'ocupada' | 'reservada' | 'manutencao';
   qrCodeUrl?: string;
+  publicOrderToken: string;
   reservas: Reserva[];
   sessions?: Session[];
   sessaoAtiva?: {

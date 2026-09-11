@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 export interface User {
   id: string;
@@ -83,13 +84,13 @@ export function UserFormModal({
 
     // Validação de senha para criação
     if (mode === 'create' && formData.password !== formData.confirmPassword) {
-      alert("As senhas não coincidem!");
+      toast.warning("As palavras-passe não coincidem.");
       return;
     }
 
     // Validação de senha para edição (se preenchida)
     if (mode === 'edit' && formData.password && formData.password !== formData.confirmPassword) {
-      alert("As senhas não coincidem!");
+      toast.warning("As palavras-passe não coincidem.");
       return;
     }
 

@@ -57,7 +57,7 @@ const CaixaHeader = ({ selectedDate, onDateChange, activeTab, onTabChange }: Cai
                     !selectedDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" />
                   {selectedDate ? (
                     format(selectedDate, "PPP", { locale: pt })
                   ) : (
@@ -88,22 +88,22 @@ const CaixaHeader = ({ selectedDate, onDateChange, activeTab, onTabChange }: Cai
             onClick={() => window.print()}
             className="gap-2"
           >
-            <PrinterIcon className="h-4 w-4" />
-            Imprimir Relatório
+            <PrinterIcon className="h-4 w-4" aria-hidden="true" />
+            Imprimir relatório
           </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="flex h-auto w-full justify-start overflow-x-auto p-1">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.id}
                 value={tab.id}
-                className="relative"
+                className="relative min-h-11 min-w-max px-4"
               >
                 {tab.label}
                 {tab.badge && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3" aria-hidden="true">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
                   </span>

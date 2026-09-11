@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -37,6 +37,7 @@ export default function TakeawayPaymentModal({
     pedido,
     onSuccess
 }: TakeawayPaymentModalProps) {
+    const idempotencyKey = useRef(crypto.randomUUID());
     const [metodoPagamento, setMetodoPagamento] = useState('multicaixa');
     const [valorPago, setValorPago] = useState(0);
     const [trocoPara, setTrocoPara] = useState('');
@@ -61,6 +62,7 @@ export default function TakeawayPaymentModal({
     }, 0) || 0;
 
     useEffect(() => {
+        if (isOpen) idempotencyKey.current = crypto.randomUUID();
         if (totalGeral > 0) {
             setValorPago(totalGeral);
         }
@@ -70,7 +72,7 @@ export default function TakeawayPaymentModal({
         { value: 'multicaixa', label: 'Multicaixa', icon: <Landmark className="w-4 h-4" /> },
         { value: 'dinheiro', label: 'Dinheiro', icon: <Banknote className="w-4 h-4" /> },
         { value: 'transferencia', label: 'Transferência', icon: <Landmark className="w-4 h-4" /> },
-        { value: 'cartao_debito', label: 'Cartão Débito', icon: <CreditCard className="w-4 h-4" /> },
+        { value: 'cartao', label: 'Cartão Débito', icon: <CreditCard className="w-4 h-4" /> },
     ];
 
     const troco = (parseFloat(trocoPara) || 0) > totalGeral ? (parseFloat(trocoPara) - totalGeral) : 0;
@@ -81,6 +83,7 @@ export default function TakeawayPaymentModal({
             await apiClient.put(`/takeaway/pedidos/${pedido.id}/aprovar`, {
                 organizationId: pedido.organizationId,
                 pagamento: {
+                    idempotencyKey: idempotencyKey.current,
                     metodoPagamento,
                     valorPago: Number(valorPago),
                     trocoPara: trocoPara ? Number(trocoPara) : undefined,

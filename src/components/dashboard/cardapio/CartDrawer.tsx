@@ -13,11 +13,13 @@ interface CartDrawerProps {
       PrecoVenda: { preco_venda: number }[];
     };
     quantity: number;
+    notes?: string;
   }>;
   total: number;
   isSubmitting: boolean;
   onClose: () => void;
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
+  onUpdateNotes: (productId: string, notes: string) => void;
   onSubmitOrder: () => void;
 }
 
@@ -29,6 +31,7 @@ export function CartDrawer({
   isSubmitting,
   onClose,
   onUpdateQuantity,
+  onUpdateNotes,
   onSubmitOrder
 }: CartDrawerProps) {
   return (
@@ -80,6 +83,7 @@ export function CartDrawer({
                         <h3 className="font-medium text-gray-900">
                           {item.product.name}
                         </h3>
+                        <label className="block text-xs text-gray-700 mt-2">Observações / restrições alimentares (opcional)<textarea maxLength={500} disabled={isSubmitting} value={item.notes || ""} onChange={e => onUpdateNotes(item.product.id, e.target.value)} placeholder="Ex.: sem amendoim; cliente 1 sem lactose" className="mt-1 w-full rounded border p-2 text-sm" /></label>
                         <p className="text-sm text-gray-600">
                           {(item.product.PrecoVenda[0]?.preco_venda || 0).toFixed(2)} Kz × {item.quantity}
                         </p>

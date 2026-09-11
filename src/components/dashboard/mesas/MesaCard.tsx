@@ -30,7 +30,7 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
   };
 
-  const cardapioUrl = `${user?.organizationId}/${mesa.number}`;
+  const cardapioUrl = `/menu/${user?.organizationId}/${mesa.number}?access=${encodeURIComponent(mesa.publicOrderToken)}`;
 
   const handleConfirmEliminar = () => {
     onEliminarMesa(mesa.id);
@@ -62,6 +62,7 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
             <QRCodePrinter
               organizationId={user?.organizationId}
               mesaNumber={mesa.number}
+              publicOrderToken={mesa.publicOrderToken}
             />
           )}
 

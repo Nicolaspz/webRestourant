@@ -30,6 +30,7 @@ interface CategoryFormModalProps {
     mode: "create" | "edit";
     organizationId: string;
     categories: Category[];
+    defaultParentId?: string | null;
 }
 
 export function CategoryFormModal({
@@ -39,7 +40,8 @@ export function CategoryFormModal({
     initialData,
     mode,
     organizationId,
-    categories
+    categories,
+    defaultParentId
 }: CategoryFormModalProps) {
     const [name, setName] = useState("");
     const [kind, setKind] = useState<"MENU" | "STOCK">("MENU");
@@ -63,9 +65,9 @@ export function CategoryFormModal({
         } else {
             setName("");
             setKind("MENU");
-            setParentId("none");
+            setParentId(defaultParentId || "none");
         }
-    }, [mode, initialData, isOpen]);
+    }, [mode, initialData, isOpen, defaultParentId]);
 
     if (!isOpen) return null;
 
@@ -111,7 +113,7 @@ export function CategoryFormModal({
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                     <div>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {mode === "create" ? "Registar Categoria" : "Editar Categoria"}
+                            {mode === "create" ? (defaultParentId ? "Registar Subcategoria" : "Registar Categoria") : "Editar Categoria"}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             Organize o cardapio e o stock com categorias e subcategorias.
@@ -184,7 +186,7 @@ export function CategoryFormModal({
                                     Processando...
                                 </>
                             ) : (
-                                mode === "create" ? "Guardar Categoria" : "Atualizar Categoria"
+                                mode === "create" ? (defaultParentId ? "Guardar Subcategoria" : "Guardar Categoria") : "Atualizar Categoria"
                             )}
                         </Button>
                     </div>
