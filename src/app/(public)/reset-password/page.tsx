@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="sf-auth sf-auth-status">
       <Card className="w-full max-w-md p-6 shadow-lg">
         <CardHeader>
           <CardTitle className="text-center">Redefinir Senha</CardTitle>

@@ -56,7 +56,7 @@ function VerifyOrganizationContent() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="sf-auth sf-auth-status">
             <title>Verificar Código | Serve Fixe</title>
 
             <div className="w-full max-w-md text-center">
@@ -78,7 +78,7 @@ function VerifyOrganizationContent() {
                     ) : (
                         <form onSubmit={handleVerify} className="space-y-6">
                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mb-2">
-                                <Smartphone className="h-8 w-8 text-amber-600" />
+                                <Smartphone className="h-8 w-8 text-blue-700" />
                             </div>
 
                             <div>
@@ -97,7 +97,7 @@ function VerifyOrganizationContent() {
                                     inputMode="numeric"
                                     maxLength={6}
                                     placeholder="000000"
-                                    className="h-14 text-center text-2xl tracking-[0.5em] font-bold border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                                    className="h-14 text-center text-2xl tracking-[0.5em] font-bold border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                                     value={code}
                                     onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                                     required
@@ -107,7 +107,7 @@ function VerifyOrganizationContent() {
                             <button
                                 type="submit"
                                 disabled={loading || code.length !== 6}
-                                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:from-amber-600 hover:to-orange-700 transition-all shadow-md disabled:opacity-50"
+                                className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all shadow-md disabled:opacity-50"
                             >
                                 {loading ? (
                                     <>
@@ -126,7 +126,7 @@ function VerifyOrganizationContent() {
                                 <button
                                     type="button"
                                     onClick={() => router.push("/register")}
-                                    className="text-sm text-gray-500 hover:text-amber-600 transition-colors"
+                                    className="text-sm text-gray-500 hover:text-blue-700 transition-colors"
                                 >
                                     Não recebeu o código? Tente novamente
                                 </button>

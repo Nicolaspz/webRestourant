@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Check, ChefHat, ClipboardList, CreditCard, Package, QrCode, Users, Utensils } from 'lucide-react';
 import './landing.css';
+import LandingEffects from './LandingEffects';
 
 const features = [
   { icon: QrCode, title: 'O atendimento começa à mesa', text: 'Menu por QR Code, mesas organizadas por área e pedidos com observações para a equipa.' },
@@ -19,6 +20,7 @@ const plans = [
 
 export default function HomePage() {
   return <main className="sf-home">
+    <LandingEffects />
     <section className="sf-hero">
       <div className="sf-wrap sf-hero-grid">
         <div className="sf-hero-copy">

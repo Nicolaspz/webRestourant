@@ -1,0 +1,24 @@
+
+.sf-auth{--primary:#2459a6;--primary-foreground:#fff;--foreground:#172b43;--background:#fafaf7;--card:#fff;--card-foreground:#172b43;--input:#cbd5e2;--border:#dfe5ed;--ring:#6596d5;color:#172b43;background:#fafaf7;font-family:var(--font-geist-sans);min-height:100dvh;padding-top:64px}
+.sf-auth-split{display:flex}
+.sf-auth-story{width:40%;flex-shrink:0;min-height:calc(100dvh - 64px);overflow:hidden}
+.sf-auth-story>img{filter:saturate(.65)}
+.sf-auth-story h2{font-size:clamp(30px,3vw,44px);line-height:1.18;letter-spacing:-.045em;font-weight:600}
+.sf-auth-story p{font-size:15px;line-height:1.8;max-width:350px;margin-top:18px;color:#c3d1e0}
+.sf-auth-main{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;padding:48px 40px;position:relative}
+.sf-auth-form{background:#fff;border:1px solid #e1e6ec;border-radius:16px;padding:32px;box-shadow:0 8px 30px #172b4305}
+.sf-auth h1{font-size:28px;letter-spacing:-.04em;font-weight:600;line-height:1.2}
+.sf-auth form label{font-size:12px;color:#405269;font-weight:600}
+.sf-auth input{background:#fff;border-color:#cbd5e2;border-radius:8px;box-shadow:none;min-height:44px;color:#172b43}
+.sf-auth input::placeholder{color:#8995a4}
+.sf-auth input:focus-visible{outline:2px solid #6596d5;outline-offset:2px}
+.sf-auth button:focus-visible,.sf-auth a:focus-visible{outline:2px solid #6596d5;outline-offset:3px}
+.sf-auth button[type=submit]{border-radius:8px;box-shadow:none}
+.sf-auth-status{display:flex;align-items:center;justify-content:center;padding:104px 22px 40px}
+.sf-auth-status [data-slot=card]{background:#fff;border:1px solid #e1e6ec;border-radius:16px;box-shadow:0 10px 35px #172b4308;padding:28px 12px}
+.sf-auth-status [data-slot=card-title]{font-size:24px;font-weight:600;letter-spacing:-.035em;line-height:1.3}
+.sf-auth-status [data-slot=card-content]{padding-top:8px}
+.sf-auth-status [data-slot=button]{min-height:44px}
+@media(max-width:1023px){.sf-auth-main{padding:40px 24px}.sf-auth-split{min-height:100dvh}}
+@media(max-width:480px){.sf-auth-main{padding:28px 16px;align-items:flex-start}.sf-auth-form{padding:24px 20px;border-radius:12px}.sf-auth h1{font-size:25px}.sf-auth-status [data-slot=card-header],.sf-auth-status [data-slot=card-content]{padding-left:14px;padding-right:14px}}
+@media(prefers-reduced-motion:reduce){.sf-auth *{animation-duration:0s!important;transition-duration:0s!important}}

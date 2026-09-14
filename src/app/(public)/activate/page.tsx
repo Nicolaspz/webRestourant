@@ -60,7 +60,7 @@ export default function ActivatePage() {
   }, [searchParams, router])
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="sf-auth sf-auth-status">
       <title>Ativação de Conta | Serve Fixe</title>
       <Card className="w-full max-w-md p-6 shadow-lg">
         <CardHeader>
@@ -85,7 +85,7 @@ export default function ActivatePage() {
               <XCircle className="h-10 w-10 text-red-500" />
               <p className="mt-2 text-center text-red-600 font-medium">{message}</p>
               <div className="flex gap-2 mt-4">
-                <Button onClick={() => router.push("/signup")} variant="outline">
+                <Button onClick={() => router.push("/register")} variant="outline">
                   Criar nova conta
                 </Button>
                 <Button onClick={() => router.push("/login")}>

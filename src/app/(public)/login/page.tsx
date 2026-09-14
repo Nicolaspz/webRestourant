@@ -59,11 +59,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="sf-auth sf-auth-split">
       <title>Login | Serve Fixe</title>
 
       {/* Left side — barTender image (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative">
+      <div className="sf-auth-story hidden lg:flex relative">
         <Image
           src="/barTender.jpg"
           alt="Bartender"
@@ -72,7 +72,7 @@ export default function LoginPage() {
           priority
           quality={85}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-amber-900/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#10243d] via-[#10243d]/65 to-[#10243d]/20" />
         <div className="absolute inset-0 flex flex-col justify-end p-12">
           <div className="max-w-md">
             <h2 className="text-3xl font-bold text-white mb-3">
@@ -86,9 +86,9 @@ export default function LoginPage() {
       </div>
 
       {/* Right side — Login form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50 relative">
+      <div className="sf-auth-main">
         {/* Background image for mobile */}
-        <div className="lg:hidden absolute inset-0">
+        <div className="hidden">
           <Image
             src="/barTender.jpg"
             alt=""
@@ -99,7 +99,7 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-white/90 backdrop-blur-md" />
         </div>
 
-        <div className="w-full max-w-md relative z-10">
+        <div className="sf-auth-form w-full max-w-md relative z-10">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
             <Image
@@ -133,7 +133,7 @@ export default function LoginPage() {
                     autoComplete="username"
                     inputMode="email"
                     placeholder="seu@email.com"
-                    className="h-12 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                    className="h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                     value={credential}
                     onChange={(e) => setCredential(e.target.value)}
                     required
@@ -150,7 +150,7 @@ export default function LoginPage() {
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
                       placeholder="••••••••"
-                      className="h-12 bg-white border-gray-300 pr-12 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                      className="h-12 bg-white border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -168,7 +168,7 @@ export default function LoginPage() {
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      className="text-sm text-amber-600 hover:text-amber-700 font-medium cursor-pointer"
+                      className="text-sm text-blue-700 hover:text-blue-800 font-medium cursor-pointer"
                       onClick={() => setForgotMode(true)}
                     >
                       Esqueci a senha
@@ -179,7 +179,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all duration-300 shadow-md shadow-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
@@ -194,7 +194,7 @@ export default function LoginPage() {
 
               <p className="text-center text-sm text-gray-500 mt-6">
                 Ainda não tem conta?{" "}
-                <Link href="/register" className="text-amber-600 hover:text-amber-700 font-medium">
+                <Link href="/register" className="text-blue-700 hover:text-blue-800 font-medium">
                   Registar-se
                 </Link>
               </p>
@@ -228,7 +228,7 @@ export default function LoginPage() {
                     type="email"
                     autoComplete="email"
                     placeholder="seu@email.com"
-                    className="h-12 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                    className="h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                     value={credential}
                     onChange={(e) => setCredential(e.target.value)}
                     required
@@ -238,7 +238,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-md shadow-amber-500/20 disabled:opacity-50"
+                  className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all duration-300 shadow-md shadow-blue-900/10 disabled:opacity-50"
                 >
                   {loading ? (
                     <>

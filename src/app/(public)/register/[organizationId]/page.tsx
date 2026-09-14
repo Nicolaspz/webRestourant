@@ -94,7 +94,7 @@ export default function CreateMasterUserPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <title>Criar Utilizador | Serve Fixe</title>
-                <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
         );
     }
@@ -102,7 +102,7 @@ export default function CreateMasterUserPage() {
     // Org error
     if (orgError) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+            <div className="sf-auth sf-auth-status">
                 <title>Erro | Serve Fixe</title>
                 <div className="text-center max-w-md">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
@@ -112,7 +112,7 @@ export default function CreateMasterUserPage() {
                     <p className="text-gray-500 mb-6">O link poderá estar inválido ou expirado.</p>
                     <Link
                         href="/register"
-                        className="text-amber-600 hover:text-amber-700 font-medium"
+                        className="text-blue-700 hover:text-blue-800 font-medium"
                     >
                         Registar nova organização
                     </Link>
@@ -122,11 +122,11 @@ export default function CreateMasterUserPage() {
     }
 
     return (
-        <div className="min-h-screen flex">
+        <div className="sf-auth sf-auth-split">
             <title>Criar Utilizador Master | Serve Fixe</title>
 
             {/* Left side */}
-            <div className="hidden lg:flex lg:w-1/2 relative">
+            <div className="sf-auth-story hidden lg:flex relative">
                 <Image
                     src="/barTender.jpg"
                     alt="Bartender"
@@ -135,7 +135,7 @@ export default function CreateMasterUserPage() {
                     priority
                     quality={85}
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-amber-900/50" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#10243d] via-[#10243d]/65 to-[#10243d]/20" />
                 <div className="absolute inset-0 flex flex-col justify-end p-12">
                     <div className="max-w-md">
                         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-4">
@@ -153,19 +153,19 @@ export default function CreateMasterUserPage() {
             </div>
 
             {/* Right side — Form */}
-            <div className="flex-1 flex items-center justify-center p-6 bg-gray-50 relative overflow-y-auto">
-                <div className="lg:hidden absolute inset-0">
+            <div className="sf-auth-main">
+                <div className="hidden">
                     <Image src="/barTender.jpg" alt="" fill className="object-cover" quality={60} />
                     <div className="absolute inset-0 bg-white/90 backdrop-blur-md" />
                 </div>
 
-                <div className="w-full max-w-md relative z-10 py-8">
+                <div className="sf-auth-form w-full max-w-md relative z-10">
                     {/* Logo */}
                     <div className="flex items-center gap-3 mb-6">
                         <Image src={logoImg} alt="Serve Fixe" width={44} height={44} className="rounded-lg" />
                         <div>
                             <span className="text-xl font-bold text-gray-900 block">Serve Fixe</span>
-                            <span className="text-sm text-amber-600 font-medium">{orgName}</span>
+                            <span className="text-sm text-blue-700 font-medium">{orgName}</span>
                         </div>
                     </div>
 
@@ -183,7 +183,7 @@ export default function CreateMasterUserPage() {
                                 id="name"
                                 type="text"
                                 placeholder="João da Silva"
-                                className="h-11 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                                className="h-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 required
@@ -196,21 +196,21 @@ export default function CreateMasterUserPage() {
                                 id="email"
                                 type="email"
                                 placeholder="joao@email.com"
-                                className="h-11 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                                className="h-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone *</Label>
                                 <Input
                                     id="telefone"
                                     type="text"
                                     placeholder="+244 9XX XXX XXX"
-                                    className="h-11 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                                    className="h-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                                     value={telefone}
                                     onChange={(e) => setTelefone(e.target.value)}
                                     required
@@ -222,7 +222,7 @@ export default function CreateMasterUserPage() {
                                     id="userName"
                                     type="text"
                                     placeholder="joao.admin"
-                                    className="h-11 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                                    className="h-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                                     value={userName}
                                     onChange={(e) => setUserName(e.target.value)}
                                     required
@@ -237,7 +237,7 @@ export default function CreateMasterUserPage() {
                                     id="password"
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
-                                    className="h-11 bg-white border-gray-300 pr-12 focus:border-amber-500 focus:ring-amber-500 text-gray-900"
+                                    className="h-11 bg-white border-gray-300 pr-12 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
@@ -267,7 +267,7 @@ export default function CreateMasterUserPage() {
                                 id="confirmPassword"
                                 type={showPassword ? "text" : "password"}
                                 placeholder="••••••••"
-                                className={`h-11 bg-white border-gray-300 focus:border-amber-500 focus:ring-amber-500 text-gray-900
+                                className={`h-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900
                   ${confirmPassword.length > 0 && !passwordsMatch ? 'border-red-400' : ''}
                 `}
                                 value={confirmPassword}
@@ -282,7 +282,7 @@ export default function CreateMasterUserPage() {
                         <button
                             type="submit"
                             disabled={loading || !passwordsMatch || !hasUpperCase || !hasLowerCase || !hasSpecialChar || !hasMinLength}
-                            className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                            className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all duration-300 shadow-md shadow-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                         >
                             {loading ? (
                                 <>

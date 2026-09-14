@@ -90,10 +90,10 @@ export default function RegisterOrganizationPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="sf-auth sf-auth-split">
       <title>Criar Conta | Serve Fixe</title>
 
-      <div className="hidden lg:flex lg:w-1/2 relative">
+      <div className="sf-auth-story hidden lg:flex relative">
         <Image
           src="/barTender.jpg"
           alt="Bartender"
@@ -102,7 +102,7 @@ export default function RegisterOrganizationPage() {
           priority
           quality={85}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-amber-900/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#10243d] via-[#10243d]/65 to-[#10243d]/20" />
         <div className="absolute inset-0 flex flex-col justify-end p-12">
           <div className="max-w-md">
             <h2 className="text-3xl font-bold text-white mb-3">
@@ -115,13 +115,13 @@ export default function RegisterOrganizationPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50 relative overflow-y-auto">
-        <div className="lg:hidden absolute inset-0">
+      <div className="sf-auth-main">
+        <div className="hidden">
           <Image src="/barTender.jpg" alt="" fill className="object-cover" quality={60} />
           <div className="absolute inset-0 bg-white/90 backdrop-blur-md" />
         </div>
 
-        <div className="w-full max-w-2xl relative z-10 py-8">
+        <div className="sf-auth-form w-full max-w-2xl relative z-10">
           <div className="flex items-center gap-3 mb-8">
             <Image src={logoImg} alt="Serve Fixe" width={44} height={44} className="rounded-lg" />
             <span className="text-xl font-bold text-gray-900">Serve Fixe</span>
@@ -256,7 +256,7 @@ export default function RegisterOrganizationPage() {
                 <button
                   type="submit"
                   disabled={loading || !passwordIsValid}
-                  className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all duration-300 shadow-md shadow-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
@@ -274,7 +274,7 @@ export default function RegisterOrganizationPage() {
 
               <p className="text-center text-sm text-gray-500 mt-6">
                 Ja tem conta?{" "}
-                <Link href="/login" className="text-amber-600 hover:text-amber-700 font-medium">
+                <Link href="/login" className="text-blue-700 hover:text-blue-800 font-medium">
                   Fazer Login
                 </Link>
               </p>
@@ -290,17 +290,17 @@ export default function RegisterOrganizationPage() {
               <p className="text-gray-600 mb-2">
                 Enviamos um codigo de verificacao para
               </p>
-              <p className="text-amber-600 font-semibold mb-6">{admin.phone}</p>
+              <p className="text-blue-700 font-semibold mb-6">{admin.phone}</p>
               <p className="text-gray-500 text-sm mb-8">
                 A empresa e o administrador ja foram criados. Falta apenas activar a conta com o codigo.
               </p>
               <Link
                 href={`/verify-organization?orgId=${orgId}&phone=${admin.phone}`}
-                className="w-full h-12 bg-amber-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-amber-700 transition-all shadow-md mb-6"
+                className="w-full h-12 bg-blue-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-blue-800 transition-all shadow-md mb-6"
               >
                 Introduzir Codigo
               </Link>
-              <Link href="/login" className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-medium">
+              <Link href="/login" className="inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-medium">
                 <ArrowLeft className="h-4 w-4" />
                 Voltar ao Login
               </Link>
