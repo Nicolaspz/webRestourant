@@ -11,6 +11,7 @@ import QRCodePrinter from "./QRCodePDFGenerator";
 import { Button } from "@/components/ui/button";
 
 interface MesaStatusTabsProps {
+  actions?: React.ReactNode;
   activeTab: string;
   onTabChange: (tab: string) => void;
   mesas: Mesa[];
@@ -25,6 +26,7 @@ interface MesaStatusTabsProps {
 }
 
 const MesaStatusTabs = ({
+  actions,
   activeTab,
   onTabChange,
   mesas,
@@ -39,7 +41,9 @@ const MesaStatusTabs = ({
 }: MesaStatusTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
-      <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+      <div className="sticky top-0 z-20 flex items-center gap-3 border-b bg-background py-3">
+      <div className="min-w-0 flex-1 overflow-x-auto">
+      <TabsList className="flex w-max min-w-full sm:min-w-0">
 
         <TabsTrigger value="todas">
           Todas ({mesas.length})
@@ -60,6 +64,9 @@ const MesaStatusTabs = ({
           </TabsTrigger>
         )}
       </TabsList>
+      </div>
+      {actions && <div className="shrink-0">{actions}</div>}
+      </div>
 
       <TabsContent value="todas" className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

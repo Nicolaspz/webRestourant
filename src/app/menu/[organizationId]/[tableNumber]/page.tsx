@@ -60,7 +60,7 @@ export default function ProductMenu() {
           onOpenCart={() => setCartOpen(true)}
         />
 
-        <div className="flex-1 overflow-y-auto px-3 pb-28 pt-[196px] sm:px-4 md:px-8 md:pb-12 md:pt-0">
+        <div className="flex-1 overflow-y-auto px-3 pb-28 pt-[300px] sm:px-4 md:px-8 md:pb-12 md:pt-0">
           {activeCategory === 'Destaques' && !searchQuery && (
             <div className="mb-10">
               <KioskHighlights products={filteredProducts} onSelect={setSelectedProduct} />

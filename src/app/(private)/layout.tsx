@@ -1,5 +1,7 @@
 "use client"
 
+import "./admin.css"
+
 import { useContext, useEffect, useState } from "react"
 import { GpayPaymentMonitor } from '@/components/layouts/admin/GpayPaymentMonitor';
 import Sidebar from "@/components/layouts/admin/Sidebar"
@@ -16,6 +18,15 @@ export default function PrivateLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  useEffect(() => {
+    try { setSidebarCollapsed(localStorage.getItem('sidebar-collapsed') === 'true') } catch {}
+  }, [])
+  const toggleDesktopSidebar = () => {
+    const next = !sidebarCollapsed
+    setSidebarCollapsed(next)
+    try { localStorage.setItem('sidebar-collapsed', String(next)) } catch {}
+  }
   const pathname = usePathname()
   const router = useRouter()
   const { isAuthenticated, isInitializing } = useContext(AuthContext)
@@ -65,9 +76,10 @@ export default function PrivateLayout({
   return (
     <SocketProvider>
       <GpayPaymentMonitor />
-      <div className="flex h-screen overflow-hidden bg-[var(--sidebar)]">
+      <a href="#conteudo-principal" className="admin-skip-link">Saltar para o conteúdo</a>
+      <div className="admin-shell flex h-dvh overflow-hidden bg-background">
         {/* Sidebar Desktop */}
-        <div className="hidden lg:flex">
+        <div id="desktop-sidebar" className={sidebarCollapsed ? "hidden" : "hidden lg:flex shrink-0"}>
           <Sidebar />
         </div>
 
@@ -102,9 +114,9 @@ export default function PrivateLayout({
 
 
         {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header toggleSidebar={() => setSidebarOpen(true)} />
-          <main id="conteudo-principal" className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--background)]">
+        <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
+          <Header toggleSidebar={() => setSidebarOpen(true)} toggleDesktopSidebar={toggleDesktopSidebar} sidebarCollapsed={sidebarCollapsed} />
+          <main id="conteudo-principal" tabIndex={-1} className="admin-content flex-1 overflow-y-auto p-4 md:p-6 xl:p-8 bg-background">
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}

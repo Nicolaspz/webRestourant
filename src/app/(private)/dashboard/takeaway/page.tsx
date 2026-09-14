@@ -1,4 +1,5 @@
 'use client';
+import { HierarchicalCategories } from '@/components/dashboard/menu/HierarchicalCategories';
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { setupAPIClient } from '@/services/api';
@@ -44,7 +45,7 @@ export default function TakeawayPage() {
     const { user } = useContext(AuthContext);
     const { socket } = useSocket();
     const [categories, setCategories] = useState<Category[]>([]);
-    const [activeCategory, setActiveCategory] = useState<string>('all');
+    const [activeCategory, setActiveCategory] = useState<string>('none');
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -271,10 +272,7 @@ export default function TakeawayPage() {
                         <div className="flex-1 flex flex-col px-4 pt-4 border-r dark:border-gray-800 overflow-hidden">
                             <Tabs value={activeCategory} onValueChange={setActiveCategory} className="flex-1 flex flex-col overflow-hidden">
                                 <ScrollArea className="w-full whitespace-nowrap mb-4 pb-2 border-b">
-                                    <TabsList className="bg-transparent h-auto p-0 flex gap-2 w-max">
-                                        <TabsTrigger value="all" className="rounded-full px-6 py-2">Todos</TabsTrigger>
-                                        {categories.map(cat => <TabsTrigger key={cat.id} value={cat.id} className="rounded-full px-6 py-2">{cat.name}</TabsTrigger>)}
-                                    </TabsList>
+                                    <HierarchicalCategories organizationId={user?.organizationId} categories={categories.map(c=>c.name)} activeCategory={categories.find(c=>c.id===activeCategory)?.name || null} onSelect={name=>setActiveCategory(categories.find(c=>c.name===name)?.id || 'none')} />
                                 </ScrollArea>
                                 <ScrollArea className="flex-1 pr-4">
                                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 pb-20">

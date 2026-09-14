@@ -11,7 +11,7 @@ import { AuthContext } from "@/contexts/AuthContext"
 import { getMediaUrl } from "../../../../config"
 
 // Definir os tipos de roles
-type UserRole = 'SUPER ADMIN' | 'ADMIN' | 'GARCON' | 'CAIXA' | 'COZINHA' | 'BAR'
+type UserRole = 'SUPER ADMIN' | 'ADMIN' | 'GARCON' | 'CAIXA' | 'COZINHA' | 'BAR' | 'ECONOMATO'
 
 import {
   Users,
@@ -52,16 +52,16 @@ type MenuItem = {
 const menuStructure: MenuItem[] = [
   {
     icon: Home,
-    label: "Painel Principal",
+    label: "Visão geral",
     href: "/dashboard",
-    roles: ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA', 'COZINHA', 'BAR']
+    roles: ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA', 'COZINHA', 'BAR', 'ECONOMATO']
   },
 
   // Gestão do Restaurante
   {
     icon: Utensils,
-    label: "Restaurante",
-    roles: ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA', 'COZINHA', 'BAR'],
+    label: "Atendimento",
+    roles: ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA', 'COZINHA', 'BAR', 'ECONOMATO'],
     subItems: [
       {
         label: "Gestão de Pedidos",
@@ -111,8 +111,8 @@ const menuStructure: MenuItem[] = [
   // Gestão de Produtos
   {
     icon: Package,
-    label: "Produtos",
-    roles: ['SUPER ADMIN', 'ADMIN'],
+    label: "Produtos e stock",
+    roles: ['SUPER ADMIN', 'ADMIN', 'ECONOMATO', 'COZINHA', 'BAR', 'GARCON', 'CAIXA'],
     subItems: [
 
       {
@@ -131,13 +131,13 @@ const menuStructure: MenuItem[] = [
         label: "Stock",
         href: "/dashboard/stock",
         icon: Warehouse,
-        roles: ['SUPER ADMIN', 'ADMIN']
+        roles: ['SUPER ADMIN', 'ADMIN', 'ECONOMATO']
       },
       {
         label: "Economato",
         href: "/dashboard/economato",
         icon: Archive,
-        roles: ['SUPER ADMIN', 'ADMIN']
+        roles: ['SUPER ADMIN', 'ADMIN', 'ECONOMATO', 'COZINHA', 'BAR', 'GARCON', 'CAIXA']
       }
     ]
   },
@@ -178,7 +178,7 @@ const menuStructure: MenuItem[] = [
   // Administração
   {
     icon: UserCog,
-    label: "Administração",
+    label: "Gestão",
     roles: ['SUPER ADMIN', 'ADMIN'],
     subItems: [
       {
@@ -232,7 +232,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
           const hasActiveChild = item.subItems.some(subItem =>
             pathname === subItem.href || pathname?.startsWith(subItem.href + '/')
           )
-          initialOpenState[item.label] = hasActiveChild
+          initialOpenState[item.label] = true
         }
       })
       setOpenMenus(initialOpenState)
@@ -246,158 +246,52 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
     }))
   }
 
-  // Se não tem role ainda, mostra menu vazio ou loading
-  if (!userRole) {
-    return (
-      <aside aria-label="Menu principal" className="h-screen w-64 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col py-6 border-r border-[var(--sidebar-border)]">
-        <div className="flex flex-col items-center justify-center h-full" role="status" aria-live="polite">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--sidebar-foreground)]"></div>
-          <p className="mt-2 text-sm text-[var(--muted-foreground)]">Carregando...</p>
-        </div>
-      </aside>
-    )
-  }
 
   return (
-    <aside aria-label="Menu principal" className="h-screen w-64 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col py-6 border-r border-[var(--sidebar-border)] overflow-y-auto">
-      {/* Fechar em mobile */}
-      {closeSidebar && (
-        <div className="flex justify-end px-4 cursor-pointer mb-4">
-          <button onClick={closeSidebar} aria-label="Fechar menu principal" className="min-h-11 min-w-11 rounded-md text-[var(--sidebar-foreground)] text-xl hover:bg-[var(--sidebar-accent)] transition-colors">×</button>
+    <aside aria-label="Menu principal" className="admin-sidebar">
+      <div className="admin-brand">
+        <div className="admin-brand-logo">
+          {user?.imageLogo ? <img src={getMediaUrl(user.imageLogo)} alt="" className="h-full w-full object-cover" /> :
+            <Image src={logoImg} alt="" width={40} height={40} priority className="object-contain" />}
         </div>
-      )}
-
-      {/* Top section */}
-      <div>
-        <div className="flex flex-col items-center gap-2 mb-8 px-4">
-          <div className="w-14 h-14 rounded-full bg-[var(--sidebar-foreground)] text-[var(--sidebar)] flex items-center justify-center font-bold text-2xl overflow-hidden">
-            {user?.imageLogo ? (
-              <img
-                src={getMediaUrl(user.imageLogo)}
-                alt={user?.name_org || "Logo"}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Image
-                src={logoImg}
-                alt="ServeFixe"
-                width={60}
-                height={60}
-                priority
-                className="object-contain"
-              />
-            )}
-          </div>
-          <h2 className="text-xl font-semibold line-clamp-1 text-center px-2" title={user?.name_org || "ServeFixe"}>
-            {user?.name_org || "ServeFixe"}
-          </h2>
-          {/* Mostrar role do usuário */}
-          <div className="px-3 py-1 bg-[var(--sidebar-accent)] rounded-full">
-            <span className="text-xs font-medium text-[var(--sidebar-accent-foreground)]">
-              {userRole}
-            </span>
-          </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold" title={user?.name_org}>{user?.name_org || 'ServeFixe'}</p>
+          <p className="mt-1 text-xs text-slate-400">Gestão do restaurante</p>
         </div>
-
-        {/* Menu hierárquico */}
-        <nav className="space-y-1 px-4">
-          {filteredMenu.map((item) => {
-            const isActive = pathname === item.href
-            const hasSubItems = item.subItems && item.subItems.length > 0
-            const isMenuOpen = openMenus[item.label]
-
-            // Se for um item sem submenus (como Dashboard)
-            if (!hasSubItems && item.href) {
-              return (
-                <Button
-                  key={item.label}
-                  variant="ghost"
-                  asChild
-                  className={cn(
-                    "w-full justify-start gap-3 text-[var(--muted-foreground)] hover:text-[var(--sidebar-accent-foreground)] hover:bg-[var(--sidebar-accent)] transition-all duration-200",
-                    isActive && "bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)]"
-                  )}
-                >
-                  <Link href={item.href} onClick={closeSidebar}>
-                    <item.icon className="w-5 h-5" aria-hidden="true" />
-                    <span className="flex-1 text-left">{item.label}</span>
-                  </Link>
-                </Button>
-              )
-            }
-
-            // Se for um item com submenus
-            if (hasSubItems) {
-              // Verificar se algum subitem está ativo
-              const hasActiveSubItem = item.subItems!.some(subItem =>
-                pathname === subItem.href || pathname?.startsWith(subItem.href + '/')
-              )
-
-              return (
-                <div key={item.label} className="space-y-1">
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-between gap-3 text-[var(--muted-foreground)] hover:text-[var(--sidebar-accent-foreground)] hover:bg-[var(--sidebar-accent)] transition-all duration-200",
-                      (isMenuOpen || hasActiveSubItem) && "bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)]"
-                    )}
-                    onClick={() => toggleMenu(item.label)}
-                    aria-expanded={isMenuOpen}
-                    aria-controls={`menu-${item.label.replace(/\s+/g, '-').toLowerCase()}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5" aria-hidden="true" />
-                      <span className="flex-1 text-left">{item.label}</span>
-                    </div>
-                    {isMenuOpen ? (
-                      <ChevronDown className="w-4 h-4 transition-transform duration-200" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 transition-transform duration-200" />
-                    )}
-                  </Button>
-
-                  {/* Subitems com transição suave */}
-                  <div
-                    id={`menu-${item.label.replace(/\s+/g, '-').toLowerCase()}`}
-                    className={cn(
-                      "overflow-hidden transition-all duration-300 ease-in-out",
-                      isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                    )}
-                  >
-                    <div className="ml-8 space-y-1">
-                      {item.subItems!.map((subItem) => {
-                        const isSubActive = pathname === subItem.href
-                        const SubIcon = subItem.icon || item.icon
-
-                        return (
-                          <Button
-                            key={subItem.href}
-                            variant="ghost"
-                            asChild
-                            size="sm"
-                            className={cn(
-                              "w-full justify-start gap-3 text-[var(--muted-foreground)] hover:text-[var(--sidebar-accent-foreground)] hover:bg-[var(--sidebar-accent)] transition-all duration-200",
-                              isSubActive && "bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)]"
-                            )}
-                          >
-                            <Link href={subItem.href} onClick={closeSidebar}>
-                              <SubIcon className="w-4 h-4" aria-hidden="true" />
-                              <span className="text-sm">{subItem.label}</span>
-                            </Link>
-                          </Button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )
-            }
-
-            return null
-          })}
-        </nav>
+        {closeSidebar && <button type="button" onClick={closeSidebar} aria-label="Fechar menu principal" className="h-11 w-11 rounded-lg hover:bg-white/10 text-xl">×</button>}
       </div>
-
+      <nav className="admin-navigation" aria-label="Secções do painel">
+        {!userRole && <p role="status" className="p-4 text-sm text-slate-400">A carregar o menu…</p>}
+        {filteredMenu.map(item => {
+          const children = item.subItems;
+          if (item.href) return <Link key={item.href} href={item.href} onClick={closeSidebar}
+            className="admin-nav-link" aria-current={pathname === item.href ? 'page' : undefined}>
+            <item.icon size={18} aria-hidden="true" /><span>{item.label}</span>
+          </Link>;
+          if (!children?.length) return null;
+          const open = !!openMenus[item.label];
+          const id = 'menu-' + item.label.replace(/\s+/g, '-').toLowerCase();
+          return <div key={item.label} className="admin-nav-section">
+            <button type="button" className="admin-nav-heading" onClick={() => toggleMenu(item.label)} aria-expanded={open} aria-controls={id}>
+              {item.label}<ChevronDown size={14} className={cn("transition-transform", !open && "-rotate-90")} />
+            </button>
+            <div id={id} hidden={!open} className="space-y-1">
+              {children.map(child => {
+                const Icon = child.icon || item.icon;
+                const active = pathname === child.href || pathname.startsWith(child.href + '/');
+                return <Link key={child.href} href={child.href} onClick={closeSidebar} className="admin-nav-link" aria-current={active ? 'page' : undefined}>
+                  <Icon size={18} aria-hidden="true" /><span>{child.label}</span>
+                  {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-300" />}
+                </Link>;
+              })}
+            </div>
+          </div>;
+        })}
+      </nav>
+      <div className="admin-sidebar-footer">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10"><UserCog size={17} /></span>
+        <div className="min-w-0"><p className="truncate text-sm font-medium">{user?.name || 'Utilizador'}</p><p className="text-xs text-slate-400 mt-0.5">{userRole}</p></div>
+      </div>
     </aside>
   )
 }

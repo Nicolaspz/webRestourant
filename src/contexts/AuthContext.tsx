@@ -229,6 +229,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         : role?.toUpperCase() === 'GARCON' ? '/dashboard/mesa'
           : role?.toUpperCase() === 'COZINHA' ? '/dashboard/cozinha'
             : role?.toUpperCase() === 'BAR' ? '/dashboard/bar'
+              : role?.toUpperCase() === 'ECONOMATO' ? '/dashboard/economato'
               : '/dashboard';
       router.replace(destination);
 

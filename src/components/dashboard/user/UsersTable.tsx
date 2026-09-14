@@ -244,6 +244,7 @@ export function UsersTable({ organizationId }: UsersTableProps) {
       case "GARÇON": return "Garçon";
       case "COZINHA": return "Cozinha";
       case "BAR": return "Bar";
+      case "ECONOMATO": return "Economato";
       default: return role;
     }
   };
@@ -304,6 +305,7 @@ export function UsersTable({ organizationId }: UsersTableProps) {
                   <SelectItem value="GARCON">Garçon</SelectItem>
                   <SelectItem value="COZINHA">Cozinha</SelectItem>
                   <SelectItem value="BAR">Bar</SelectItem>
+                  <SelectItem value="ECONOMATO">Economato</SelectItem>
                 </SelectContent>
               </Select>
             </div>

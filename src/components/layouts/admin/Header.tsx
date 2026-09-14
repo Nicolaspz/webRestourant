@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChevronDown, LogOut, Menu } from "lucide-react"
+import { ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { ThemeSwitcher } from "@/components/theme-swicther"
 import { useContext } from "react"
 import { AuthContext } from "@/contexts/AuthContext"
@@ -26,11 +26,17 @@ const pageLabels: Record<string, { title: string; subtitle: string }> = {
   '/dashboard/products': { title: 'Produtos e pratos', subtitle: 'Catálogo, preços e receitas' },
   '/dashboard/stock': { title: 'Stock', subtitle: 'Disponibilidade e movimentos' },
   '/dashboard/economato': { title: 'Economato', subtitle: 'Stock e transferências por área' },
+  '/dashboard/cardapio': { title: 'Cardápio', subtitle: 'Produtos disponíveis para atendimento' },
+  '/dashboard/category': { title: 'Categorias', subtitle: 'Organize o catálogo e as subcategorias' },
+  '/dashboard/igredient': { title: 'Ingredientes', subtitle: 'Ingredientes, unidades e disponibilidade' },
+  '/dashboard/compra': { title: 'Compras', subtitle: 'Entradas de produtos e documentos' },
+  '/dashboard/fornecedores': { title: 'Fornecedores', subtitle: 'Contactos e parceiros de fornecimento' },
+  '/dashboard/advanced': { title: 'Análise do negócio', subtitle: 'Resultados e indicadores' },
   '/dashboard/users': { title: 'Utilizadores', subtitle: 'Equipa, perfis e permissões' },
-  '/dashboard/settings': { title: 'Definições', subtitle: 'Organização, conta e segurança' },
+  '/dashboard/settings': { title: 'Definições', subtitle: 'Organização, pagamentos e áreas das mesas' },
 }
 
-export default function Header({ toggleSidebar }: { toggleSidebar: () => void }) {
+export default function Header({ toggleSidebar, toggleDesktopSidebar, sidebarCollapsed = false }: { toggleSidebar: () => void; toggleDesktopSidebar?: () => void; sidebarCollapsed?: boolean }) {
   const { signOut, user } = useContext(AuthContext);
   const pathname = usePathname();
   const currentPage = Object.entries(pageLabels)
@@ -48,21 +54,24 @@ export default function Header({ toggleSidebar }: { toggleSidebar: () => void })
   }
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] border-b border-[var(--sidebar-border)]">
+    <header className="admin-header">
       {/* Esquerda: Menu e Título */}
-      <div className="flex items-center gap-4 min-w-[150px]">
-        <button onClick={toggleSidebar} className="lg:hidden rounded-md p-2 hover:bg-[var(--sidebar-accent)]" aria-label="Abrir menu principal">
-          <Menu className="w-6 h-6 text-[var(--sidebar-foreground)] cursor-pointer" />
+      <div className="flex items-center gap-3 min-w-0">
+        <button type="button" onClick={toggleDesktopSidebar} className={`hidden lg:inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${sidebarCollapsed ? 'border-[var(--sidebar-border)] bg-muted text-foreground' : 'border-transparent hover:bg-muted'}`} aria-controls="desktop-sidebar" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Abrir menu principal' : 'Recolher menu principal'} title={sidebarCollapsed ? 'Abrir menu' : 'Recolher menu'}>
+          {sidebarCollapsed ? <PanelLeftOpen className="h-6 w-6" aria-hidden="true" /> : <PanelLeftClose className="h-6 w-6" aria-hidden="true" />}
+        </button>
+        <button type="button" onClick={toggleSidebar} className="lg:hidden rounded-md p-2 hover:bg-muted" aria-label="Abrir menu principal">
+          <Menu className="w-6 h-6 text-foreground cursor-pointer" />
         </button>
         <div>
-          <h1 className="text-lg font-semibold">{currentPage.title}</h1>
+          <h1 className="text-sm sm:text-base font-semibold tracking-tight">{currentPage.title}</h1>
           <p className="hidden text-sm text-[var(--muted-foreground)] sm:block">{currentPage.subtitle}</p>
         </div>
       </div>
       {/* <span>{user?.tenant_id}</span> */}
 
       {/* Direita: Ícones e Menu do Usuário */}
-      <div className="flex items-center gap-4 min-w-[150px] justify-end">
+      <div className="flex items-center gap-2 shrink-0 justify-end">
         <CaixaControl />
         <ThemeSwitcher />
         {/* Avatar com Dropdown */}
@@ -76,6 +85,7 @@ export default function Header({ toggleSidebar }: { toggleSidebar: () => void })
                 />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
+              <span className="hidden xl:block max-w-32 truncate text-sm">{user?.name?.split(" ")[0]}</span>
               <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />
             </Button>
           </DropdownMenuTrigger>

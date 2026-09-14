@@ -149,7 +149,8 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
     } else {
       const filtered = products.filter(product =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.unit?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredProducts(filtered);
     }
@@ -252,7 +253,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Pesquisar produtos..."
+          placeholder="Pesquisar produto, descrição ou unidade..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-9"

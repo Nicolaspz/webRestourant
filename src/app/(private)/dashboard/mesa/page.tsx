@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { setupAPIClient } from '@/services/api';
 import { AuthContext } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
+import { TableAreaDialog } from '@/components/dashboard/mesas/TableAreaDialog';
 import { Plus } from 'lucide-react';
 
 // Components
@@ -48,6 +49,9 @@ export default function GerenciamentoMesasPage() {
   useEffect(() => {
     if (!user?.organizationId) return;
     fetchMesas();
+    const refresh = () => { void fetchMesas(); };
+    window.addEventListener('table-area-updated',refresh);
+    return () => window.removeEventListener('table-area-updated',refresh);
   }, [user?.organizationId]);
 
   const fetchMesas = async () => {
@@ -72,7 +76,7 @@ export default function GerenciamentoMesasPage() {
     }
   };
 
-  const criarMesa = async () => {
+  const criarMesa = async (tableAreaId: string) => {
     try {
       const ultimoNumero =
         mesas.length > 0
@@ -85,6 +89,7 @@ export default function GerenciamentoMesasPage() {
         '/mesa',
         {
           numero: novoNumero,
+          tableAreaId,
           organizationId: user?.organizationId
         },
         {
@@ -96,9 +101,8 @@ export default function GerenciamentoMesasPage() {
 
       toast.success(`Mesa ${novoNumero} criada com sucesso!`);
       fetchMesas();
-    } catch (error) {
-      console.error('Erro ao criar mesa:', error);
-      toast.error('Erro ao criar mesa');
+    } catch (error: any) {
+      throw error;
     }
   };
 
@@ -258,6 +262,7 @@ export default function GerenciamentoMesasPage() {
       <Header />
 
       <MesaStatusTabs
+        actions={user?.role?.toUpperCase() !== 'GARCON' && user?.role?.toUpperCase() !== 'CAIXA' ? <TableAreaDialog onCreate={criarMesa} /> : undefined}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         mesas={mesas}
@@ -271,12 +276,6 @@ export default function GerenciamentoMesasPage() {
         onFactMesa={GetFact}
       />
 
-      {user?.role?.toUpperCase() !== 'GARCON' && user?.role?.toUpperCase() !== 'CAIXA' && (
-        <Button onClick={criarMesa} className="flex items-center gap-2 mt-2">
-          <Plus className="h-4 w-4" />
-          Nova Mesa
-        </Button>
-      )}
 
       {/* Modal de Pagamento — aparece ao clicar "Fechar Mesa" */}
       <ModalPagamento

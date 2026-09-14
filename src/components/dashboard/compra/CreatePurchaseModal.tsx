@@ -1,7 +1,9 @@
 'use client';
+import { downloadPurchaseDocument } from '@/utils/downloadPurchaseDocument';
 
 import { useState, useContext, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +30,7 @@ interface CreatePurchaseModalProps {
     description: string;
     qtdCompra: number;
     supplierId?: string;
+    SupplierId?: string | null;
     images?: { id: string; path: string }[];
   };
 }
@@ -35,6 +38,7 @@ interface CreatePurchaseModalProps {
 interface Supplier {
   id: string;
   name: string;
+  nif?: string;
 }
 
 export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: CreatePurchaseModalProps) {
@@ -42,6 +46,8 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
   const apiClient = setupAPIClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [supplierSearch, setSupplierSearch] = useState('');
+  const [supplierOpen, setSupplierOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -74,7 +80,7 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
         name: purchase.name,
         description: purchase.description || '',
         qtdCompra: purchase.qtdCompra,
-        supplierId: purchase.supplierId || ''
+        supplierId: purchase.SupplierId || purchase.supplierId || ''
       });
     } else {
       setFormData({
@@ -118,7 +124,7 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
       data.append('description', formData.description);
       data.append('qtdCompra', String(formData.qtdCompra));
       data.append('organizationId', user.organizationId);
-      if (formData.supplierId) data.append('SupplierId', formData.supplierId);
+      data.append('SupplierId', formData.supplierId);
 
       files.forEach((file) => {
         data.append('file', file);
@@ -210,26 +216,18 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="supplierId" className="text-gray-900 dark:text-white">Fornecedor</Label>
-            <Select
-              value={formData.supplierId}
-              onValueChange={(value) => setFormData({ ...formData, supplierId: value })}
-            >
-              <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
-                <SelectValue placeholder="Selecione um fornecedor" />
-              </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                {suppliers.map((supplier) => (
-                  <SelectItem
-                    key={supplier.id}
-                    value={supplier.id}
-                    className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
-                  >
-                    {supplier.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="supplierId" className="text-gray-900 dark:text-white">Fornecedor (opcional)</Label>
+            <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
+              <PopoverTrigger asChild><Button type="button" variant="outline" role="combobox" aria-expanded={supplierOpen} className="w-full justify-between">{suppliers.find(s=>s.id===formData.supplierId)?.name || 'Sem fornecedor (opcional)'}</Button></PopoverTrigger>
+              <PopoverContent className="w-80 p-2">
+                <Input aria-label="Pesquisar fornecedor" placeholder="Pesquisar nome ou NIF..." value={supplierSearch} onChange={e=>setSupplierSearch(e.target.value)} />
+                <div className="mt-2 max-h-60 overflow-y-auto">
+                  <Button type="button" variant="ghost" className="w-full justify-start" onClick={()=>{setFormData({...formData,supplierId:''});setSupplierOpen(false);}}>Sem fornecedor</Button>
+                  {suppliers.filter(s=>(s.name+' '+(s.nif || '')).toLocaleLowerCase().includes(supplierSearch.trim().toLocaleLowerCase())).map(supplier=><Button type="button" variant="ghost" key={supplier.id} className="w-full justify-start" onClick={()=>{setFormData({...formData,supplierId:supplier.id});setSupplierOpen(false);}}>{supplier.name}{supplier.nif ? ` — ${supplier.nif}` : ''}</Button>)}
+                  {supplierSearch && !suppliers.some(s=>(s.name+' '+(s.nif || '')).toLocaleLowerCase().includes(supplierSearch.trim().toLocaleLowerCase())) && <p className="p-2 text-sm text-muted-foreground">Nenhum fornecedor encontrado.</p>}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
@@ -268,8 +266,8 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
                           className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40"
                         >
                           <a
-                            href={getMediaUrl(img.path)}
-                            target="_blank"
+                            href="#" onClick={event => { event.preventDefault(); void downloadPurchaseDocument(purchase.id, img); }}
+                            
                             rel="noopener noreferrer"
                           >
                             <Download size={14} />

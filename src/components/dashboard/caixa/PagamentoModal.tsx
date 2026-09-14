@@ -102,6 +102,7 @@ const PagamentoModal = ({ fatura, onClose, onSuccess }: PagamentoModalProps) => 
 
       // Gerar PDF da fatura paga
       const dadosSessao = {
+        pagamentos: paidInvoice?.pagamentos,
         faturaId: fatura.id,
         fiscalStatus: paidInvoice?.fiscalSubmission?.status || null,
         mesaNumero: fatura.session.mesa.number,

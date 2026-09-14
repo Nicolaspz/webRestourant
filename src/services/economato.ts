@@ -36,14 +36,14 @@ export type EconomatoItem = {
 
 export type PedidoArea = {
   id: string;
-  areaOrigemId: string;
+  areaOrigemId: string | null;
   areaDestinoId: string;
   status: 'pendente' | 'aprovado' | 'rejeitado' | 'processado' | 'cancelado';
   observacoes?: string;
   confirmationCode?: string;
   criadoPor?: string;
   criadoEm: string;
-  areaOrigem: { nome: string };
+  areaOrigem: { nome: string } | null;
   areaDestino: { nome: string };
   itens: {
     id: string;
@@ -61,7 +61,7 @@ export type ConsumoInterno = {
   motivo: string;
   observacoes?: string;
   criadoEm: string;
-  area: { nome: string };
+  area: { nome: string } | null;
   product: { name: string; unit: string };
 };
 
@@ -153,12 +153,6 @@ export const economatoService = {
   processPedido: async (pedidoId: string, status: string, organizationId: string, userId: string) => {
     try {
       const api = setupAPIClient();
-      console.log('Enviando processar:', {
-        pedidoId,
-        status,
-        organizationId,
-        userId
-      });
 
       const response = await api.put(`/pedidos-area/${pedidoId}/processar`,
         { status },
@@ -179,12 +173,6 @@ export const economatoService = {
   confirmPedido: async (pedidoId: string, code: string, organizationId: string, userId: string) => {
     try {
       const api = setupAPIClient();
-      console.log('Enviando confirmar:', {
-        pedidoId,
-        code,
-        organizationId,
-        userId
-      });
 
       const response = await api.post(`/pedidos-area/${pedidoId}/confirmar`,
         { code },

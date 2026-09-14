@@ -2,25 +2,25 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-type UserRole = 'SUPER ADMIN' | 'ADMIN' | 'GARCON' | 'CAIXA' | 'COZINHA' | 'BAR'
+type UserRole = 'SUPER ADMIN' | 'ADMIN' | 'GARCON' | 'CAIXA' | 'COZINHA' | 'BAR' | 'ECONOMATO'
 
 // Permissões específicas (ordem importa: mais específicas primeiro)
 const routePermissions: Record<string, UserRole[]> = {
   '/dashboard/caixa': ['SUPER ADMIN', 'ADMIN', 'CAIXA'],
   '/dashboard/bar': ['SUPER ADMIN', 'ADMIN', 'BAR'],
   '/dashboard/cozinha': ['SUPER ADMIN', 'ADMIN', 'COZINHA'],
-  '/dashboard/stock': ['SUPER ADMIN', 'ADMIN'],
+  '/dashboard/stock': ['SUPER ADMIN', 'ADMIN', 'ECONOMATO'],
   '/dashboard/compra': ['SUPER ADMIN', 'ADMIN'],
   '/dashboard/igredient': ['SUPER ADMIN', 'ADMIN'],
   '/dashboard/products': ['SUPER ADMIN', 'ADMIN'],
   '/dashboard/settings': ['SUPER ADMIN'], // Apenas Super Admin apaga Org/mexe licença
   '/dashboard/mesa': ['SUPER ADMIN', 'ADMIN', 'GARCON','CAIXA'],
   '/dashboard/users': ['SUPER ADMIN', 'ADMIN'],
-  '/dashboard/economato': ['SUPER ADMIN', 'ADMIN'],
+  '/dashboard/economato': ['SUPER ADMIN', 'ADMIN', 'ECONOMATO', 'COZINHA', 'BAR', 'GARCON', 'CAIXA'],
   '/dashboard/advanced': ['SUPER ADMIN'], // Dash avançado financeiro apenas Super Admin
 
   // Geral por último
-  '/dashboard': ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA', 'COZINHA', 'BAR'],
+  '/dashboard': ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA', 'COZINHA', 'BAR', 'ECONOMATO'],
 }
 
 export function middleware(request: NextRequest) {

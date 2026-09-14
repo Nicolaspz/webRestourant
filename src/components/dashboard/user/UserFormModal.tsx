@@ -233,6 +233,7 @@ export function UserFormModal({
                 <SelectItem value="CAIXA" className="focus:bg-gray-700">Caixa</SelectItem>
                 <SelectItem value="GARCON" className="focus:bg-gray-700">Garçon</SelectItem>
                 <SelectItem value="COZINHA" className="focus:bg-gray-700">Cozinha</SelectItem>
+                <SelectItem value="ECONOMATO">Economato</SelectItem>
                 <SelectItem value="BAR" className="focus:bg-gray-700">Bar</SelectItem>
               </SelectContent>
             </Select>

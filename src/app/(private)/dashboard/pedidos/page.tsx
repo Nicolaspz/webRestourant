@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { useCallback, useContext, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -38,6 +39,9 @@ export default function OrdersPage() {
           <Button variant="outline" onClick={() => void orders.refresh()} disabled={orders.loading}><RefreshCw className={`mr-2 h-4 w-4 ${orders.loading ? 'animate-spin' : ''}`} />Atualizar</Button>
         </header>
 
+        <Link href="/dashboard/economato" className="block rounded-xl border bg-background p-4 text-sm hover:bg-muted">
+          Precisa de produtos do Stock Geral? Abra os <strong>Levantamentos para mesas</strong>, obtenha o código e apresente-o ao economato.
+        </Link>
         <OrdersGrid orders={orders.groupedOrders} loading={orders.loading} expandedOrderId={expandedOrderId}
           pendingItems={orders.pendingItems} pendingTables={orders.pendingTables} onToggleExpand={toggleExpand}
           onManage={openManager} onTogglePrepared={orders.togglePrepared} onFinish={orders.finishOrders} />

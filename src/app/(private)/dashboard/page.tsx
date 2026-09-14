@@ -229,7 +229,7 @@ export default function Dashboard() {
       {/* Header com seletor de tempo */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Resumo do negócio</h1>
           <p className="text-muted-foreground">
             {timeRange === "today" && "Visão geral das vendas de hoje"}
             {timeRange === "week" && "Visão geral das vendas desta semana"}
@@ -247,9 +247,9 @@ export default function Dashboard() {
       ) : (
         <div className="space-y-6">
           {/* Métricas principais - SEMPRE MOSTRA OS CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
-              title="Faturamento Total"
+              title="Faturação total"
               value={`${(displayData.metrics.totalRevenue || 0).toLocaleString('pt-AO', { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: 2 
@@ -264,7 +264,7 @@ export default function Dashboard() {
               icon={<Coffee className="text-muted-foreground" size={20} />}
             />
             <MetricCard
-              title="Ticket Médio"
+              title="Consumo médio"
               value={`${(displayData.metrics.averageTicket || 0).toLocaleString('pt-AO', { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: 2 
@@ -314,12 +314,12 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Estoque Crítico - SÓ MOSTRA SE HOUVER ITENS */}
+          {/* Stock a repor - SÓ MOSTRA SE HOUVER ITENS */}
           
 {displayData.criticalStock && displayData.criticalStock.length > 0 && (
   <Card>
     <CardHeader>
-      <CardTitle className="text-red-600">Estoque Crítico</CardTitle>
+      <CardTitle className="text-red-600">Stock a repor</CardTitle>
     </CardHeader>
     <CardContent>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -331,7 +331,7 @@ export default function Dashboard() {
             <div>
               <p className="font-medium text-red-800">{item.name}</p>
               <p className="text-sm text-red-600">
-                Estoque: {item.currentStock} / Mínimo: {item.minStock}
+                Disponível: {item.currentStock} / Mínimo: {item.minStock}
               </p>
             </div>
             <TrendingDown className="text-red-600" size={20} />

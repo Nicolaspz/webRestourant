@@ -1,4 +1,5 @@
 'use client';
+import { StockFulfillments } from '@/components/dashboard/economato/StockFulfillments';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -29,7 +30,9 @@ export default function EconomatoLayout({
     const [organization, setOrganization] = useState<Organization | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
+  const isManager = ['ADMIN', 'SUPER ADMIN', 'ECONOMATO'].includes(user?.role || '');
   const tabs = [
+    { id: "Levantamentos", label: "Levantamentos para mesas", icon: "truck", content: <StockFulfillments /> },
          { 
       id: "Stock", 
       label: "Stock/Inventário", 
@@ -45,7 +48,7 @@ export default function EconomatoLayout({
     
     { 
       id: "Consumos", 
-      label: "Consumos Internos", 
+      label: "Quebras e consumos",
       icon: "clipboard-list", // ← string
       content: <ConsumoPage /> 
     },
@@ -55,11 +58,11 @@ export default function EconomatoLayout({
   return (
     <div className="flex-1 space-y-6 p-6">
               <SettingsHeader 
-                title="Configurações do Stock "
-                description="Gerencie Os stock, fazendo Pedidos e Consumos"
+                title="Economato"
+                description={isManager ? "Aprove as requisições e confirme o levantamento com o código apresentado pelo solicitante. Registe também as quebras e consumos." : "Escolha os produtos, confira a lista e confirme a solicitação. Apresente o seu código ao economato no levantamento."}
               />
               
-              <SettingsTabs tabs={tabs} defaultTab="Stock" />
+              <SettingsTabs tabs={tabs.filter(tab => tab.id !== "Consumos" || isManager)} defaultTab="Levantamentos" />
             </div>
   );
 }

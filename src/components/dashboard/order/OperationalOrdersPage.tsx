@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { useCallback, useContext, useState } from 'react';
 import { ChefHat, RefreshCw, Wine } from 'lucide-react';
@@ -49,6 +50,9 @@ export function OperationalOrdersPage({ area }: { area: OperationalArea }) {
           </Button>
         </header>
 
+        <Link href="/dashboard/economato" className="block rounded-xl border bg-background p-4 text-sm hover:bg-muted">
+          Precisa de produtos do Stock Geral? Abra os <strong>Levantamentos para mesas</strong>, obtenha o código e apresente-o ao economato.
+        </Link>
         <OrdersGrid
           orders={queue.groupedOrders}
           loading={queue.loading}

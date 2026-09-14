@@ -1,4 +1,5 @@
 'use client';
+import { downloadPurchaseDocument } from '@/utils/downloadPurchaseDocument';
 
 import { useState, useEffect, useContext } from "react";
 import {
@@ -170,8 +171,8 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status }: PurchaseP
             {purchase.images.map((img) => (
               <a
                 key={img.id}
-                href={getMediaUrl(img.path)}
-                target="_blank"
+                href="#" onClick={event => { event.preventDefault(); void downloadPurchaseDocument(purchaseId, img); }}
+                
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-md text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors"
               >
@@ -213,16 +214,17 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status }: PurchaseP
                     <TableCell>
                       <div className="font-medium">{purchaseProduct.product.name}</div>
                       <Badge variant="outline" className="text-xs">
-                        {purchaseProduct.product.unit}
+                        {purchaseProduct.product.unit || 'Unidade não definida'}
                       </Badge>
                     </TableCell>
 
                     <TableCell>
-                      {purchaseProduct.quantity}
+                      {purchaseProduct.quantity} {purchaseProduct.product.unit || '(unidade não definida)'}
                     </TableCell>
 
                     <TableCell>
                       {formatPrice(purchaseProduct.purchasePrice)}
+                      {purchaseProduct.product.unit && <span className="text-muted-foreground"> / {purchaseProduct.product.unit}</span>}
                     </TableCell>
 
                     <TableCell className="font-medium">

@@ -24,6 +24,7 @@ interface StockProduct {
     data_fim?: string;
     precisaAtualizar?: boolean;
   }>;
+  reservedQuantity?: number;
   quantity: number;
   currentPrice?: string;
   category?: {
@@ -62,6 +63,7 @@ export default function StockPage() {
             description: product.description,
             unit: product.unit || "",         // ✅ tabela usa product.unit
             quantity: item.quantity || 0,
+            reservedQuantity: item.reservedQuantity || 0,
             currentPrice: `${precoVendaAtual} Kz`,  // ✅ tabela usa este campo!
             PrecoVenda: product.PrecoVenda || [],   // ✅ tabela usa este campo!
             isDerived: product.isDerived,

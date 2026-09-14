@@ -1,4 +1,5 @@
 'use client';
+import { StockRequestDialog } from './StockRequestDialog';
 
 import { useState, useEffect, useContext } from "react";
 import {
@@ -64,8 +65,6 @@ import { api } from "@/services/apiClients";
 export function PedidosTable() {
   const { user } = useContext(AuthContext);
   const [pedidos, setPedidos] = useState<PedidoArea[]>([]);
-  const [areas, setAreas] = useState<Area[]>([]);
-  const [generalStock, setGeneralStock] = useState<any[]>([]); // Produtos do Stock Geral
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -75,16 +74,6 @@ export function PedidosTable() {
   const [isProcessSheetOpen, setIsProcessSheetOpen] = useState(false);
   const [isConfirmSheetOpen, setIsConfirmSheetOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false); // Novo: Para visualizar itens
-
-  // Data States
-  const [newPedidoData, setNewPedidoData] = useState({
-    areaDestinoId: '',
-    observacoes: '',
-  });
-
-  // Multi-select for Creation
-  const [selectedRequestProducts, setSelectedRequestProducts] = useState<Set<string>>(new Set());
-  const [requestQuantities, setRequestQuantities] = useState<Record<string, number>>({});
 
   const [selectedPedido, setSelectedPedido] = useState<PedidoArea | null>(null);
   const [processStatus, setProcessStatus] = useState<'aprovado' | 'rejeitado' | null>(null);
@@ -97,37 +86,6 @@ export function PedidosTable() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  // Carregamento de Stock Geral
-  const fetchStock = async (silent = false) => {
-    if (!isMounted || !user?.organizationId) return;
-    try {
-      const stockData = await economatoService.getGeneralStock(user.organizationId);
-
-      // Filtra para mostrar ingrediente ou não-derivados
-      const filtered = stockData.filter((item: any) =>
-        item.product.isIgredient === true || item.product.isDerived === false
-      );
-
-      setGeneralStock(filtered);
-    } catch (error) {
-      console.error("Erro ao carregar stock geral:", error);
-    }
-  };
-
-  useEffect(() => {
-    async function loadData() {
-      if (!isMounted || !user?.organizationId) return;
-      try {
-        const areasData = await economatoService.getAreas(user.organizationId);
-        setAreas(areasData);
-        await fetchStock(true);
-      } catch (error) {
-        console.error("Erro ao carregar áreas:", error);
-      }
-    }
-    loadData();
-  }, [isMounted, user?.organizationId]);
 
   // Fetch Pedidos
   const fetchPedidos = async (silent = false) => {
@@ -151,70 +109,18 @@ export function PedidosTable() {
     fetchPedidos();
   }, [isMounted, statusFilter, user?.organizationId]);
 
+  useEffect(() => {
+    if (!isMounted) return;
+    const refresh = () => { void fetchPedidos(true); };
+    window.addEventListener('focus', refresh);
+    window.addEventListener('economato-updated', refresh);
+    return () => { window.removeEventListener('focus', refresh); window.removeEventListener('economato-updated', refresh); };
+  }, [isMounted, statusFilter, user?.organizationId]);
+
   if (!isMounted) return null;
 
   // Handlers
-  const openCreateDialog = () => {
-    setSelectedRequestProducts(new Set());
-    setRequestQuantities({});
-    setNewPedidoData({ areaDestinoId: '', observacoes: '' });
-    fetchStock(true); // Garante que o stock esteja atualizado ao abrir a modal
-    setIsCreateDialogOpen(true);
-  };
-
-  const toggleRequestSelection = (productId: string) => {
-    const next = new Set(selectedRequestProducts);
-    if (next.has(productId)) {
-      next.delete(productId);
-    } else {
-      next.add(productId);
-    }
-    setSelectedRequestProducts(next);
-  };
-
-  const handleRequestQuantityChange = (productId: string, qtd: number) => {
-    setRequestQuantities(prev => ({ ...prev, [productId]: qtd }));
-  };
-
-  const handleCreatePedido = async () => {
-    if (!user?.organizationId || !user?.id) return;
-
-    if (!newPedidoData.areaDestinoId) {
-      toast.warning("Selecione a área de destino.");
-      return;
-    }
-
-    // Monta itens
-    const itens = Array.from(selectedRequestProducts).map(productId => ({
-      productId,
-      quantity: requestQuantities[productId] || 0
-    })).filter(i => i.quantity > 0);
-
-    if (itens.length === 0) {
-      toast.warning("Selecione produtos e informe quantidades.");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      // areaOrigemId = null (Stock Geral)
-      await economatoService.createPedido({
-        areaOrigemId: null,
-        areaDestinoId: newPedidoData.areaDestinoId,
-        observacoes: newPedidoData.observacoes,
-        itens
-      }, user.organizationId, user.id);
-
-      toast.success("Pedido ao Stock Geral criado com sucesso!");
-      setIsCreateDialogOpen(false);
-      fetchPedidos(true);
-    } catch (error: any) {
-      console.error("Erro ao criar pedido:", error);
-      toast.error(error.response?.data?.error || "Erro ao criar pedido");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const openCreateDialog = () => setIsCreateDialogOpen(true);
 
   const handleProcessPedido = async () => {
 
@@ -224,19 +130,18 @@ export function PedidosTable() {
       setIsSubmitting(true);
 
       const response = await api.put(`/pedidos-area/${selectedPedido.id}/processar`,
-        { status: processStatus },
+        { status: processStatus, observacoes: processObs },
         {
           params: {
             organizationId: user.organizationId,
             userId: user.id
           },
-          headers: { Authorization: `Bearer ${user?.token}` },
         }
       );
 
 
       toast.success(processStatus === 'aprovado'
-        ? "Pedido aprovado! O código foi gerado."
+        ? "Pedido aprovado. Peça o código ao solicitante no levantamento."
         : "Pedido rejeitado.");
 
       setIsProcessSheetOpen(false);
@@ -253,17 +158,12 @@ export function PedidosTable() {
     if (!user?.organizationId || !user?.id || !selectedPedido || !confirmCode) return;
 
     try {
-
+      setIsSubmitting(true);
       await economatoService.confirmPedido(selectedPedido.id, confirmCode, user.organizationId, user.id)
-      /*const response = await api.post(`/pedidos-area/${selectedPedido.id}/confirmar`, 
-       { confirmCode },
-       {
-         params: {organizationId: user?.organizationId},
-         headers: { Authorization: `Bearer ${user?.token}` },
-       }
-     );*/
 
-      toast.success("Recebimento confirmado! Stock atualizado.");
+
+      toast.success("Entrega confirmada! Stock atualizado.");
+      window.dispatchEvent(new Event("economato-updated"));
       setIsConfirmSheetOpen(false);
       setConfirmCode('');
       fetchPedidos(true);
@@ -286,6 +186,8 @@ export function PedidosTable() {
   const openConfirmSheet = (pedido: PedidoArea) => {
     setSelectedPedido(pedido);
     setConfirmCode('');
+    setIsDetailsOpen(false);
+    setIsProcessSheetOpen(false);
     setIsConfirmSheetOpen(true);
   };
 
@@ -321,7 +223,7 @@ export function PedidosTable() {
           <p><strong>Data:</strong> ${new Date(pedido.criadoEm).toLocaleString()}</p>
           <p><strong>Destino:</strong> ${pedido.areaDestino.nome}</p>
           <p><strong>Status:</strong> <span class="status">${pedido.status}</span></p>
-          <p><strong>Código de Confirmação:</strong> <strong>${pedido.confirmationCode || '-'}</strong></p>
+          <p><strong>Código de Confirmação:</strong> <strong>${pedido.criadoPor === user?.id ? pedido.confirmationCode || '-' : 'Disponível apenas para o solicitante'}</strong></p>
           
           <h3>Produtos:</h3>
           <table>
@@ -365,10 +267,11 @@ export function PedidosTable() {
       <CardHeader>
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
           <div>
-            <CardTitle>Transferências entre Áreas</CardTitle>
-            <CardDescription>Gerencie solicitações de transferência de stock</CardDescription>
+            <CardTitle>Pedidos de stock</CardTitle>
+            <CardDescription>Confira a lista e confirme a solicitação → aguarde aprovação → apresente o código ao economato → receba os produtos.</CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => fetchPedidos()}>Atualizar</Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue />
@@ -384,7 +287,7 @@ export function PedidosTable() {
 
             <Button onClick={openCreateDialog}>
               <Plus className="w-4 h-4 mr-2" />
-              Solicitar Transferência
+              Solicitar Stock
             </Button>
           </div>
         </div>
@@ -419,7 +322,7 @@ export function PedidosTable() {
                     <TableCell>{new Date(pedido.criadoEm).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <span className="font-medium text-gray-700">
-                        Stock Geral
+                        {pedido.areaOrigem?.nome || "Stock Geral"}
                       </span>
                       <span className="mx-2 text-muted-foreground">➔</span>
                       <span className="font-medium text-green-700">{pedido.areaDestino.nome}</span>
@@ -433,10 +336,11 @@ export function PedidosTable() {
                     </TableCell>
                     <TableCell>{getStatusBadge(pedido.status)}</TableCell>
                     <TableCell>
-                      {pedido.status === 'aprovado' && pedido.confirmationCode ? (
+                      {['pendente', 'aprovado'].includes(pedido.status) && pedido.confirmationCode ? (
                         pedido.criadoPor === user?.id ? (
                           <div className="font-mono text-lg font-bold tracking-widest bg-orange-100 text-orange-700 px-2 py-1 rounded w-fit border border-orange-200">
                             {pedido.confirmationCode}
+                            <span className="block font-sans text-xs font-normal tracking-normal">Apresente ao responsável na entrega.</span>
                           </div>
                         ) : (
                           <Badge variant="outline" className="text-xs">Código Seguro</Badge>
@@ -459,7 +363,7 @@ export function PedidosTable() {
                           Itens
                         </Button>
 
-                        {pedido.status === 'pendente' && (user?.role === 'ADMIN' || user?.role === 'SUPER ADMIN') && (
+                        {pedido.status === 'pendente' && (['ADMIN', 'SUPER ADMIN', 'ECONOMATO'].includes(user?.role || '')) && (
                           <>
                             <Button
                               variant="outline"
@@ -480,7 +384,7 @@ export function PedidosTable() {
                           </>
                         )}
 
-                        {pedido.status === 'aprovado' && (user?.role === 'ADMIN' || user?.role === 'SUPER ADMIN') && (
+                        {pedido.status === 'aprovado' && (['ADMIN', 'SUPER ADMIN', 'ECONOMATO'].includes(user?.role || '')) && (
                           <Button
                             variant="default"
                             size="sm"
@@ -574,95 +478,7 @@ export function PedidosTable() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog Создаar Pedido */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Solicitar Stock</DialogTitle>
-              <DialogDescription>
-                Selecione produtos do <strong>Stock Geral</strong> para transferir.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Área Destino (Quem Recebe)</Label>
-                <Select
-                  value={newPedidoData.areaDestinoId}
-                  onValueChange={(val) => setNewPedidoData({ ...newPedidoData, areaDestinoId: val })}
-                >
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Observações</Label>
-                <Input
-                  value={newPedidoData.observacoes}
-                  onChange={(e) => setNewPedidoData({ ...newPedidoData, observacoes: e.target.value })}
-                  placeholder="Ex: reposição de fim de semana"
-                />
-              </div>
-
-              <div className="border rounded-md">
-                <div className="p-3 bg-muted border-b">
-                  <h4 className="font-semibold text-sm">Produtos Disponíveis (Stock Geral)</h4>
-                </div>
-                <div className="max-h-[300px] overflow-y-auto p-2">
-                  {generalStock.length === 0 ? (
-                    <p className="text-center text-muted-foreground p-4">Nenhum ingrediente disponível no stock geral.</p>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[50px]"></TableHead>
-                          <TableHead>Produto</TableHead>
-                          <TableHead>Disponível</TableHead>
-                          <TableHead className="w-[100px]">Qtd. Pedida</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {generalStock.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedRequestProducts.has(item.product.id)}
-                                onCheckedChange={() => toggleRequestSelection(item.product.id)}
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium">{item.product.name}</TableCell>
-                            <TableCell>
-                              {item.quantity} {item.product.unit}
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                disabled={!selectedRequestProducts.has(item.product.id)}
-                                value={requestQuantities[item.product.id] || ''}
-                                onChange={(e) => handleRequestQuantityChange(item.product.id, Number(e.target.value))}
-                                className="w-24"
-                              />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="mt-4">
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleCreatePedido} disabled={isSubmitting}>Solicitar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <StockRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onSuccess={() => fetchPedidos(true)} />
 
         {/* Sheet Processar (Aprovar/Rejeitar) */}
         <Sheet open={isProcessSheetOpen} onOpenChange={setIsProcessSheetOpen}>
@@ -673,7 +489,7 @@ export function PedidosTable() {
               </SheetTitle>
               <SheetDescription>
                 {processStatus === 'aprovado'
-                  ? "Aprovar irá gerar um código de retirada."
+                  ? "Aprovar autoriza o levantamento. O código permanece visível apenas para quem solicitou."
                   : "Rejeitar irá cancelar a solicitação."}
               </SheetDescription>
             </SheetHeader>
@@ -713,36 +529,26 @@ export function PedidosTable() {
           </SheetContent>
         </Sheet>
 
-        {/* Sheet Confirmar Recebimento */}
-        <Sheet open={isConfirmSheetOpen} onOpenChange={setIsConfirmSheetOpen}>
-          <SheetHeader className="px-6 pt-6 mb-4">
-            <SheetTitle>Confirmar Recebimento</SheetTitle>
-            <SheetDescription>
-              Insira o código fornecido para confirmar a retirada do Stock Geral.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="px-6 space-y-4">
-            <div className="space-y-2">
-              <Label>Código de Confirmação</Label>
-              <Input
-                value={confirmCode}
-                onChange={(e) => setConfirmCode(e.target.value)}
-                placeholder="000000"
-                className="text-center text-2xl tracking-[0.5em] font-mono h-16"
-                maxLength={6}
-              />
-            </div>
-          </div>
-          <SheetFooter className="px-6 pb-6 mt-6">
-            <Button
-              onClick={handleConfirmReceipt}
-              disabled={isSubmitting || confirmCode.length < 4}
-              className="w-full"
-            >
-              Confirmar Retirada
-            </Button>
-          </SheetFooter>
-        </Sheet>
+        <Dialog open={isConfirmSheetOpen} onOpenChange={value => { if (!isSubmitting) setIsConfirmSheetOpen(value); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirmar levantamento</DialogTitle>
+              <DialogDescription>Peça o código ao solicitante e confira os produtos entregues. Ao confirmar, o stock é transferido e o pedido fica recebido.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={e => { e.preventDefault(); void handleConfirmReceipt(); }} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="pickup-code">Código de levantamento (6 dígitos)</Label>
+                <Input id="pickup-code" autoFocus type="text" inputMode="numeric" autoComplete="one-time-code"
+                  value={confirmCode} onChange={e => setConfirmCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Digite o código" className="h-14 text-center text-xl font-mono tracking-widest bg-background text-foreground"
+                  readOnly={isSubmitting} maxLength={6} required pattern="[0-9]{6}" />
+                <p className="text-sm text-muted-foreground">O botão fica disponível depois de inserir os seis dígitos.</p>
+              </div>
+              <DialogFooter><Button type="button" variant="outline" disabled={isSubmitting} onClick={() => setIsConfirmSheetOpen(false)}>Cancelar</Button>
+                <Button type="submit" disabled={isSubmitting || !/^\d{6}$/.test(confirmCode)}>{isSubmitting ? 'A confirmar…' : 'Confirmar entrega e recebimento'}</Button></DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
       </CardContent>
     </Card>

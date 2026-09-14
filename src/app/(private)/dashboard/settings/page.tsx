@@ -2,6 +2,7 @@
 import { useEffect, useState, useContext } from 'react'
 import { AuthContext } from '@/contexts/AuthContext'
 import { SettingsHeader } from "@/components/settings/SettingsHeader"
+import { TableAreaControls } from '@/components/dashboard/mesas/TableAreaControls';
 import { AccountSection } from "@/components/settings/AccountSection"
 import { SecuritySection } from "@/components/settings/SecuritySection"
 import { OrganizationSection } from "@/components/settings/OrganizationSection"
@@ -122,6 +123,7 @@ export default function SettingsPage() {
   )
 
   const tabs = [
+    { id: "table-areas", label: "Áreas das mesas", icon: "building", content: <TableAreaControls organizationId={user?.organizationId || ''} /> },
     {
       id: "organization",
       label: "Organização",
@@ -148,28 +150,10 @@ export default function SettingsPage() {
       content: <OnlinePaymentSettingsSection />
     },
     {
-      id: "account",
-      label: "Conta",
-      icon: "user",
-      content: <AccountSection />
-    },
-    {
-      id: "security",
-      label: "Segurança",
-      icon: "lock",
-      content: <SecuritySection />
-    },
-    {
       id: "area",
-      label: "Área de Trabalho",
+      label: "Áreas de consumo / stock",
       icon: "lock",
       content: <AreasPage />
-    },
-    {
-      id: "suppliers",
-      label: "Fornecedores",
-      icon: "truck",
-      content: <SupplierSection />
     },
   ]
 

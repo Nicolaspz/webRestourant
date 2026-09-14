@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getMediaUrl } from '@/../config';
 import { printPdf } from '@/utils/printPdf';
+import { paymentSummary, paymentMethodLabel, type PaymentDetail } from '@/utils/paymentDetails';
 
 interface ItemPedido {
   produto: string;
@@ -28,6 +29,7 @@ interface OrganizationInfo {
 }
 
 interface DadosSessao {
+  pagamentos?: PaymentDetail[];
   id?: string;
   numero?: string;
   mesaNumero: number;
@@ -112,7 +114,10 @@ export function buildReceiptPdf(dados: DadosSessao, payment?: PaymentInfo, forma
   }
   text((paid?'TOTAL PAGO: ':'TOTAL A PAGAR: ')+money(dados.totalGeral),{bold:true,center:true,size:thermal?12:16});
   if (paid && payment) {
-    text('Método: '+(payment.metodo || '').toUpperCase());
+    text('Método: '+paymentSummary(dados.pagamentos, payment.metodo || '').toUpperCase());
+    if (dados.pagamentos && dados.pagamentos.length > 1) {
+      for (const part of dados.pagamentos) text(paymentMethodLabel(part.metodo)+': '+money(part.valor));
+    }
     text('Valor pago: '+money(payment.valorPago));
     if (payment.trocoPara != null && Number(payment.trocoPara)>0) { text('Entregue: '+money(payment.trocoPara)); text('Troco: '+money(Number(payment.trocoPara)-Number(payment.valorPago))); }
   }

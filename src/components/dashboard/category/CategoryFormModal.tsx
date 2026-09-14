@@ -64,7 +64,7 @@ export function CategoryFormModal({
             setParentId(initialData.parentId || "none");
         } else {
             setName("");
-            setKind("MENU");
+            setKind(categories.find(category => category.id === defaultParentId)?.kind || "MENU");
             setParentId(defaultParentId || "none");
         }
     }, [mode, initialData, isOpen, defaultParentId]);
@@ -79,10 +79,11 @@ export function CategoryFormModal({
             return;
         }
 
+        if (!organizationId) { toast.error("Organização não identificada. Atualize a página e inicie sessão novamente."); return; }
         setIsSubmitting(true);
         const apiClient = setupAPIClient();
         const payload = {
-            name,
+            name: name.trim(),
             organizationId,
             kind,
             parentId: parentId === "none" ? null : parentId,
@@ -100,7 +101,8 @@ export function CategoryFormModal({
             onSuccess();
             onClose();
         } catch (err: any) {
-            const errorMsg = err.response?.data?.error || "Erro ao processar categoria.";
+            const errorMsg = err.response?.data?.error || err.response?.data?.message ||
+                (!err.response ? "Não foi possível ligar ao servidor. Verifique se o backend está em execução e tente novamente." : `Não foi possível guardar a categoria (HTTP ${err.response.status}).`);
             toast.error(errorMsg);
         } finally {
             setIsSubmitting(false);

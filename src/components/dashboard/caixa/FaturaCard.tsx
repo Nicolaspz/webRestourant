@@ -1,5 +1,6 @@
 // components/caixa/FaturaCard.tsx
 import React from 'react';
+import { paymentSummary, paymentMethodLabel } from '@/utils/paymentDetails';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -98,6 +99,17 @@ const FaturaCard = ({ fatura, onPagamento, onPreConta, onPrint, onFiscalSync, on
           </div>
         </div>
 
+        {fatura.status === 'paga' && Boolean(fatura.pagamentos?.length) && (
+          <details className="rounded border p-3 text-sm">
+            <summary className="cursor-pointer font-medium">Como foi pago</summary>
+            <ul className="mt-2 space-y-2">
+              {fatura.pagamentos!.map((part, index) => <li key={index}>
+                <div className="flex justify-between gap-3"><span>{paymentMethodLabel(part.metodo)}</span><span>{formatCurrency(Number(part.valor))}</span></div>
+                {part.referencia && <p className="break-all text-muted-foreground">Referência: {part.referencia}</p>}
+              </li>)}
+            </ul>
+          </details>
+        )}
         <div className="flex items-center justify-between pt-3 border-t">
           <div className="text-xl font-bold text-primary">
             {formatCurrency(fatura.valorTotal)}
@@ -119,10 +131,10 @@ const FaturaCard = ({ fatura, onPagamento, onPreConta, onPrint, onFiscalSync, on
             </div>
           )}
           
-          {fatura.status === 'paga' && fatura.metodoPagamento && (
+          {fatura.status === 'paga' && (
             <div className="flex flex-wrap justify-end gap-2">
               <div className="text-sm text-muted-foreground capitalize bg-muted px-2 py-1 rounded">
-                {fatura.metodoPagamento.replace('_', ' ')}
+                {paymentSummary(fatura.pagamentos, fatura.metodoPagamento || '')}
               </div>
               {onPrint && <Button variant="outline" size="sm" onClick={onPrint}>Imprimir fatura</Button>}
               {fatura.fiscalSubmission && onFiscalSync && (

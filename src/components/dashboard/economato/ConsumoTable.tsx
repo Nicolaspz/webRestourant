@@ -1,4 +1,5 @@
 'use client';
+import { StockProductPicker, StockOption } from './StockProductPicker';
 
 import { useState, useEffect, useContext } from "react";
 import { 
@@ -55,7 +56,10 @@ export function ConsumoTable() {
   const { user } = useContext(AuthContext);
   const [consumos, setConsumos] = useState<ConsumoInterno[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<StockOption[]>([]);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockError, setStockError] = useState(false);
+  const [stockRetry, setStockRetry] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [areaFilter, setAreaFilter] = useState<string>('all');
 
@@ -92,16 +96,26 @@ export function ConsumoTable() {
         const areasData = await economatoService.getAreas(user.organizationId);
         setAreas(areasData);
         
-        const prodResponse = await api.get('/produts', {
-          params: { organizationId: user.organizationId }
-        });
-        setProducts(prodResponse.data);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       }
     }
     loadData();
   }, [user?.organizationId]);
+
+  useEffect(() => {
+    if (!isSheetOpen || !newData.areaId || !user?.organizationId) return;
+    let active = true;
+    setProducts([]); setStockLoading(true); setStockError(false);
+    const request = newData.areaId === 'general'
+      ? economatoService.getGeneralStock(user.organizationId)
+      : economatoService.getStockByArea(newData.areaId, user.organizationId).then(r => r.data);
+    request.then(data => { if (active) setProducts(data || []); })
+      .catch(() => { if (active) setStockError(true); })
+      .finally(() => { if (active) setStockLoading(false); });
+    return () => { active = false; };
+  }, [isSheetOpen, newData.areaId, user?.organizationId, stockRetry]);
+  const selectedStock = products.find(p => p.product.id === newData.productId);
 
   // Carregar Consumos
   const fetchConsumos = async () => {
@@ -131,10 +145,14 @@ export function ConsumoTable() {
     if (!user?.organizationId) return;
     if (!user?.id) return;
 
+    if (!selectedStock || !newData.motivo || !Number.isFinite(newData.quantity) || newData.quantity <= 0 || newData.quantity > selectedStock.quantity || (!selectedStock.product.is_fractional && !Number.isInteger(newData.quantity))) {
+      toast.warning('Selecione o local, o produto, o motivo e uma quantidade válida dentro do disponível.');
+      return;
+    }
     try {
       setIsSubmitting(true);
       await economatoService.createConsumo({
-        areaId: newData.areaId,
+        areaId: newData.areaId === 'general' ? null : newData.areaId,
         productId: newData.productId,
         quantity: Number(newData.quantity),
         motivo: newData.motivo,
@@ -151,6 +169,7 @@ export function ConsumoTable() {
         observacoes: ''
       });
       fetchConsumos();
+      window.dispatchEvent(new Event("economato-updated"));
     } catch (error: any) {
       console.error("Erro ao registrar consumo:", error);
       toast.error(error.response?.data?.error || "Erro ao registrar consumo");
@@ -237,6 +256,7 @@ export function ConsumoTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as Áreas</SelectItem>
+                <SelectItem value="general">Stock Geral</SelectItem>
                 {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -248,44 +268,38 @@ export function ConsumoTable() {
                   Registrar Quebra/Consumo
                 </Button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent className="sm:max-w-2xl overflow-y-auto p-6">
                 <SheetHeader>
                   <SheetTitle>Registrar Quebra / Consumo</SheetTitle>
-                  <SheetDescription>Desconta stock de uma área por motivos internos.</SheetDescription>
+                  <SheetDescription>Escolha onde ocorreu a quebra ou consumo: Stock Geral ou uma área. A baixa desconta apenas esse local.</SheetDescription>
                 </SheetHeader>
                 <form onSubmit={handleSubmit} className="space-y-6 pt-6">
                   <div className="space-y-2">
                     <Label>Área (Baixa de Stock)</Label>
                     <Select 
                       value={newData.areaId} 
-                      onValueChange={(val) => setNewData({...newData, areaId: val})}
+                      onValueChange={(val) => setNewData({...newData, areaId: val, productId: '', quantity: 0})}
                     >
                       <SelectTrigger><SelectValue placeholder="Selecione a área" /></SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="general">Stock Geral</SelectItem>
                         {areas.map(a => <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
 
+                  {newData.areaId && <div className="space-y-2">
+                    <Label>Produto no local selecionado</Label>
+                    {stockLoading ? <p>A carregar stock…</p> : stockError ? <div role="alert">Erro ao carregar stock. <Button type="button" variant="outline" onClick={() => setStockRetry(r => r + 1)}>Tentar novamente</Button></div> : <StockProductPicker single items={products} quantities={newData.productId ? { [newData.productId]: newData.quantity } : {}} onChange={next => setNewData({ ...newData, productId: Object.keys(next)[0] || '', quantity: 0 })} />}
+                  </div>}
+
                   <div className="space-y-2">
-                    <Label>Produto</Label>
-                    <Select 
-                      value={newData.productId} 
-                      onValueChange={(val) => setNewData({...newData, productId: val})}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
-                      <SelectContent className="max-h-[200px]">
-                        {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Quantidade</Label>
+                    <Label>Quantidade {selectedStock ? `(${selectedStock.product.unit || 'un'}) — disponível: ${selectedStock.quantity}` : ''}</Label>
                     <Input 
                       type="number"
-                      min="0"
-                      step="0.01"
+                      min={selectedStock?.product.is_fractional ? "0.001" : "1"}
+                      max={selectedStock?.quantity}
+                      step={selectedStock?.product.is_fractional ? "any" : "1"}
                       value={newData.quantity}
                       onChange={(e) => setNewData({...newData, quantity: Number(e.target.value)})}
                       required
@@ -318,7 +332,7 @@ export function ConsumoTable() {
                   </div>
                   
                   <SheetFooter>
-                    <Button type="submit" variant="destructive" disabled={isSubmitting}>
+                    <Button type="submit" variant="destructive" disabled={isSubmitting || stockLoading || stockError || !selectedStock || !newData.motivo || newData.quantity <= 0}>
                       Registrar Baixa
                     </Button>
                   </SheetFooter>
@@ -357,7 +371,7 @@ export function ConsumoTable() {
                 consumos.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{new Date(item.criadoEm).toLocaleDateString()} {new Date(item.criadoEm).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</TableCell>
-                    <TableCell>{item.area.nome}</TableCell>
+                    <TableCell>{item.area?.nome || "Stock Geral"}</TableCell>
                     <TableCell>{item.product?.name}</TableCell>
                     <TableCell>{item.quantity} {item.product?.unit || 'un'}</TableCell>
                     <TableCell>

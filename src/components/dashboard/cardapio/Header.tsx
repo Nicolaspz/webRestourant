@@ -1,3 +1,4 @@
+import { HierarchicalCategories } from '../menu/HierarchicalCategories';
 import { ShoppingCart, ChefHat, MapPin } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
@@ -68,21 +69,7 @@ export function Header({
         </div>
 
         <div className="border-t border-slate-100">
-          <div className="flex gap-2 overflow-x-auto py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {Object.keys(groupedProducts).map(category => (
-              <button
-                key={category}
-                onClick={() => onCategoryClick(category)}
-                className={`min-h-10 shrink-0 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition-all ${
-                  activeCategory === category
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                    : 'border border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-white'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+          <HierarchicalCategories categories={Object.keys(groupedProducts)} activeCategory={activeCategory} onSelect={onCategoryClick} />
         </div>
       </div>
     </header>

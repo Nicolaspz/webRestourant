@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useMenu } from '@/components/hooks/useMenu';
 import { useCategoryNavigation } from '@/hooks/useCategoryNavigation';
 import { Header } from './Header';
@@ -15,7 +15,7 @@ export function ProductMenuPage() {
   const menu = useMenu();
   const categories = useMemo(() => Object.keys(menu.groupedProducts), [menu.groupedProducts]);
   const cartItemCount = useMemo(() => menu.cart.reduce((total, item) => total + item.quantity, 0), [menu.cart]);
-  const scrollToCategory = useCategoryNavigation(categories, menu.setActiveCategory);
+  const [selectedCategory, setSelectedCategory] = useState<string|null>(null);
 
   if (!menu.isReady) {
     return <div className="min-h-screen bg-[#f6f7f9] p-4 sm:p-8" aria-label="A preparar cardápio">
@@ -32,9 +32,9 @@ export function ProductMenuPage() {
 
   return (
     <div className="min-h-screen bg-[#f6f7f9]">
-      <Header tableNumber={menu.tableNumber} cartItemCount={cartItemCount} activeCategory={menu.activeCategory}
+      <Header tableNumber={menu.tableNumber} cartItemCount={cartItemCount} activeCategory={selectedCategory}
         groupedProducts={menu.groupedProducts} onCartClick={() => menu.setShowCart(true)}
-        onCategoryClick={scrollToCategory} isCheckingSession={menu.isCheckingSession}
+        onCategoryClick={setSelectedCategory} isCheckingSession={menu.isCheckingSession}
         hasSessionConflict={Boolean(menu.sessionConflict?.isConflict)} />
       <SessionConflictModal isOpen={Boolean(menu.sessionConflict?.isConflict)} conflict={menu.sessionConflict}
         tableNumber={menu.tableNumber} onClose={() => menu.setSessionConflict(null)}
@@ -42,7 +42,9 @@ export function ProductMenuPage() {
       <FeaturedProducts products={menu.getFeaturedProductsByTab()} activeTab={menu.activeTab}
         onTabChange={menu.setActiveTab} onAddToCart={menu.addToCart} />
       <main className="mx-auto max-w-[1480px] px-4 py-10 sm:px-6">
-        {Object.entries(menu.groupedProducts).map(([category, products]) => (
+        {!selectedCategory && <p className="text-slate-600">Escolha uma categoria para ver os produtos.</p>}
+        {selectedCategory && !menu.groupedProducts[selectedCategory]?.length && <p className="text-slate-600">Selecione uma subcategoria acima para ver os produtos. Se não houver subcategorias, esta categoria ainda não tem produtos disponíveis.</p>}
+        {Object.entries(menu.groupedProducts).filter(([category])=>category===selectedCategory).map(([category, products]) => (
           <CategorySection key={category} category={category} products={products} onAddToCart={menu.addToCart} />
         ))}
       </main>

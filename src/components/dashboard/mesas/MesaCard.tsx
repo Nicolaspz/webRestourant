@@ -1,5 +1,6 @@
 'use client';
 
+import { TableAreaDialog } from './TableAreaDialog';
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +49,7 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
                 Mesa {mesa.number}
               </CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-300">
-                Capacidade: {mesa.capacidade} pessoas
+                Capacidade: {mesa.capacidade} pessoas<br />Área: {mesa.areaName || 'Sem área'}
               </CardDescription>
             </div>
             <Badge className={getStatusBadge(mesa.status)}>
@@ -58,6 +59,7 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {user?.role?.toUpperCase() === 'ADMIN' && <TableAreaDialog mesa={mesa} />}
           {user?.role?.toUpperCase() !== 'GARCON' && (
             <QRCodePrinter
               organizationId={user?.organizationId}

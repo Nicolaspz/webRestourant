@@ -55,6 +55,7 @@ interface StockProduct {
   isDerived: boolean;
   isIgredient: boolean;
   PrecoVenda: PrecoVenda[];
+  reservedQuantity?: number;
   quantity: number; // Quantidade em stock
   currentPrice?: string; // Preço formatado
   category?: {
@@ -198,7 +199,8 @@ export function StockTable({ products, isLoading }: StockTableProps) {
                               {getQuantityText(product.quantity)}
                             </Badge>
                             <span className="text-xs text-muted-foreground">
-                              {product.quantity} {product.unit}
+                              {product.quantity} {product.unit} disponíveis
+                              {!!product.reservedQuantity && <span className="block text-amber-600">{product.reservedQuantity} {product.unit} reservados para levantamento</span>}
                             </span>
                           </div>
                         </TableCell>

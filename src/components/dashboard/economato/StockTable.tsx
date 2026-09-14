@@ -1,4 +1,5 @@
 'use client';
+import { StockRequestDialog } from './StockRequestDialog';
 
 import { useState, useEffect, useContext } from "react";
 import {
@@ -65,7 +66,6 @@ export function StockTable() {
   const [filterType, setFilterType] = useState<'all' | 'product' | 'ingredient'>('all');
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
-  const [generalStock, setGeneralStock] = useState<any[]>([]);
 
   // Sheet State
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
@@ -77,12 +77,6 @@ export function StockTable() {
   const [addData, setAddData] = useState({ productId: '', quantity: 0 });
   const [adjustData, setAdjustData] = useState({ quantity: 0, reason: '', obs: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Request Stock Form
-  const [selectedRequestProducts, setSelectedRequestProducts] = useState<Set<string>>(new Set());
-  const [requestQuantities, setRequestQuantities] = useState<Record<string, number>>({});
-  const [isRequestLoading, setIsRequestLoading] = useState(false);
-
 
   // Load Areas
   useEffect(() => {
@@ -105,23 +99,6 @@ export function StockTable() {
     loadAreas();
   }, [user?.organizationId]);
 
-  // Load General Stock for Request
-  const fetchGeneralStock = async () => {
-    if (!user?.organizationId) return;
-    try {
-      const response = await api.get('/stock', {
-        params: { organizationId: user.organizationId }
-      });
-      // Filtra apenas Ingredientes e Não-Derivados
-      const filtered = response.data.filter((item: any) =>
-        item.product.isIgredient === true && item.product.isDerived === false
-      );
-      setGeneralStock(filtered);
-    } catch (err) {
-      console.error("Erro ao carregar stock geral", err);
-    }
-  };
-
   // Load Stock Items (Area)
   const fetchStock = async () => {
     if (!selectedAreaId || !user?.organizationId) return;
@@ -139,6 +116,12 @@ export function StockTable() {
 
   useEffect(() => {
     fetchStock();
+  }, [selectedAreaId, user?.organizationId]);
+
+  useEffect(() => {
+    const refresh = () => { void fetchStock(); };
+    window.addEventListener('economato-updated', refresh);
+    return () => window.removeEventListener('economato-updated', refresh);
   }, [selectedAreaId, user?.organizationId]);
 
   const filteredItems = stockItems.filter(item => {
@@ -178,96 +161,6 @@ export function StockTable() {
     setIsAddSheetOpen(true);
   };
 
-  const handleOpenRequest = async () => {
-    setIsRequestDialogOpen(true);
-    setIsRequestLoading(true);
-    try {
-      await fetchGeneralStock();
-    } finally {
-      setIsRequestLoading(false);
-    }
-  };
-
-  const toggleRequestSelection = (productId: string) => {
-    const next = new Set(selectedRequestProducts);
-    if (next.has(productId)) {
-      next.delete(productId);
-    } else {
-      next.add(productId);
-    }
-    setSelectedRequestProducts(next);
-  };
-
-  const handleRequestQuantityChange = (productId: string, qtd: number) => {
-    setRequestQuantities(prev => ({ ...prev, [productId]: qtd }));
-  };
-
-  const handleSubmitRequest = async () => {
-    if (!user?.organizationId || !user?.id) return;
-    if (selectedRequestProducts.size === 0) {
-      toast.warning("Selecione pelo menos um produto.");
-      return;
-    }
-
-    const itens = Array.from(selectedRequestProducts).map(productId => ({
-      productId,
-      quantity: requestQuantities[productId] || 0
-    })).filter(i => i.quantity > 0);
-
-    if (itens.length === 0) {
-      toast.warning("Informe a quantidade para os produtos selecionados.");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      // Lógica para definir a Origem (Deve ser o Stock Geral / Armazém)
-      // Tenta encontrar área por nome
-      let origemId = areas.find(a =>
-        a.nome.toLowerCase().includes("armazém") ||
-        a.nome.toLowerCase().includes("stock") ||
-        a.nome.toLowerCase().includes("geral")
-      )?.id;
-
-      // Se não encontrar pelo nome, e se a área de destino NÃO for a primeira da lista, usa a primeira (assumindo ser a principal)
-      if (!origemId) {
-        const potentialOrigin = areas.find(a => a.id !== selectedAreaId);
-        if (potentialOrigin) {
-          origemId = potentialOrigin.id;
-        }
-      }
-
-      if (!origemId) {
-        toast.error("Não foi encontrada uma área de 'Armazém' ou 'Stock' para servir de origem.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (origemId === selectedAreaId) {
-        toast.error("A área de origem (Stock) não pode ser a mesma que o destino.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      await economatoService.createPedido({
-        areaOrigemId: origemId,
-        areaDestinoId: selectedAreaId,
-        observacoes: "Solicitação ao Stock Geral",
-        itens
-      }, user.organizationId, user.id);
-
-      toast.success("Solicitação enviada ao Stock Geral!");
-      setIsRequestDialogOpen(false);
-
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao solicitar stock.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleOpenAdjust = (item: EconomatoItem) => {
     setSelectedItem(item);
     setAdjustData({ quantity: item.quantity, reason: 'Contagem', obs: '' });
@@ -280,9 +173,10 @@ export function StockTable() {
     try {
       setIsSubmitting(true);
       await economatoService.adjustStock({
-        economatoId: selectedItem.id,
-        quantity: Number(adjustData.quantity),
-        reason: adjustData.reason,
+        areaId: selectedItem.areaId,
+        productId: selectedItem.productId,
+        novaQuantidade: Number(adjustData.quantity),
+        motivo: adjustData.reason,
         observacoes: adjustData.obs
       }, user.organizationId, user.id);
 
@@ -317,7 +211,7 @@ export function StockTable() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" onClick={handleOpenRequest} disabled={!selectedAreaId}>
+            <Button variant="outline" onClick={() => setIsRequestDialogOpen(true)} disabled={!selectedAreaId}>
               <ArrowRightLeft className="w-4 h-4 mr-2" />
               Solicitar Stock
             </Button>
@@ -407,6 +301,7 @@ export function StockTable() {
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={!['ADMIN', 'SUPER ADMIN', 'ECONOMATO'].includes(user?.role || '')}
                       onClick={() => handleOpenAdjust(item)}
                     >
                       <RefreshCw className="w-3 h-3 mr-1" /> Ajuste
@@ -472,71 +367,7 @@ export function StockTable() {
           </SheetContent>
         </Sheet>
 
-        {/* Request Dialog */}
-        <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Solicitar Stock</DialogTitle>
-              <DialogDescription>
-                Solicitando para: <span className="font-semibold text-primary">
-                  {areas.find(a => a.id === selectedAreaId)?.nome || "Área Selecionada"}
-                </span>
-                <br />
-                Origem: <span className="font-semibold">Stock Geral</span>
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="max-h-[400px] overflow-y-auto py-4">
-              {isRequestLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : generalStock.length === 0 ? (
-                <p className="text-muted-foreground text-center">Nenhum ingrediente disponível no stock geral.</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[50px]">
-                      </TableHead>
-                      <TableHead>Produto</TableHead>
-                      <TableHead>Disp. Geral</TableHead>
-                      <TableHead className="w-[100px]">Qtd. Pedida</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {generalStock.map((stockItem) => (
-                      <TableRow key={stockItem.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedRequestProducts.has(stockItem.product.id)}
-                            onCheckedChange={() => toggleRequestSelection(stockItem.product.id)}
-                          />
-                        </TableCell>
-                        <TableCell>{stockItem.product.name}</TableCell>
-                        <TableCell>{stockItem.quantity} {stockItem.product.unit}</TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="1"
-                            step="1"
-                            disabled={!selectedRequestProducts.has(stockItem.product.id)}
-                            onChange={(e) => handleRequestQuantityChange(stockItem.product.id, Number(e.target.value))}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsRequestDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSubmitRequest} disabled={isSubmitting}>Enviar Solicitação</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <StockRequestDialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen} destinationId={selectedAreaId} />
       </CardContent>
     </Card>
   );

@@ -124,6 +124,7 @@ export interface FaturaItem {
 }
 
 export interface Fatura {
+  pagamentos?: { metodo: string; valor: number; referencia?: string | null }[];
   id: string;
   numero: string;
   mesa: string;
@@ -171,6 +172,8 @@ export interface Organization {
 
 // types/mesa.ts
 export interface Mesa {
+  tableAreaId?: string | null;
+  areaName?: string | null;
   id: string;
   number: number;
   capacidade: number;
