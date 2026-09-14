@@ -23,7 +23,7 @@ export default function Header() {
         fixed top-0 left-0 right-0 z-50 transition-all duration-300
         ${scrolled
           ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200'
-          : 'bg-transparent'
+          : 'bg-white/95 border-b border-gray-200'
         }
       `}
     >
@@ -39,7 +39,7 @@ export default function Header() {
               priority
               className="rounded-lg"
             />
-            <span className={`font-bold text-lg transition-colors duration-300 ${scrolled ? 'text-gray-900' : 'text-white'}`}>
+            <span className={`font-bold text-lg transition-colors duration-300 ${scrolled ? 'text-gray-900' : 'text-gray-900'}`}>
               Serve Fixe
             </span>
           </Link>
@@ -47,40 +47,43 @@ export default function Header() {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
             <a
-              href="#features"
-              className={`text-sm font-medium transition-colors duration-300 hover:text-amber-500 ${scrolled ? 'text-gray-600' : 'text-white/80'}`}
+              href="/#features"
+              className={`text-sm font-medium transition-colors duration-300 hover:text-blue-700 ${scrolled ? 'text-gray-600' : 'text-gray-600'}`}
             >
               Funcionalidades
             </a>
             <a
-              href="#pricing"
-              className={`text-sm font-medium transition-colors duration-300 hover:text-amber-500 ${scrolled ? 'text-gray-600' : 'text-white/80'}`}
+              href="/#pricing"
+              className={`text-sm font-medium transition-colors duration-300 hover:text-blue-700 ${scrolled ? 'text-gray-600' : 'text-gray-600'}`}
             >
               Planos
             </a>
             <Link
               href="/login"
-              className={`text-sm font-medium transition-colors duration-300 hover:text-amber-500 ${scrolled ? 'text-gray-600' : 'text-white/80'}`}
+              className={`text-sm font-medium transition-colors duration-300 hover:text-blue-700 ${scrolled ? 'text-gray-600' : 'text-gray-600'}`}
             >
-              Login
+              Entrar
             </Link>
             <Link
               href="/register"
-              className="bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold px-5 py-2 rounded-lg text-sm hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-md shadow-amber-500/20"
+              className="bg-[#2459a6] text-white font-semibold px-5 py-2 rounded-lg text-sm hover:bg-[#1d4887] transition-all duration-300 shadow-md shadow-blue-900/10"
             >
-              Solicitar demo
+              Criar conta
             </Link>
           </nav>
 
           {/* Mobile toggle */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 text-slate-900"
+            aria-label={mobileOpen ? "Fechar navegação" : "Abrir navegação"}
+            aria-expanded={mobileOpen}
+            aria-controls="public-mobile-nav"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? (
-              <X className={`h-6 w-6 ${scrolled ? 'text-gray-900' : 'text-white'}`} />
+              <X className={`h-6 w-6 ${scrolled ? 'text-gray-900' : 'text-gray-900'}`} />
             ) : (
-              <Menu className={`h-6 w-6 ${scrolled ? 'text-gray-900' : 'text-white'}`} />
+              <Menu className={`h-6 w-6 ${scrolled ? 'text-gray-900' : 'text-gray-900'}`} />
             )}
           </button>
         </div>
@@ -88,16 +91,16 @@ export default function Header() {
         {/* Mobile Menu */}
         {mobileOpen && (
           <div className="md:hidden bg-white rounded-xl shadow-xl mt-2 p-4 border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-200">
-            <nav className="flex flex-col gap-3">
+            <nav id="public-mobile-nav" className="flex flex-col gap-3" aria-label="Navegação móvel">
               <a
-                href="#features"
+                href="/#features"
                 onClick={() => setMobileOpen(false)}
                 className="text-gray-700 font-medium py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 Funcionalidades
               </a>
               <a
-                href="#pricing"
+                href="/#pricing"
                 onClick={() => setMobileOpen(false)}
                 className="text-gray-700 font-medium py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors"
               >
@@ -108,14 +111,14 @@ export default function Header() {
                 onClick={() => setMobileOpen(false)}
                 className="text-gray-700 font-medium py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                Login
+                Entrar
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMobileOpen(false)}
-                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold py-2.5 px-4 rounded-lg text-center hover:from-amber-600 hover:to-orange-700 transition-all"
+                className="bg-[#2459a6] text-white font-semibold py-2.5 px-4 rounded-lg text-center hover:bg-[#1d4887] transition-all"
               >
-                Solicitar demo
+                Criar conta
               </Link>
             </nav>
           </div>

@@ -315,7 +315,7 @@ const Caixa = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900 p-4">
+    <div className="space-y-6">
       <div className="max-w-[90vw] mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>

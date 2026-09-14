@@ -29,7 +29,7 @@ export default function OrdersPage() {
   }, [orders.refresh]);
 
   return (
-    <div className="min-h-screen bg-muted/20 p-4 sm:p-6 lg:p-8">
+    <div className="space-y-6">
       <div className="mx-auto max-w-[1500px] space-y-6">
         <header className="flex flex-col gap-4 rounded-2xl border bg-background p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">

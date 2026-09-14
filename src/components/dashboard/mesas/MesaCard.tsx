@@ -40,15 +40,15 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
 
   return (
     <>
-      <Card key={mesa.id} className="overflow-hidden hover:shadow-lg transition-shadow dark:bg-gray-800 dark:border-gray-700">
+      <Card key={mesa.id} className="overflow-hidden transition-colors hover:border-primary/40">
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Users className="h-5 w-5" />
                 Mesa {mesa.number}
               </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-300">
+              <CardDescription className="text-muted-foreground">
                 Capacidade: {mesa.capacidade} pessoas<br />Área: {mesa.areaName || 'Sem área'}
               </CardDescription>
             </div>
@@ -68,13 +68,10 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
             />
           )}
 
-          <div className="text-xs p-3 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-            <p className="font-medium mb-1">URL do Cardápio:</p>
-            <p className="break-all">{cardapioUrl}</p>
-            <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-300">
-              Esta URL será codificada no QR Code
-            </p>
-          </div>
+          <details className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <summary className="cursor-pointer font-medium text-foreground">Ver endereço do cardápio</summary>
+            <p className="mt-2 break-all">{cardapioUrl}</p>
+          </details>
 
           {mesa.reservas?.filter((r: any) => r.status === 'confirmada').length > 0 && (
             <ReservasAtivas reservas={mesa.reservas} />
@@ -129,7 +126,7 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 rounded-lg shadow-lg w-80"
+            className="bg-white dark:bg-gray-800 text-foreground p-6 rounded-lg shadow-lg w-80"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-semibold mb-4">Confirmar exclusão</h2>

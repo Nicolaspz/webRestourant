@@ -1,8 +1,8 @@
 // components/settings/SettingsTabs.tsx (atualizado)
 "use client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, Lock, Bell, CreditCard, Building2, Loader2, Truck, Printer } from "lucide-react"
-import { useState, useEffect } from "react"
+import { User, Lock, Bell, CreditCard, Building2, Loader2, Truck, Printer, Warehouse, ArrowRightLeft, ClipboardList } from "lucide-react"
+import { useState } from "react"
 
 interface Tab {
   id: string
@@ -17,6 +17,9 @@ interface SettingsTabsProps {
 }
 
 const iconMap = {
+  warehouse: <Warehouse className="h-4 w-4" />,
+  "arrow-right-left": <ArrowRightLeft className="h-4 w-4" />,
+  "clipboard-list": <ClipboardList className="h-4 w-4" />,
   user: <User className="mr-2 h-4 w-4" />,
   lock: <Lock className="mr-2 h-4 w-4" />,
   bell: <Bell className="mr-2 h-4 w-4" />,
@@ -28,13 +31,6 @@ const iconMap = {
 
 export function SettingsTabs({ tabs, defaultTab }: SettingsTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    setLoading(true)
-    const timer = setTimeout(() => setLoading(false), 800)
-    return () => clearTimeout(timer)
-  }, [activeTab])
 
   return (
     <Tabs
@@ -53,14 +49,7 @@ export function SettingsTabs({ tabs, defaultTab }: SettingsTabsProps) {
 
       {tabs.map((tab) => (
         <TabsContent key={tab.id} value={tab.id} className="mt-6">
-          {loading ? (
-            <div className="flex items-center justify-center h-40 text-gray-500">
-              <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              <span>Carregando {tab.label}...</span>
-            </div>
-          ) : (
-            tab.content
-          )}
+          {tab.content}
         </TabsContent>
       ))}
     </Tabs>

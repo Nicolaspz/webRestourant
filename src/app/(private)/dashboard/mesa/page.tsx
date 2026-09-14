@@ -293,8 +293,8 @@ export default function GerenciamentoMesasPage() {
 // Subcomponentes da página
 const Header = () => (
   <div className="mb-8">
-    <h1 className="text-3xl font-bold text-gray-900">Gerenciamento de Mesas</h1>
-    <p className="text-gray-600">Gerencie mesas, reservas e QR Codes</p>
+    <h1 className="text-2xl font-semibold text-foreground">Gestão de mesas</h1>
+    <p className="text-muted-foreground">Gerencie mesas, reservas e QR Codes</p>
   </div>
 );
 

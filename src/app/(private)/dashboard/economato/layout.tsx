@@ -56,7 +56,7 @@ export default function EconomatoLayout({
   ];
 
   return (
-    <div className="flex-1 space-y-6 p-6">
+    <div className="flex-1 space-y-6">
               <SettingsHeader 
                 title="Economato"
                 description={isManager ? "Aprove as requisições e confirme o levantamento com o código apresentado pelo solicitante. Registe também as quebras e consumos." : "Escolha os produtos, confira a lista e confirme a solicitação. Apresente o seu código ao economato no levantamento."}
