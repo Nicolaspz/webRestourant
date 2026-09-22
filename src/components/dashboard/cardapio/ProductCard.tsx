@@ -1,3 +1,4 @@
+import { ProductImage } from '@/components/ProductImage';
 // components/menu/ProductCard.tsx
 import { motion } from 'framer-motion';
 import { Utensils, Plus } from 'lucide-react';
@@ -29,17 +30,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
           onClick={onAddToCart}
         >
           <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-              {product.banner ? (
-                <img
-                  src={getMediaUrl(product.banner)}
-                  alt={product.name}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Utensils className="h-8 w-8 text-slate-300" />
-                </div>
-              )}
+              <ProductImage banner={product.banner} name={product.name} className="h-full w-full object-cover" />
               {/* Badges para Featured/New */}
               <div className="absolute top-1 left-1 flex flex-col gap-1">
                 {product.isFeatured && (
@@ -78,17 +69,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
         onClick={onAddToCart}
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-          {product.banner ? (
-            <img
-              src={getMediaUrl(product.banner)}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-blue-50">
-              <Utensils className="h-12 w-12 text-slate-300" />
-            </div>
-          )}
+          <ProductImage banner={product.banner} name={product.name} className="h-full w-full object-cover" />
 
           {/* Badges para Featured/New */}
           <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">

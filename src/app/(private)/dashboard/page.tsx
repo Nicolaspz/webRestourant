@@ -17,7 +17,7 @@ import dayjs from "dayjs";
 
 // Componentes reutilizáveis
 import { MetricCard } from "@/components/dashboard/MetricCard";
-import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
+import { DateRangeFilter, dateRangePreset } from "@/components/DateRangeFilter";
 import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
 import { RecentOrdersTable } from "@/components/dashboard/RecentOrdersTable";
@@ -103,7 +103,7 @@ const defaultDashboardData: DashboardData = {
 export default function Dashboard() {
   const { user, isAuthenticated } = useContext(AuthContext);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [timeRange, setTimeRange] = useState<string>("today");
+
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const apiClient = setupAPIClient();
@@ -111,34 +111,7 @@ export default function Dashboard() {
 
   
 
-  // Função para calcular o range de datas
-  const getDateRange = (range: string) => {
-    const today = dayjs();
-    switch (range) {
-      case "today":
-        return {
-          startDate: today.format("YYYY-MM-DD"),
-          endDate: today.format("YYYY-MM-DD")
-        };
-      case "week":
-        return {
-          startDate: today.startOf('week').format("YYYY-MM-DD"),
-          endDate: today.endOf('week').format("YYYY-MM-DD")
-        };
-      case "month":
-        return {
-          startDate: today.startOf('month').format("YYYY-MM-DD"),
-          endDate: today.endOf('month').format("YYYY-MM-DD")
-        };
-      default:
-        return {
-          startDate: today.format("YYYY-MM-DD"),
-          endDate: today.format("YYYY-MM-DD")
-        };
-    }
-  };
-
-  const [dateRange, setDateRange] = useState(getDateRange(timeRange));
+  const [dateRange, setDateRange] = useState(() => dateRangePreset('today'));
 
   const fetchDashboard = async () => {
     if (!user?.organizationId || !user?.token) {
@@ -192,11 +165,6 @@ export default function Dashboard() {
     }
   };
 
-  // Atualiza o dateRange quando timeRange muda
-  useEffect(() => {
-    setDateRange(getDateRange(timeRange));
-  }, [timeRange]);
-
   // Monitora mudanças na autenticação e no dateRange
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -207,10 +175,6 @@ export default function Dashboard() {
       setIsLoading(false);
     }
   }, [isAuthenticated, user, dateRange]);
-
-  const handleTimeRangeChange = (range: string) => {
-    setTimeRange(range);
-  };
 
   // Usar dados reais ou padrão
   const displayData = dashboardData || defaultDashboardData;
@@ -231,12 +195,10 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Resumo do negócio</h1>
           <p className="text-muted-foreground">
-            {timeRange === "today" && "Visão geral das vendas de hoje"}
-            {timeRange === "week" && "Visão geral das vendas desta semana"}
-            {timeRange === "month" && "Visão geral das vendas deste mês"}
+            Vendas de {dayjs(dateRange.startDate).format('DD/MM/YYYY')} a {dayjs(dateRange.endDate).format('DD/MM/YYYY')}
           </p>
         </div>
-        <TimeRangeSelector value={timeRange} onChange={handleTimeRangeChange} />
+        <DateRangeFilter value={dateRange} onChange={setDateRange} disabled={isLoading} />
       </div>
 
       {/* Conteúdo principal */}

@@ -208,6 +208,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         sameSite: "lax"
       });
 
+      // Disponibiliza o token imediatamente para qualquer pedido disparado
+      // durante a primeira renderização do dashboard. O interceptor também
+      // lê o cookie, mas este header evita uma janela em que componentes
+      // montados logo após o redirect ainda usam a sessão anterior.
+      api.defaults.headers['Authorization'] = `Bearer ${token}`;
+
       // Atualiza estado com user + token
       setUser({
         id,
@@ -231,6 +237,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             : role?.toUpperCase() === 'BAR' ? '/dashboard/bar'
               : role?.toUpperCase() === 'ECONOMATO' ? '/dashboard/economato'
               : '/dashboard';
+      // Prefetch reduz o tempo percebido entre a resposta do login e a
+      // montagem do layout privado, sobretudo na primeira entrada.
+      router.prefetch(destination);
       router.replace(destination);
 
     } catch (err: any) {

@@ -48,8 +48,9 @@ import { setupAPIClient } from "@/services/api";
 import { toast } from 'react-toastify';
 import { AuthContext } from "@/contexts/AuthContext";
 import { IngredientFormModal } from "@/components/dashboard/igredient/IngredientFormModal";
+import { RecipeModal } from "@/components/dashboard/produto/RecipeModal";
 import { DeleteDialog } from "@/components/dashboard/user/userConfirmModal";
-import { Category, Ingredient } from "@/types/product";
+import { Category, Ingredient, Product } from "@/types/product";
 
 export default function IngredientsPage() {
   const { user } = useContext(AuthContext);
@@ -67,6 +68,8 @@ export default function IngredientsPage() {
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
+  const [selectedRecipeIngredient, setSelectedRecipeIngredient] = useState<Product | null>(null);
 
   // Buscar ingredientes e categorias
   const fetchData = async () => {
@@ -364,6 +367,12 @@ export default function IngredientsPage() {
     setIsDeleteDialogOpen(true);
   };
 
+  const openRecipeModal = (ingredient: Ingredient) => {
+    // A dose/pré-preparado tem a mesma estrutura de produto para o editor de receitas.
+    setSelectedRecipeIngredient(ingredient as unknown as Product);
+    setIsRecipeModalOpen(true);
+  };
+
   const getTypeBadgeVariant = (isDerived: boolean) => {
     return isDerived ? "secondary" : "default";
   };
@@ -498,6 +507,12 @@ export default function IngredientsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+                            {ingredient.isDerived && (
+                              <DropdownMenuItem onClick={() => openRecipeModal(ingredient)}>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Gerir receita
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => openEditModal(ingredient)}>
                               <Edit className="w-4 h-4 mr-2" />
                               Editar
@@ -535,6 +550,18 @@ export default function IngredientsPage() {
         categories={categories}
         organizationId={user?.organizationId || ''}
       />
+
+      {selectedRecipeIngredient && user?.organizationId && (
+        <RecipeModal
+          isOpen={isRecipeModalOpen}
+          onClose={() => {
+            setIsRecipeModalOpen(false);
+            setSelectedRecipeIngredient(null);
+          }}
+          product={selectedRecipeIngredient}
+          organizationId={user.organizationId}
+        />
+      )}
 
       {/* Diálogo de Confirmação de Exclusão */}
       <DeleteDialog

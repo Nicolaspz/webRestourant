@@ -21,9 +21,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         if (!token) return;
 
         // URL direta do backend para WebSockets (proxy da Vercel nao suporta WebSockets)
-        const socketUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-            ? 'https://server-restourant.onrender.com'
-            : API_BASE_URL;
+        const socketUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE_URL;
 
         const socketInstance = io(socketUrl, {
             auth: { token },

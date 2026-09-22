@@ -30,6 +30,8 @@ export interface RecipeItem {
     id: string;
     name: string;
     unit: string;
+    isDerived?: boolean;
+    cost?: number;
     price: number;
     PrecoVenda?: PrecoVenda[];
   };
@@ -43,6 +45,7 @@ export interface Product {
   unit: string;
   is_fractional: boolean;
   isDerived: boolean;
+  allowAsIngredient: boolean;
   isIgredient: boolean;
   isFeatured: boolean;
   isNew: boolean;
@@ -80,6 +83,7 @@ export interface ProductFormData {
   description: string;
   unit: string;
   isDerived: boolean;
+  allowAsIngredient: boolean;
   isIgredient: boolean;
   isFeatured: boolean;
   isNew: boolean;
@@ -88,6 +92,7 @@ export interface ProductFormData {
   file: File | null;
   previewImage: string;
   price: number;
+  cost?: number;
   existingBanner?: string;
   defaultAreaId: string;
   taxPercentage: number;

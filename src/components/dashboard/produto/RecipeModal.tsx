@@ -69,7 +69,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       });
 
       const ingredients = ingredientsResponse.data.filter(
-        (p: Product) => p.isIgredient === true
+        (p: Product) => p.id !== product.id && (p.isIgredient === true || (p.isDerived === true && p.allowAsIngredient === true))
       );
 
       const recipeResponse = await api.get(`/recipe/${product.id}`, {
@@ -85,7 +85,9 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
           id: item.ingredient.id,
           name: item.ingredient.name,
           unit: item.ingredient.unit,
+          isDerived: item.ingredient.isDerived,
           price: item.ingredient.PrecoVenda?.[0]?.preco_venda || 0,
+          cost: Number(item.custoUnitario || 0),
           PrecoVenda: item.ingredient.PrecoVenda || []
         }
       }));
@@ -123,8 +125,8 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   const calculateTotalCost = () => {
     return recipeItems.reduce((total, item) => {
       if (item.impactaPreco) {
-        const price = item.ingredient.price || 0;
-        return total + (price * item.quantity);
+        const cost = item.ingredient.cost ?? item.ingredient.price ?? 0;
+        return total + (cost * item.quantity);
       }
       return total;
     }, 0);
@@ -347,7 +349,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                 {item.ingredient.name}
                               </TableCell>
                               <TableCell className="text-right text-green-600">
-                                {item.ingredient.price.toFixed(2)} Kz
+                                {(item.ingredient.cost ?? item.ingredient.price ?? 0).toFixed(2)} Kz
                               </TableCell>
                               <TableCell className="text-right">
                                 {isEditing ? (
@@ -366,12 +368,12 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                       step="0.1"
                                     />
                                     <span className="text-sm text-muted-foreground">
-                                      {item.ingredient.unit}
+                                      {item.ingredient.isDerived ? (item.quantity === 1 ? 'unidade' : 'unidades') : item.ingredient.unit}
                                     </span>
                                   </div>
                                 ) : (
                                   <span>
-                                    {item.quantity} {item.ingredient.unit}
+                                    {item.quantity} {item.ingredient.isDerived ? (item.quantity === 1 ? 'unidade' : 'unidades') : item.ingredient.unit}
                                   </span>
                                 )}
                               </TableCell>
@@ -393,7 +395,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                 )}
                               </TableCell>
                               <TableCell className="text-right text-yellow-600 font-medium">
-                                {(item.ingredient.price * item.quantity).toFixed(2)} Kz
+                                {((item.ingredient.cost ?? item.ingredient.price ?? 0) * item.quantity).toFixed(2)} Kz
                               </TableCell>
                               {isEditing && (
                                 <TableCell className="text-right">
@@ -455,7 +457,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                           <SelectContent>
                             {allIngredients.map(ingredient => (
                               <SelectItem key={ingredient.id} value={ingredient.id}>
-                                {ingredient.name} - {ingredient.PrecoVenda?.[0]?.preco_venda?.toFixed(2) || '0.00'} Kz
+                                {ingredient.name} ({ingredient.isDerived ? 'unidade' : ingredient.unit}) - {ingredient.PrecoVenda?.[0]?.preco_venda?.toFixed(2) || '0.00'} Kz
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -468,10 +470,13 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                           type="number"
                           value={quantity}
                           onChange={(e) => setQuantity(Number(e.target.value))}
-                          min="0.1"
-                          step="0.1"
+                          min={allIngredients.find(item => item.id === selectedIngredient)?.isDerived ? '1' : '0.1'}
+                          step={allIngredients.find(item => item.id === selectedIngredient)?.isDerived ? '1' : '0.1'}
                           placeholder="0.00"
                         />
+                        <p className="text-xs text-muted-foreground">
+                          Unidade: {allIngredients.find(item => item.id === selectedIngredient)?.isDerived ? 'unidade' : (allIngredients.find(item => item.id === selectedIngredient)?.unit || 'selecione um item')}
+                        </p>
                       </div>
                     </div>
 

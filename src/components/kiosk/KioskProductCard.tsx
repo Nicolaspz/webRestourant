@@ -1,3 +1,4 @@
+import { ProductImage } from '@/components/ProductImage';
 import { motion } from "framer-motion";
 import { Plus, Star, Utensils, TrendingUp } from "lucide-react";
 import { API_BASE_URL, getMediaUrl } from "../../../config";
@@ -18,17 +19,7 @@ export function KioskProductCard({ product, onSelect, onAdd }: KioskProductCardP
             onClick={() => onSelect(product)}
         >
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#2A2A2A]">
-                {product.banner ? (
-                    <img
-                        src={getMediaUrl(product.banner)}
-                        alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-700 bg-gradient-to-br from-[#2A2A2A] to-[#1E1E1E]">
-                        <Utensils size={40} strokeWidth={1} />
-                    </div>
-                )}
+                <ProductImage banner={product.banner} name={product.name} className="h-full w-full object-cover" />
 
                 {/* Overlay Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />

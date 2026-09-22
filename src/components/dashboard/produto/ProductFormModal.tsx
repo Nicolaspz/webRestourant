@@ -45,6 +45,7 @@ export function ProductFormModal({
     description: '',
     unit: 'un',
     isDerived: false,
+    allowAsIngredient: false,
     isIgredient: false,
     isFeatured: false,
     isNew: false,
@@ -126,6 +127,7 @@ export function ProductFormModal({
           description: initialData.description || '',
           unit: initialData.unit || 'un',
           isDerived: initialData.isDerived || false,
+          allowAsIngredient: initialData.allowAsIngredient || false,
           isIgredient: initialData.isIgredient || false,
           isFeatured: initialData.isFeatured || false,
           isNew: initialData.isNew || false,
@@ -152,6 +154,7 @@ export function ProductFormModal({
           description: '',
           unit: 'un',
           isDerived: false,
+          allowAsIngredient: false,
           isIgredient: false,
           isFeatured: false,
           isNew: false,
@@ -217,6 +220,7 @@ export function ProductFormModal({
       formPayload.append('description', formData.description || '');
       formPayload.append('unit', formData.unit);
       formPayload.append('isDerived', formData.isDerived.toString());
+      formPayload.append('allowAsIngredient', formData.allowAsIngredient.toString());
       formPayload.append('isIgredient', formData.isIgredient.toString());
       formPayload.append('isFeatured', formData.isFeatured.toString());
       formPayload.append('isNew', formData.isNew.toString());
@@ -421,7 +425,7 @@ export function ProductFormModal({
               </SelectContent>
             </Select>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Ingredientes entram no stock/receitas. Produtos e pratos aparecem no cardapio.
+              Ingredientes entram no stock/receitas. Pratos derivados também podem ser usados dentro de outros pratos.
             </p>
           </div>
 
@@ -585,6 +589,14 @@ export function ProductFormModal({
           {formData.productKind === 'RECIPE_PRODUCT' && (
             <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
               Este item sera tratado como prato/receita. Depois de criar, defina os ingredientes na receita do produto.
+              <label className="mt-3 flex items-start gap-2 text-sm font-medium">
+                <Checkbox
+                  id="allowAsIngredient"
+                  checked={formData.allowAsIngredient}
+                  onCheckedChange={(checked) => handleInputChange('allowAsIngredient', !!checked)}
+                />
+                <span>Permitir usar este prato como ingrediente de outros pratos</span>
+              </label>
             </div>
           )}
 
