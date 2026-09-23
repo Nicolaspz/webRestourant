@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+// Permit WebSockets only for the configured API, not for arbitrary hosts.
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BASE_API_URL ||
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://server-restourant.onrender.com');
+const apiOrigin = new URL(apiUrl).origin;
+const socketOrigin = apiOrigin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+
 const nextConfig: NextConfig = {
   env: {
     BASE_API_URL: process.env.BASE_API_URL,
@@ -43,7 +49,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https: https://server-restourant.onrender.com http://localhost:3333;",
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https: ${apiOrigin} ${socketOrigin};`,
           },
         ],
       },
@@ -53,7 +59,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://server-restourant.onrender.com/:path*' // Redireciona para o backend
+        destination: `${apiOrigin}/:path*`
       }
     ];
   }
