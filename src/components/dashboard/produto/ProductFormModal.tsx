@@ -77,10 +77,10 @@ export function ProductFormModal({
     : category.name;
 
   const fetchAreas = async () => {
-    if (!user?.organizationId) return;
+    if (!organizationId) return;
     try {
       setIsLoadingAreas(true);
-      const data = await economatoService.getAreas(user.organizationId);
+      const data = await economatoService.getAreas(organizationId);
       setAreas(data);
       console.log("✅ Áreas carregadas:", {
         quantidade: data.length,
@@ -172,20 +172,10 @@ export function ProductFormModal({
 
       setIsDataReady(true);
 
-      // Auto-selecionar categoria "Ingredientes" para novos ingredientes
-      if (mode === 'create' && categories.length > 0) {
-        const ingredientCategory = categories.find(c =>
-          c.name.toLowerCase() === 'ingredientes' ||
-          c.name.toLowerCase() === 'ingrediente'
-        );
-        if (ingredientCategory) {
-          setFormData(prev => ({ ...prev, categoryId: ingredientCategory.id }));
-        }
-      }
     };
 
     initializeForm();
-  }, [isOpen, initialData, categories, mode]);
+  }, [isOpen, initialData, organizationId, mode]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
