@@ -23,7 +23,8 @@ function groupOrders(orders: Order[], area: OrderQueueArea): GroupedOrder[] {
       id: `mesa-${table}`, name: `Mesa ${table}`, created_at: order.created_at,
       Session: order.Session, items: [], orderIds: [], allPrepared: true,
     };
-    group.items.push(...visibleItems);
+    group.items.push(...visibleItems.map(item => ({ ...item, awaitingStockPickup: Boolean(order.awaitingStockPickup) })));
+    group.awaitingStockPickup = Boolean(group.awaitingStockPickup || order.awaitingStockPickup);
     group.orderIds.push(order.id);
     group.allPrepared = Boolean(group.allPrepared) && order.items.every(item => item.prepared || item.canceled);
     if (order.created_at > group.created_at) group.created_at = order.created_at;
@@ -60,31 +61,51 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
     if (!socket || !organizationId) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const handleRefresh = (data: { organizationId?: string }) => {
-      if (data.organizationId !== organizationId || Date.now() < suppressSocketUntil.current) return;
+      if (data.organizationId !== organizationId) return;
       clearTimeout(timer);
-      timer = setTimeout(() => void refresh(true), 180);
+      timer = setTimeout(() => void refresh(true), Math.max(180, suppressSocketUntil.current - Date.now()));
     };
     socket.on('orders_refresh', handleRefresh);
-    return () => { clearTimeout(timer); socket.off('orders_refresh', handleRefresh); };
+    const reconnect = () => void refresh(true);
+    socket.on('connect', reconnect);
+    return () => { clearTimeout(timer); socket.off('orders_refresh', handleRefresh); socket.off('connect', reconnect); };
   }, [organizationId, refresh, socket]);
+
+  // Recover missed events when the socket is unavailable or the tab resumes.
+  useEffect(() => {
+    if (!organizationId) return;
+    const recover = () => { if (document.visibilityState === 'visible') void refresh(true); };
+    const timer = setInterval(recover, 15000);
+    window.addEventListener('focus', recover);
+    return () => { clearInterval(timer); window.removeEventListener('focus', recover); };
+  }, [organizationId, refresh]);
 
   const togglePrepared = useCallback(async (itemId: string, prepared: boolean) => {
     if (!organizationId || pendingItems.has(itemId)) return;
+    if (prepared && orders.some(order => order.awaitingStockPickup && order.items.some(item => item.id === itemId))) {
+      toast.warning('Aguarda entrega pelo economato. A marcação será ativada após a confirmação.');
+      return;
+    }
     setPendingItems(current => new Set(current).add(itemId));
     setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared } : item) })));
     suppressSocketUntil.current = Date.now() + 900;
     try {
       await ordersService.togglePrepared(itemId, prepared, organizationId);
-    } catch {
+    } catch (error: any) {
       setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared: !prepared } : item) })));
-      toast.error('Não foi possível atualizar o item.');
+      toast.error(error?.response?.data?.error || 'Não foi possível atualizar o item.');
+      void refresh(true);
     } finally {
       setPendingItems(current => { const next = new Set(current); next.delete(itemId); return next; });
     }
-  }, [organizationId, pendingItems]);
+  }, [organizationId, pendingItems, orders, refresh]);
 
   const finishOrders = useCallback(async (group: GroupedOrder) => {
     if (!organizationId || pendingTables.has(group.id)) return;
+    if (group.awaitingStockPickup) {
+      toast.warning('Confirme a entrega pelo economato antes de fechar os pedidos.');
+      return;
+    }
     setPendingTables(current => new Set(current).add(group.id));
     const snapshot = orders;
     setOrders(current => current.filter(order => !group.orderIds.includes(order.id)));
@@ -100,5 +121,10 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
   }, [organizationId, orders, pendingTables]);
 
   const groupedOrders = useMemo(() => groupOrders(orders, area), [area, orders]);
-  return { groupedOrders, loading, pendingItems, pendingTables, refresh, togglePrepared, finishOrders };
+  const hasPendingStockPickup = orders.some(order => {
+    if (!order.awaitingStockPickup || !order.Session?.mesa) return false;
+    if (area === 'all') return true;
+    return order.pendingStockAreas?.some(name => name?.trim().toLocaleLowerCase() === (area === 'bar' ? 'bar' : 'cozinha')) ?? false;
+  });
+  return { groupedOrders, hasPendingStockPickup, loading, pendingItems, pendingTables, refresh, togglePrepared, finishOrders };
 }

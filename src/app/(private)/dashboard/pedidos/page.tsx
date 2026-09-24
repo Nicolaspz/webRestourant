@@ -39,9 +39,9 @@ export default function OrdersPage() {
           <Button variant="outline" onClick={() => void orders.refresh()} disabled={orders.loading}><RefreshCw className={`mr-2 h-4 w-4 ${orders.loading ? 'animate-spin' : ''}`} />Atualizar</Button>
         </header>
 
-        <Link href="/dashboard/economato" className="block rounded-xl border bg-background p-4 text-sm hover:bg-muted">
-          Precisa de produtos do Stock Geral? Abra os <strong>Levantamentos para mesas</strong>, obtenha o código e apresente-o ao economato.
-        </Link>
+        {orders.hasPendingStockPickup && <Link href="/dashboard/economato" className="block rounded-xl border-2 border-amber-500 bg-amber-100 p-4 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">
+          Há pedidos com produtos pendentes de receber. Abra os <strong>Levantamentos para mesas</strong> e confirme a entrega com o economato.
+        </Link>}
         <OrdersGrid orders={orders.groupedOrders} loading={orders.loading} expandedOrderId={expandedOrderId}
           pendingItems={orders.pendingItems} pendingTables={orders.pendingTables} onToggleExpand={toggleExpand}
           onManage={openManager} onTogglePrepared={orders.togglePrepared} onFinish={orders.finishOrders} />
