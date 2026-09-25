@@ -1,4 +1,5 @@
 "use client";
+import {useAccess} from '@/contexts/AccessContext';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { AuthContext } from '@/contexts/AuthContext';
@@ -25,6 +26,7 @@ const todayFilters = () => {
 };
 const formatDate = (value: string) => new Date(value).toLocaleString('pt-PT', { timeZone: 'Africa/Luanda' });
 export function StockFulfillments() {
+ const {can}=useAccess();
  const { user } = useContext(AuthContext);
  const { socket } = useSocket();
  const [items, setItems] = useState<Pickup[]>([]);
@@ -41,8 +43,8 @@ export function StockFulfillments() {
  const [pageSize, setPageSize] = useState(25);
  const [exporting, setExporting] = useState(false);
  const requestVersion = useRef(0);
- const manager = ['ADMIN', 'SUPER ADMIN', 'ECONOMATO'].includes(user?.role || '');
- const canClaim = ['ADMIN', 'SUPER ADMIN', 'GARCON', 'COZINHA', 'BAR', 'CAIXA'].includes(user?.role || '');
+ const manager = can('pickups.deliver');
+ const canClaim = can('pickups.create');
  const refresh = useCallback(async () => {
    if (!user?.organizationId) return;
    const version = ++requestVersion.current;
@@ -97,7 +99,7 @@ export function StockFulfillments() {
  };
  const location = (p: Pickup) => p.order.tipoOrder === 'takeaway' ? 'Takeaway' : p.order.tipoOrder === 'balcao' ? 'Balcão' : `Mesa ${p.order.Session?.mesa.number ?? '—'}`;
  return <section className="space-y-4">
-   <div className="flex flex-wrap justify-between gap-3"><h2 className="text-xl font-semibold">Levantamentos dos pedidos</h2><div className="flex gap-2">{manager && <Button variant="outline" onClick={exportReport} disabled={exporting || loading || error}>{exporting ? 'A exportar…' : 'Exportar CSV'}</Button>}<Button variant="outline" onClick={refresh} disabled={loading}>{loading ? 'A carregar…' : 'Atualizar'}</Button></div></div>
+   <div className="flex flex-wrap justify-between gap-3"><h2 className="text-xl font-semibold">Levantamentos dos pedidos</h2><div className="flex gap-2">{can("pickups.export") && <Button variant="outline" onClick={exportReport} disabled={exporting || loading || error}>{exporting ? 'A exportar…' : 'Exportar CSV'}</Button>}<Button variant="outline" onClick={refresh} disabled={loading}>{loading ? 'A carregar…' : 'Atualizar'}</Button></div></div>
    <p className="text-muted-foreground">Requisições automáticas dos pedidos de clientes. O stock fica reservado até o economato conferir os produtos e confirmar o código. O cancelamento antes do levantamento liberta a reserva.</p>
    <form className="grid gap-3 rounded-xl border bg-muted/30 p-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={e => {
      e.preventDefault();

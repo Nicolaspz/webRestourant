@@ -1,4 +1,5 @@
 'use client';
+import {useAccess} from '@/contexts/AccessContext';
 import { StockRequestDialog } from './StockRequestDialog';
 
 import { useState, useEffect, useContext } from "react";
@@ -58,6 +59,7 @@ import { economatoService, Area, EconomatoItem } from "@/services/economato";
 import { api } from "@/services/apiClients";
 
 export function StockTable() {
+ const {can}=useAccess();
   const { user } = useContext(AuthContext);
 
   const [areas, setAreas] = useState<Area[]>([]);
@@ -301,7 +303,7 @@ export function StockTable() {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={!['ADMIN', 'SUPER ADMIN', 'ECONOMATO'].includes(user?.role || '')}
+                      disabled={!can('stock.update')}
                       onClick={() => handleOpenAdjust(item)}
                     >
                       <RefreshCw className="w-3 h-3 mr-1" /> Ajuste

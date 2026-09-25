@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { setupAPIClient } from "@/services/api";
 import { toast } from "react-toastify";
+import { useAccess } from '@/contexts/AccessContext';
 import { UserFormModal } from "./UserFormModal";
 import { AuthContext } from "@/contexts/AuthContext";
 import { DeleteDialog } from "./userConfirmModal";
@@ -73,6 +74,7 @@ export function UsersTable({ organizationId }: UsersTableProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const {can}=useAccess();
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
   // Estados para modais
@@ -271,7 +273,7 @@ export function UsersTable({ organizationId }: UsersTableProps) {
                 Visualize e gira os acessos da sua equipa no sistema ({users.length} membros)
               </CardDescription>
             </div>
-            <Button onClick={openCreateModal}>
+            <Button disabled={!can("users.create")} onClick={openCreateModal}>
               <UserPlus className="w-4 h-4 mr-2" />
               Registar Novo Colaborador
             </Button>
@@ -299,13 +301,7 @@ export function UsersTable({ organizationId }: UsersTableProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os perfis</SelectItem>
-                  <SelectItem value="SUPER ADMIN">Super Admin</SelectItem>
-                  <SelectItem value="ADMIN">Administrador</SelectItem>
-                  <SelectItem value="CAIXA">Caixa</SelectItem>
-                  <SelectItem value="GARCON">Garçon</SelectItem>
-                  <SelectItem value="COZINHA">Cozinha</SelectItem>
-                  <SelectItem value="BAR">Bar</SelectItem>
-                  <SelectItem value="ECONOMATO">Economato</SelectItem>
+                  {[...new Set(users.map(u=>u.role))].map(role=><SelectItem key={role} value={role}>{role}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -370,12 +366,12 @@ export function UsersTable({ organizationId }: UsersTableProps) {
                             {/* Um ADMIN não pode editar nem apagar um SUPER ADMIN */}
                             {(user?.role?.toUpperCase() === 'SUPER ADMIN' || userItem.role !== 'SUPER ADMIN') ? (
                               <>
-                                <DropdownMenuItem onClick={() => openEditModal(userItem)}>
+                                <DropdownMenuItem disabled={!can("users.update")} onClick={() => openEditModal(userItem)}>
                                   <Edit className="w-4 h-4 mr-2" />
                                   Editar Detalhes
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => openDeleteDialog(userItem)}
+                                  disabled={!can("users.delete") || userItem.role === "SUPER ADMIN"} onClick={() => openDeleteDialog(userItem)}
                                   className="text-red-600"
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" />

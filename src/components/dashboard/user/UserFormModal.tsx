@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { api } from '@/services/api';
+import { useAccess } from '@/contexts/AccessContext';
 import { toast } from "react-toastify";
 
 export interface User {
@@ -44,12 +46,15 @@ export function UserFormModal({
   initialData,
   organizationId
 }: UserFormModalProps) {
+  const { access } = useAccess();
+  const [roles,setRoles]=useState<string[]>([]);
+  useEffect(()=>{if(isOpen)api.get('/access/roles').then(r=>setRoles(r.data.map((role:any)=>role.name))).catch(()=>toast.error('Não foi possível carregar os roles'));},[isOpen,organizationId]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     telefone: '',
     user_name: '',
-    role: 'CLIENT',
+    role: '',
     password: '',
     confirmPassword: ''
   });
@@ -72,7 +77,7 @@ export function UserFormModal({
         email: '',
         telefone: '',
         user_name: '',
-        role: 'CLIENT',
+        role: '',
         password: '',
         confirmPassword: ''
       });
@@ -82,6 +87,7 @@ export function UserFormModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if(!formData.role){toast.error('Selecione um role');return;}
     // Validação de senha para criação
     if (mode === 'create' && formData.password !== formData.confirmPassword) {
       toast.warning("As palavras-passe não coincidem.");
@@ -228,13 +234,8 @@ export function UserFormModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-gray-600 text-white">
-                <SelectItem value="ADMIN" className="focus:bg-gray-700">Administrador</SelectItem>
-                <SelectItem value="SUPER ADMIN" className="focus:bg-gray-700">Super Admin</SelectItem>
-                <SelectItem value="CAIXA" className="focus:bg-gray-700">Caixa</SelectItem>
-                <SelectItem value="GARCON" className="focus:bg-gray-700">Garçon</SelectItem>
-                <SelectItem value="COZINHA" className="focus:bg-gray-700">Cozinha</SelectItem>
-                <SelectItem value="ECONOMATO">Economato</SelectItem>
-                <SelectItem value="BAR" className="focus:bg-gray-700">Bar</SelectItem>
+                {access?.role==='SUPER ADMIN'&&<SelectItem value="SUPER ADMIN">Super Admin (acesso total)</SelectItem>}
+                {roles.map(role=><SelectItem key={role} value={role}>{role}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

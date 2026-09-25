@@ -1,4 +1,5 @@
 'use client';
+import {useAccess} from '@/contexts/AccessContext';
 import { StockRequestDialog } from './StockRequestDialog';
 
 import { useState, useEffect, useContext } from "react";
@@ -63,6 +64,7 @@ import { economatoService, Area, PedidoArea } from "@/services/economato";
 import { api } from "@/services/apiClients";
 
 export function PedidosTable() {
+ const {can}=useAccess();
   const { user } = useContext(AuthContext);
   const [pedidos, setPedidos] = useState<PedidoArea[]>([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -285,7 +287,7 @@ export function PedidosTable() {
               </SelectContent>
             </Select>
 
-            <Button onClick={openCreateDialog}>
+            <Button disabled={!can("transfers.create")} onClick={openCreateDialog}>
               <Plus className="w-4 h-4 mr-2" />
               Solicitar Stock
             </Button>
@@ -363,7 +365,7 @@ export function PedidosTable() {
                           Itens
                         </Button>
 
-                        {pedido.status === 'pendente' && (['ADMIN', 'SUPER ADMIN', 'ECONOMATO'].includes(user?.role || '')) && (
+                        {pedido.status === 'pendente' && can('transfers.update') && (
                           <>
                             <Button
                               variant="outline"
@@ -384,7 +386,7 @@ export function PedidosTable() {
                           </>
                         )}
 
-                        {pedido.status === 'aprovado' && (['ADMIN', 'SUPER ADMIN', 'ECONOMATO'].includes(user?.role || '')) && (
+                        {pedido.status === 'aprovado' && can('transfers.update') && (
                           <Button
                             variant="default"
                             size="sm"

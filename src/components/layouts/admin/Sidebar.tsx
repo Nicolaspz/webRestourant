@@ -1,3 +1,4 @@
+import { useAccess } from '@/contexts/AccessContext';
 import Image from 'next/image';
 import logoImg from '../../../../public/Logo.png'
 import { cn } from "@/lib/utils"
@@ -198,6 +199,7 @@ const menuStructure: MenuItem[] = [
 ]
 
 export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void }) {
+  const { access, canScreen } = useAccess();
   const pathname = usePathname()
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({})
@@ -206,23 +208,18 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
 
   useEffect(() => {
     // Pegar a role do cookie
-    const { '@servFixe.role': role } = parseCookies()
+    const role = access?.role
     if (role) {
       setUserRole(role as UserRole)
 
       // Filtrar menu baseado na role
-      const filtered = menuStructure.filter(item =>
-        item.roles.includes(role as UserRole)
-      ).map(item => {
-        // Filtrar subItems se existirem
-        if (item.subItems) {
-          const filteredSubItems = item.subItems.filter(subItem =>
-            subItem.roles.includes(role as UserRole)
-          )
-          return { ...item, subItems: filteredSubItems }
-        }
-        return item
-      })
+      const filtered = menuStructure.map(item => item.subItems ? {...item,subItems:item.subItems.filter(sub=>canScreen(sub.href))} : item)
+        .filter(item => item.href ? canScreen(item.href) : !!item.subItems?.length);
+      if(canScreen('/dashboard/roles')) filtered.push({label:'Roles e permissões',href:'/dashboard/roles',icon:UserCog,roles:[]});
+      if(canScreen('/dashboard/areas')) filtered.push({label:'Pedidos por área',href:'/dashboard/areas',icon:UserCog,roles:[]});
+      for (const [href,label] of [['/dashboard/economato/areas','Áreas de consumo'],['/dashboard/economato/pedidos','Transferências'],['/dashboard/economato/consumo','Quebras e consumos']]) {
+        if(canScreen(href)) filtered.push({label,href,icon:UserCog,roles:[]});
+      }
       setFilteredMenu(filtered)
 
       // Abrir menus que contenham o path atual
@@ -237,7 +234,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
       })
       setOpenMenus(initialOpenState)
     }
-  }, [pathname])
+  }, [pathname, access])
 
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => ({

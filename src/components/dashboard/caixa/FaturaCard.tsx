@@ -1,3 +1,4 @@
+import {useAccess} from '@/contexts/AccessContext';
 // components/caixa/FaturaCard.tsx
 import React from 'react';
 import { paymentSummary, paymentMethodLabel } from '@/utils/paymentDetails';
@@ -16,6 +17,7 @@ interface FaturaCardProps {
 }
 
 const FaturaCard = ({ fatura, onPagamento, onPreConta, onPrint, onFiscalSync, onFiscalQRCode }: FaturaCardProps) => {
+  const {can}=useAccess();
   const fiscalStatus = fatura.fiscalSubmission?.status;
   const fiscalFinal = fiscalStatus && !['PENDING_SUBMISSION', 'RECEIVED', 'SENT_TO_AGT', 'PROCESSING'].includes(fiscalStatus);
   const fiscalAccepted = fiscalStatus && ['VALID', 'VALID_PENALTY', 'SUCCESS', 'COMPLETED'].includes(fiscalStatus);
@@ -117,12 +119,12 @@ const FaturaCard = ({ fatura, onPagamento, onPreConta, onPrint, onFiscalSync, on
           
           {fatura.status === 'pendente' && (
             <div className="flex items-center gap-2">
-              {onPreConta && (
+              {can("invoices.print") && onPreConta && (
                 <Button onClick={onPreConta} variant="outline" className="gap-2" size="sm">
                   Pré-conta
                 </Button>
               )}
-              <Button onClick={onPagamento} className="gap-2" size="sm">
+              <Button disabled={!can("invoices.pay")} onClick={onPagamento} className="gap-2" size="sm">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
@@ -136,13 +138,13 @@ const FaturaCard = ({ fatura, onPagamento, onPreConta, onPrint, onFiscalSync, on
               <div className="text-sm text-muted-foreground capitalize bg-muted px-2 py-1 rounded">
                 {paymentSummary(fatura.pagamentos, fatura.metodoPagamento || '')}
               </div>
-              {onPrint && <Button variant="outline" size="sm" onClick={onPrint}>Imprimir fatura</Button>}
-              {fatura.fiscalSubmission && onFiscalSync && (
+              {can("invoices.print") && onPrint && <Button variant="outline" size="sm" onClick={onPrint}>Imprimir fatura</Button>}
+              {can("invoices.submit") && fatura.fiscalSubmission && onFiscalSync && (
                 <Button variant="outline" size="sm" onClick={onFiscalSync}>
                   {fatura.fiscalSubmission.requestId ? 'Atualizar estado fiscal' : 'Tentar submissão fiscal'}
                 </Button>
               )}
-              {fiscalAccepted && fatura.fiscalSubmission?.agtRequestId && onFiscalQRCode && (
+              {can("invoices.print") && fiscalAccepted && fatura.fiscalSubmission?.agtRequestId && onFiscalQRCode && (
                 <Button variant="outline" size="sm" onClick={onFiscalQRCode}>QR Code AGT</Button>
               )}
             </div>

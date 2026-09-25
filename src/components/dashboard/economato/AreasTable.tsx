@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { useAccess } from '@/contexts/AccessContext';
 import { useState, useEffect, useContext } from "react";
 import { 
   Table, 
@@ -39,6 +41,7 @@ import { AuthContext } from "@/contexts/AuthContext";
 import { economatoService, Area } from "@/services/economato";
 
 export function AreasTable() {
+  const { can, access } = useAccess();
   const { user } = useContext(AuthContext);
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -127,7 +130,7 @@ export function AreasTable() {
           
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button onClick={() => handleOpenSheet()}>
+              <Button disabled={!can("areas.create")} onClick={() => handleOpenSheet()}>
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Área
               </Button>
@@ -201,10 +204,11 @@ export function AreasTable() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        {can("areaOrders.read") && (access?.role==="SUPER ADMIN" || access?.allAreas || access?.areaIds.includes(area.id)) && <><Link href={`/dashboard/areas/${area.id}/pedidos`}>Abrir pedidos</Link><Button variant="outline" onClick={async()=>{try{await navigator.clipboard.writeText(`${location.origin}/dashboard/areas/${area.id}/pedidos`);toast.success("Link copiado");}catch{toast.error("Não foi possível copiar o link");}}}>Copiar link</Button></>}
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => handleOpenSheet(area)}
+                          disabled={!can("areas.update")} onClick={() => handleOpenSheet(area)}
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -212,7 +216,7 @@ export function AreasTable() {
                           variant="ghost" 
                           size="icon" 
                           className="text-red-500 hover:text-red-700"
-                          onClick={() => handleDelete(area.id)}
+                          disabled={!can("areas.delete")} onClick={() => handleDelete(area.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

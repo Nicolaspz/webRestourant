@@ -1,4 +1,5 @@
 'use client';
+import {useAccess} from '@/contexts/AccessContext';
 import { useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
@@ -10,6 +11,8 @@ import { toast } from 'react-toastify';
 
 /** Fila por organização e posto. Não depende de manter a mesa/modal aberto. */
 export function GpayPaymentMonitor() {
+  const {can}=useAccess();
+  const allowed=can("invoices.pay") && can("invoices.print");
   const { user } = useContext(AuthContext);
   const { socket } = useSocket();
   const { settings, isLoading } = usePosSettings(user?.organizationId);
@@ -17,7 +20,7 @@ export function GpayPaymentMonitor() {
   const printer = useRef(printPaidReceipt);
   printer.current = printPaidReceipt;
   useEffect(() => {
-    if (!user?.organizationId || !['ADMIN', 'CAIXA'].includes(user.role || '') || isLoading || !settings.autoPrint) return;
+    if (!user?.organizationId || !allowed || isLoading || !settings.autoPrint) return;
     const organizationId = user.organizationId;
     const prefix = gpayQueuePrefix(organizationId);
     let active = true, busy = false;
@@ -71,6 +74,6 @@ export function GpayPaymentMonitor() {
     window.addEventListener('focus', check);
     socket?.on('orders_refresh', check);
     return () => { active = false; clearInterval(timer); window.removeEventListener('gpay-print-queue', check); window.removeEventListener('focus', check); socket?.off('orders_refresh', check); };
-  }, [user?.organizationId, user?.role, settings.autoPrint, isLoading, socket]);
+  }, [allowed, user?.organizationId, user?.role, settings.autoPrint, isLoading, socket]);
   return null;
 }

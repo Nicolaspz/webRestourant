@@ -1,69 +1,11 @@
 'use client';
+import {useEffect,useState} from 'react';
 import Link from 'next/link';
-
-import { useCallback, useContext, useState } from 'react';
-import { ChefHat, RefreshCw, Wine } from 'lucide-react';
-import { AuthContext } from '@/contexts/AuthContext';
-import { useOperationalOrders, type OperationalArea } from '@/hooks/useOperationalOrders';
-import { OrdersGrid } from '@/components/dashboard/order/OrdersGrid';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-
-const AREA = {
-  kitchen: {
-    title: 'Cozinha',
-    description: 'Preparação dos pratos organizada por mesa e em tempo real',
-    Icon: ChefHat,
-  },
-  bar: {
-    title: 'Bar',
-    description: 'Preparação das bebidas organizada por mesa e em tempo real',
-    Icon: Wine,
-  },
-} as const;
-
-export function OperationalOrdersPage({ area }: { area: OperationalArea }) {
-  const { user } = useContext(AuthContext);
-  const queue = useOperationalOrders(user?.organizationId, area);
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedOrderId(current => current === id ? null : id);
-  }, []);
-  const { title, description, Icon } = AREA[area];
-
-  return (
-    <div className="space-y-6">
-      <div className="mx-auto max-w-[1500px] space-y-6">
-        <header className="flex flex-col gap-4 rounded-2xl border bg-background p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="rounded-2xl bg-primary/10 p-3 text-primary"><Icon className="h-7 w-7" /></div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-                <Badge variant="secondary">{queue.groupedOrders.length} mesas</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-          </div>
-          <Button variant="outline" onClick={() => void queue.refresh()} disabled={queue.loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${queue.loading ? 'animate-spin' : ''}`} />Atualizar
-          </Button>
-        </header>
-
-        {queue.hasPendingStockPickup && <Link href="/dashboard/economato" className="block rounded-xl border-2 border-amber-500 bg-amber-100 p-4 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">
-          Há produtos desta área pendentes de receber. Abra os <strong>Levantamentos para mesas</strong> e confirme a entrega com o economato.
-        </Link>}
-        <OrdersGrid
-          orders={queue.groupedOrders}
-          loading={queue.loading}
-          expandedOrderId={expandedOrderId}
-          pendingItems={queue.pendingItems}
-          pendingTables={queue.pendingTables}
-          onToggleExpand={toggleExpand}
-          onTogglePrepared={queue.togglePrepared}
-          onFinish={queue.finishOrders}
-        />
-      </div>
-    </div>
-  );
+import {api} from '@/services/api';
+import {AreaOrdersPanel} from './AreaOrdersPanel';
+export function OperationalOrdersPage({area}:{area:'kitchen'|'bar'}){
+ const [id,setId]=useState<string|null>(null),[loading,setLoading]=useState(true);
+ useEffect(()=>{api.get('/access/areas').then(r=>{const name=area==='bar'?'bar':'cozinha';setId(r.data.find((a:any)=>a.nome.trim().toLowerCase()===name)?.id||null);}).catch(()=>setId(null)).finally(()=>setLoading(false));},[area]);
+ if(loading)return <p>A carregar área…</p>;
+ return id?<AreaOrdersPanel areaId={id}/>:<p>Área indisponível ou não autorizada. <Link href="/dashboard/areas">Ver áreas autorizadas</Link></p>;
 }

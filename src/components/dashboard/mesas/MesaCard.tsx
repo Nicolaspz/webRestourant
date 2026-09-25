@@ -1,4 +1,5 @@
 'use client';
+import {useAccess} from '@/contexts/AccessContext';
 
 import { TableAreaDialog } from './TableAreaDialog';
 import { useState } from "react";
@@ -19,6 +20,7 @@ interface MesaCardProps {
 }
 
 const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFactMesa }: MesaCardProps) => {
+ const {can}=useAccess();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
@@ -59,8 +61,8 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {user?.role?.toUpperCase() === 'ADMIN' && <TableAreaDialog mesa={mesa} />}
-          {user?.role?.toUpperCase() !== 'GARCON' && (
+          {can('tables.update') && <TableAreaDialog mesa={mesa} />}
+          {can('tables.read') && (
             <QRCodePrinter
               organizationId={user?.organizationId}
               mesaNumber={mesa.number}
@@ -87,7 +89,7 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
                 </Button>
 
                 {mesa.podeFechar ? (
-                  <Button variant="destructive" size="sm" onClick={() => onFecharMesa(mesa.id)}>
+                  <Button variant="destructive" size="sm" disabled={!can("invoices.pay")} onClick={() => onFecharMesa(mesa.id)}>
                     <X className="h-4 w-4 mr-1" />
                     Fechar Mesa
                   </Button>
@@ -107,7 +109,7 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
             </div>
           )}
 
-          {mesa.status === 'livre' && (user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER ADMIN') && (
+          {mesa.status === 'livre' && can('tables.delete') && (
             <Button
               variant="destructive"
               size="sm"

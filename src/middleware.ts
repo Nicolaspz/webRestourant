@@ -57,26 +57,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // 🎯 Verificação de permissão por role
-  if (isDashboardRoute && token && userRole) {
-    let matchedRoute: string | undefined
-
-    for (const route of Object.keys(routePermissions)) {
-      if (pathname.startsWith(route)) {
-        matchedRoute = route
-        break
-      }
-    }
-
-    if (matchedRoute) {
-      const allowedRoles = routePermissions[matchedRoute]
-
-      if (!allowedRoles.includes(userRole)) {
-        return NextResponse.redirect(new URL('/unauthorized', request.url))
-      }
-    }
-  }
-
+  // Fine-grained access is loaded from the backend; role cookies are not authoritative.
   // 🔓 Tudo que não for dashboard é público
   return NextResponse.next()
 }

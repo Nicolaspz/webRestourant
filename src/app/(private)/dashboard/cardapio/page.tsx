@@ -1,4 +1,5 @@
 'use client';
+import {useAccess} from '@/contexts/AccessContext';
 
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -22,6 +23,7 @@ const statusStyle = {
 } as const;
 
 export default function TableSelectionPage() {
+  const {can}=useAccess();
   const router = useRouter();
   const { user } = useContext(AuthContext);
   const [tables, setTables] = useState<Table[]>([]);
@@ -99,7 +101,7 @@ export default function TableSelectionPage() {
       <div className="relative w-full sm:w-72"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={event => setQuery(event.target.value)} placeholder="Procurar mesa ou área…" className="pl-9" /></div>
     </header>
 
-    {user?.role === 'ADMIN' && <details className="rounded-xl border p-4"><summary className="cursor-pointer font-semibold">Organizar mesas por área</summary><p className="my-3 text-sm text-muted-foreground">Selecione uma área das mesas cadastrada. Para cadastrar áreas e criar mesas, aceda às configurações; crie as mesas na gestão de mesas.</p><a className="text-primary underline" href="/dashboard/settings">Gerir áreas das mesas</a><div className="mt-3 grid gap-3 sm:grid-cols-2">{tables.map(table=><div key={table.id} className="flex items-center gap-2"><label htmlFor={`area-${table.id}`} className="shrink-0">Mesa {table.number}</label><select id={`area-${table.id}`} className="min-w-0 flex-1 rounded-md border bg-background p-2" value={areaDrafts[table.id] ?? table.tableAreaId ?? ''} onChange={e=>setAreaDrafts({...areaDrafts,[table.id]:e.target.value})}><option value="">Selecione a área</option>{tableAreas.map(area=><option key={area.id} value={area.id}>{area.name}</option>)}</select><Button disabled={savingArea!==null || !(areaDrafts[table.id] ?? table.tableAreaId)} onClick={()=>saveArea(table)}>Guardar</Button></div>)}</div></details>}
+    {can('tables.update') && <details className="rounded-xl border p-4"><summary className="cursor-pointer font-semibold">Organizar mesas por área</summary><p className="my-3 text-sm text-muted-foreground">Selecione uma área das mesas cadastrada. Para cadastrar áreas e criar mesas, aceda às configurações; crie as mesas na gestão de mesas.</p><a className="text-primary underline" href="/dashboard/settings">Gerir áreas das mesas</a><div className="mt-3 grid gap-3 sm:grid-cols-2">{tables.map(table=><div key={table.id} className="flex items-center gap-2"><label htmlFor={`area-${table.id}`} className="shrink-0">Mesa {table.number}</label><select id={`area-${table.id}`} className="min-w-0 flex-1 rounded-md border bg-background p-2" value={areaDrafts[table.id] ?? table.tableAreaId ?? ''} onChange={e=>setAreaDrafts({...areaDrafts,[table.id]:e.target.value})}><option value="">Selecione a área</option>{tableAreas.map(area=><option key={area.id} value={area.id}>{area.name}</option>)}</select><Button disabled={savingArea!==null || !(areaDrafts[table.id] ?? table.tableAreaId)} onClick={()=>saveArea(table)}>Guardar</Button></div>)}</div></details>}
     {!loading && !error && <Tabs value={activeArea} onValueChange={setActiveArea}><div className="overflow-x-auto pb-2"><TabsList aria-label="Áreas das mesas" className="h-auto w-max justify-start gap-1">{areaTabs.map(area=><TabsTrigger key={area.id} value={area.id}>{area.name} ({tables.filter(table=>(table.tableAreaId || '__unassigned')===area.id).length})</TabsTrigger>)}<TabsTrigger value="__all">Todas as mesas ({tables.length})</TabsTrigger></TabsList></div></Tabs>}
     {loading ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}</div>
       : error ? <Card className="border-destructive/30"><CardContent className="flex flex-col items-center gap-4 p-10 text-center"><p className="font-medium text-destructive">{error}</p><Button variant="outline" onClick={loadTables}><RefreshCw className="mr-2 h-4 w-4" />Tentar novamente</Button></CardContent></Card>

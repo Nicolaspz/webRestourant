@@ -6,21 +6,21 @@ import { useSocket } from '@/contexts/SocketContext';
 import { ordersService } from '@/services/orders';
 import type { GroupedOrder, Order, OrderItem } from '@/types/orders';
 
-export type OrderQueueArea = 'all' | 'kitchen' | 'bar';
+export type OrderQueueArea = 'all' | 'kitchen' | 'bar' | `area:${string}`;
 
 const DRINK_CATEGORY = /bebida|vinho|cocktail|sangria|gin|vodka|whisk|champan|espumante|aguardente|brandy|cognac|cerveja|refrigerante|sumo|água|agua/;
 const isDrink = (item: OrderItem) => DRINK_CATEGORY.test(item.Product?.Category?.name?.trim().toLocaleLowerCase() ?? '');
-const belongsToArea = (item: OrderItem, area: OrderQueueArea) => area === 'all' || (area === 'bar' ? isDrink(item) : !isDrink(item));
+const belongsToArea = (item: OrderItem, area: OrderQueueArea) => (area === 'all' || area.startsWith('area:')) || (area === 'bar' ? isDrink(item) : !isDrink(item));
 
 function groupOrders(orders: Order[], area: OrderQueueArea): GroupedOrder[] {
-  const groups = new Map<number, GroupedOrder>();
+  const groups = new Map<string, GroupedOrder>();
   orders.forEach(order => {
     const table = order.Session?.mesa?.number;
-    if (table == null) return;
+    const groupKey = table == null ? `pedido-${order.id}` : `mesa-${table}`;
     const visibleItems = order.items.filter(item => area === 'all' ? true : belongsToArea(item, area) && !item.canceled);
     if (visibleItems.length === 0) return;
-    const group = groups.get(table) ?? {
-      id: `mesa-${table}`, name: `Mesa ${table}`, created_at: order.created_at,
+    const group = groups.get(groupKey) ?? {
+      id: groupKey, name: table == null ? (order.name || "Takeaway") : `Mesa ${table}`, created_at: order.created_at,
       Session: order.Session, items: [], orderIds: [], allPrepared: true,
     };
     group.items.push(...visibleItems.map(item => ({ ...item, awaitingStockPickup: Boolean(order.awaitingStockPickup) })));
@@ -28,9 +28,9 @@ function groupOrders(orders: Order[], area: OrderQueueArea): GroupedOrder[] {
     group.orderIds.push(order.id);
     group.allPrepared = Boolean(group.allPrepared) && order.items.every(item => item.prepared || item.canceled);
     if (order.created_at > group.created_at) group.created_at = order.created_at;
-    groups.set(table, group);
+    groups.set(groupKey, group);
   });
-  return Array.from(groups.values()).sort((a, b) => a.Session.mesa.number - b.Session.mesa.number);
+  return Array.from(groups.values()).sort((a, b) => (a.Session?.mesa?.number ?? 999999) - (b.Session?.mesa?.number ?? 999999));
 }
 
 export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'all') {
@@ -45,16 +45,17 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
   const refresh = useCallback(async (silent = false) => {
     if (!organizationId) return;
     const currentRequest = ++requestId.current;
-    if (!silent) setLoading(true);
+    if (!silent) {setLoading(true);setOrders([]);}
     try {
-      const data = await ordersService.list(organizationId);
+      const data = await ordersService.list(organizationId, area.startsWith('area:') ? area.slice(5) : undefined);
       if (currentRequest === requestId.current) setOrders(data);
     } catch {
+      setOrders([]);
       if (!silent) toast.error('Não foi possível carregar os pedidos.');
     } finally {
       if (currentRequest === requestId.current) setLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, area]);
 
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => {
@@ -90,7 +91,7 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
     setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared } : item) })));
     suppressSocketUntil.current = Date.now() + 900;
     try {
-      await ordersService.togglePrepared(itemId, prepared, organizationId);
+      await ordersService.togglePrepared(itemId, prepared, organizationId, area.startsWith('area:') ? area.slice(5) : undefined);
     } catch (error: any) {
       setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared: !prepared } : item) })));
       toast.error(error?.response?.data?.error || 'Não foi possível atualizar o item.');
@@ -98,7 +99,7 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
     } finally {
       setPendingItems(current => { const next = new Set(current); next.delete(itemId); return next; });
     }
-  }, [organizationId, pendingItems, orders, refresh]);
+  }, [organizationId, pendingItems, orders, refresh, area]);
 
   const finishOrders = useCallback(async (group: GroupedOrder) => {
     if (!organizationId || pendingTables.has(group.id)) return;
@@ -122,7 +123,7 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
 
   const groupedOrders = useMemo(() => groupOrders(orders, area), [area, orders]);
   const hasPendingStockPickup = orders.some(order => {
-    if (!order.awaitingStockPickup || !order.Session?.mesa) return false;
+    if (!order.awaitingStockPickup) return false;
     if (area === 'all') return true;
     return order.pendingStockAreas?.some(name => name?.trim().toLocaleLowerCase() === (area === 'bar' ? 'bar' : 'cozinha')) ?? false;
   });

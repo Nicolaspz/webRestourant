@@ -1,5 +1,6 @@
 // components/mesa/MesaStatusTabs.tsx - ATUALIZADO
 'use client';
+import {useAccess} from '@/contexts/AccessContext';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,7 @@ const MesaStatusTabs = ({
   onFactMesa,
   onGerarQRCode
 }: MesaStatusTabsProps) => {
+ const {can}=useAccess();
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
       <div className="sticky top-0 z-20 flex items-center gap-3 border-b bg-background py-3">
@@ -58,7 +60,7 @@ const MesaStatusTabs = ({
         <TabsTrigger value="reservadas">
           Reservadas ({mesasReservadas.length})
         </TabsTrigger>
-        {user?.role?.toUpperCase() !== 'GARCON' && (
+        {can('tables.read') && (
           <TabsTrigger value="qr-massivo">
             QR em Massa
           </TabsTrigger>
@@ -100,7 +102,7 @@ const MesaStatusTabs = ({
               </CardHeader>
 
               <CardContent>
-                {user?.role?.toUpperCase() !== 'GARCON' && (
+                {can('tables.read') && (
                   <QRCodePrinter
                     organizationId={user?.organizationId}
                     mesaNumber={mesa.number}
@@ -158,7 +160,7 @@ const MesaStatusTabs = ({
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between flex-wrap gap-2">
-                  {user?.role?.toUpperCase() !== 'GARCON' && (
+                  {can('tables.read') && (
                     <QRCodePrinter
                       organizationId={user?.organizationId}
                       mesaNumber={mesa.number}
@@ -166,19 +168,19 @@ const MesaStatusTabs = ({
                     />
                   )}
                   {/* Apenas CAIXA ou superiores podem fechar ou consultar faturação */}
-                  {['CAIXA', 'ADMIN', 'SUPER ADMIN'].includes(user?.role?.toUpperCase()) && (
+                  {(can('invoices.print') || can('invoices.pay')) && (
                     <>
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => onFactMesa(mesa.id)}
+                        disabled={!can("invoices.print")} onClick={() => onFactMesa(mesa.id)}
                       >
                         Consultar Consumo
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => onFecharMesa(mesa.id)}
+                        disabled={!can("invoices.pay")} onClick={() => onFecharMesa(mesa.id)}
                       >
                         Fechar Mesa
                       </Button>
@@ -192,7 +194,7 @@ const MesaStatusTabs = ({
       </TabsContent>
 
       {/* Nova aba para gerar QR Codes em massa */}
-      {user?.role?.toUpperCase() !== 'GARCON' && (
+      {can('tables.read') && (
         <TabsContent value="qr-massivo">
           <Card>
             <CardHeader>

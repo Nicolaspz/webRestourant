@@ -1,4 +1,5 @@
 'use client';
+import {useAccess} from '@/contexts/AccessContext';
 import { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +31,8 @@ export function CaixaControl() {
     const [closureReport, setClosureReport] = useState<any>(null);
     const [isReportOpen, setIsReportOpen] = useState(false);
 
-    const isManagement = user?.role?.toUpperCase() === 'CAIXA' || user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'SUPER ADMIN';
+    const {can}=useAccess();
+    const isManagement = can('cash.read');
 
     useEffect(() => {
         if (user?.organizationId && isManagement) {

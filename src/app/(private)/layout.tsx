@@ -1,6 +1,7 @@
 "use client"
 
 import "./admin.css"
+import { AccessProvider, AccessGate } from '@/contexts/AccessContext';
 
 import { useContext, useEffect, useState } from "react"
 import { GpayPaymentMonitor } from '@/components/layouts/admin/GpayPaymentMonitor';
@@ -17,6 +18,9 @@ export default function PrivateLayout({
 }: {
   children: React.ReactNode
 }) {
+  return <AccessProvider><PrivateContent>{children}</PrivateContent></AccessProvider>;
+}
+function PrivateContent({children}:{children:React.ReactNode}) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   useEffect(() => {
@@ -126,7 +130,7 @@ export default function PrivateLayout({
                 transition={{ duration: 0.2, ease: "easeInOut" }}
                 className="h-full"
               >
-                {children}
+                <AccessGate>{children}</AccessGate>
               </motion.div>
             </AnimatePresence>
           </main>

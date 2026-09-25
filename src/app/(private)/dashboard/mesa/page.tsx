@@ -1,4 +1,5 @@
 'use client';
+import {useAccess} from '@/contexts/AccessContext';
 
 import { useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
@@ -41,6 +42,7 @@ export default function GerenciamentoMesasPage() {
     quantidadePessoas: 4
   });
 
+  const {can}=useAccess();
   const { user } = useContext(AuthContext);
   const apiClient = setupAPIClient();
   const { settings: posSettings } = usePosSettings(user?.organizationId);
@@ -262,7 +264,7 @@ export default function GerenciamentoMesasPage() {
       <Header />
 
       <MesaStatusTabs
-        actions={user?.role?.toUpperCase() !== 'GARCON' && user?.role?.toUpperCase() !== 'CAIXA' ? <TableAreaDialog onCreate={criarMesa} /> : undefined}
+        actions={can('tables.create') ? <TableAreaDialog onCreate={criarMesa} /> : undefined}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         mesas={mesas}
