@@ -128,7 +128,7 @@ export const economatoService = {
   transferStock: async (data: any, organizationId: string, userId: string) => {
     const api = setupAPIClient();
     const response = await api.post('/economato/transferir', data, {
-      params: { organizationId, id: userId }
+      params: { organizationId }
     });
     return response.data;
   },
@@ -145,7 +145,9 @@ export const economatoService = {
   createPedido: async (data: any, organizationId: string, userId: string) => {
     const api = setupAPIClient();
     const response = await api.post('/pedidos-area', data, {
-      params: { organizationId, id: userId }
+      // O utilizador é obtido no backend a partir do Bearer token. Não usar
+      // "id" aqui: nas rotas /pedidos-area/:id ele significa ID do pedido.
+      params: { organizationId }
     });
     return response.data;
   },

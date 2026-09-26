@@ -55,7 +55,10 @@ export function StockRequestDialog({ open, onOpenChange, destinationId = '', onS
         itens: entries.map(([productId, quantity]) => ({ productId, quantity })) }, user.organizationId, user.id);
       toast.success('Solicitação confirmada. O seu código está na tab Pedidos; aguarde a aprovação do economato.');
       onOpenChange(false); onSuccess?.(); window.dispatchEvent(new Event('economato-updated'));
-    } catch (e: any) { toast.error(e.response?.data?.error || 'Não foi possível enviar a solicitação.'); }
+    } catch (e: any) {
+      const requestId = e.response?.data?.requestId;
+      toast.error(requestId ? `Não foi possível enviar a solicitação. Código: ${requestId}` : (e.response?.data?.error || 'Não foi possível enviar a solicitação.'));
+    }
     finally { setSaving(false); }
   };
   return <Dialog open={open} onOpenChange={value => { if (!saving) onOpenChange(value); }}><DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
