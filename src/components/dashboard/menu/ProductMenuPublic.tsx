@@ -1,5 +1,6 @@
 'use client';
 
+import { ProductImage } from '@/components/ProductImage';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -258,17 +259,7 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
                       }}
                     >
                       <div className="relative aspect-video overflow-hidden">
-                        {product.banner ? (
-                          <img
-                            src={getMediaUrl(product.banner)}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: customColors.primaryBg }}>
-                            <Utensils className="w-12 h-12" style={{ color: customColors.primaryLight }} />
-                          </div>
-                        )}
+                        <ProductImage banner={product.banner} name={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         
                         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
                           <p className="text-white text-sm text-center line-clamp-4">

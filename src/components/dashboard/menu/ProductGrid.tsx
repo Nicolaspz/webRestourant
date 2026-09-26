@@ -1,6 +1,7 @@
 // components/dashboard/menu/ProductGrid.tsx
 'use client';
 
+import { ProductImage } from '@/components/ProductImage';
 import { motion } from 'framer-motion';
 import { Utensils, Plus } from 'lucide-react';
 import { API_BASE_URL, getMediaUrl } from '../../../../config'; 
@@ -49,17 +50,7 @@ const ProductGrid = ({ products, onProductClick }: ProductGridProps) => {
             onClick={() => onProductClick(product)}
           >
             <div className="relative aspect-video overflow-hidden">
-              {product.banner ? (
-                <img
-                  src={getMediaUrl(product.banner)}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: customColors.primaryBg }}>
-                  <Utensils className="w-12 h-12" style={{ color: customColors.primaryLight }} />
-                </div>
-              )}
+              <ProductImage banner={product.banner} name={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               
               {/* Overlay com descrição */}
               <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">

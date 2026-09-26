@@ -93,7 +93,13 @@ export function buildReceiptPdf(dados: DadosSessao, payment?: PaymentInfo, forma
   text('Doc: '+(paid ? dados.agtDocumentNo || dados.numero || dados.codigoAbertura : dados.codigoAbertura));
   const waiter = dados.abertoPorNome || dados.pedidos?.find(p=>p.atendidoPor)?.atendidoPor;
   if (waiter) text('Atendido por: '+waiter);
-  if (paid || dados.clienteNome || dados.clienteNif) { rule(); text('Cliente: '+(dados.clienteNome || 'Consumidor Final')); text('NIF: '+(dados.clienteNif || '999999999')); }
+  if (paid || dados.clienteNome || dados.clienteNif) {
+    rule();
+    text('Cliente: '+(dados.clienteNome || 'Consumidor Final'));
+    // Display only: preserve the fiscal submission's consumer-final identifier.
+    const customerNif = dados.clienteNif?.trim();
+    text('NIF: '+(!customerNif || customerNif === '999999999' ? 'N/A' : customerNif));
+  }
   rule();
   const items = dados.pedidos.flatMap(p=>p.items);
   autoTable(doc, {

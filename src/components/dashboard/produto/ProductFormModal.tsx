@@ -649,8 +649,7 @@ export function ProductFormModal({
           <div className="space-y-2">
             <Label htmlFor="banner" className="flex items-center gap-2 text-gray-900 dark:text-white">
               <Image className="w-4 h-4" />
-              Imagem do Produto
-              {mode === 'create' && <span className="text-red-500">*</span>}
+              Imagem do Produto (opcional)
             </Label>
             <Input
               id="banner"
@@ -662,7 +661,7 @@ export function ProductFormModal({
             />
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {mode === 'create'
-                ? 'Imagem obrigatória para novo produto'
+                ? 'Pode adicionar a imagem depois. Até lá, o menu apresenta uma imagem padrão.'
                 : 'Selecione uma nova imagem apenas se deseja alterar'
               }
             </p>
