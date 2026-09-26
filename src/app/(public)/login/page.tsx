@@ -9,12 +9,10 @@ import { api } from "@/services/apiClients";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from 'next/navigation';
 import logoImg from '../../../../public/Logo.png';
 
 export default function LoginPage() {
   const { signIn } = useContext(AuthContext);
-  const router = useRouter();
   const [credential, setCredential] = useState('');
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +20,6 @@ export default function LoginPage() {
   const [forgotMode, setForgotMode] = useState(false);
 
   useEffect(() => {
-    router.prefetch('/dashboard');
     const reason = new URLSearchParams(window.location.search).get('reason');
     if (reason === 'inactivity') {
       toast.info('A sessão terminou após 15 minutos sem atividade. Inicie sessão novamente.', {
@@ -30,7 +27,7 @@ export default function LoginPage() {
       });
       window.history.replaceState({}, '', '/login');
     }
-  }, [router]);
+  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();

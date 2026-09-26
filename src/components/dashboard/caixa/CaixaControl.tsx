@@ -1,6 +1,6 @@
 'use client';
 import {useAccess} from '@/contexts/AccessContext';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -25,6 +25,8 @@ export function CaixaControl() {
     const [otherUserHasCaixaOpen, setOtherUserHasCaixaOpen] = useState(false);
     const [otherUserName, setOtherUserName] = useState('');
     const [loading, setLoading] = useState(true);
+    const [statusError, setStatusError] = useState(false);
+    const statusRequest = useRef(false);
     const [processing, setProcessing] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [amount, setAmount] = useState<string>('');
@@ -38,7 +40,7 @@ export function CaixaControl() {
         if (user?.organizationId && isManagement) {
             loadCaixaStatus();
         }
-    }, [user, isManagement]);
+    }, [user?.id, user?.organizationId, isManagement]);
 
     // Listen for socket events to update caixa if others close/open it
     useEffect(() => {
@@ -56,12 +58,15 @@ export function CaixaControl() {
     }, [socket, user, isManagement]);
 
     async function loadCaixaStatus() {
-        setLoading(true);
+        if (statusRequest.current) return;
+        statusRequest.current = true;
         try {
             const apiClient = setupAPIClient();
             const response = await apiClient.get('/caixa/current', {
-                params: { organizationId: user?.organizationId }
+                params: { organizationId: user?.organizationId },
+                timeout: 15000,
             });
+            setStatusError(false);
 
             if (response.data && !response.data.isClosed) {
                 // Caixa do próprio usuário está aberto
@@ -80,9 +85,9 @@ export function CaixaControl() {
             }
         } catch (err) {
             console.error(err);
-            setCaixaData(null);
-            setOtherUserHasCaixaOpen(false);
+            setStatusError(true);
         } finally {
+            statusRequest.current = false;
             setLoading(false);
         }
     }
@@ -167,6 +172,8 @@ export function CaixaControl() {
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
+                        aria-label="Estado e opções do caixa"
+                        aria-busy={loading}
                         variant={isMyCaixaOpen ? "outline" : otherUserHasCaixaOpen ? "secondary" : "destructive"}
                         className="gap-2 shrink-0"
                     >
@@ -174,6 +181,8 @@ export function CaixaControl() {
                         <span className="hidden sm:inline">
                             {loading ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : statusError ? (
+                                'Caixa indisponível'
                             ) : isMyCaixaOpen ? (
                                 'Meu Caixa: Aberto'
                             ) : otherUserHasCaixaOpen ? (
@@ -189,7 +198,9 @@ export function CaixaControl() {
                     <DropdownMenuLabel>Controle de Caixa</DropdownMenuLabel>
                     <DropdownMenuSeparator />
 
-                    {otherUserHasCaixaOpen && !isMyCaixaOpen ? (
+                    {loading ? <div role="status" className="p-3 text-sm">A consultar o estado do caixa…</div> : statusError ? (
+                        <div className="p-3 space-y-3 text-sm"><p>Não foi possível consultar o caixa. Tente novamente.</p><Button variant="outline" onClick={() => { setLoading(true); void loadCaixaStatus(); }}>Tentar novamente</Button></div>
+                    ) : otherUserHasCaixaOpen && !isMyCaixaOpen ? (
                         // Mostrar mensagem de caixa ocupado por outro usuário
                         <>
                             <div className="px-2 py-4 text-sm text-center">

@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/apiClients";
+import { cachedGet } from '@/services/api';
 import { toast } from 'react-toastify';
 import { ProductFormModal } from "./ProductFormModal";
 import { RecipeModal } from "./RecipeModal";
@@ -111,14 +112,8 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
     try {
       setIsLoading(true);
       const [productsResponse, categoriesResponse] = await Promise.all([
-        api.get('/produts', {
-          params: { organizationId: user.organizationId },
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        api.get('/category', {
-          params: { organizationId: user.organizationId },
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        cachedGet('/produts', { organizationId: user.organizationId }),
+        cachedGet('/category', { organizationId: user.organizationId })
       ]);
 
       // Filtrar apenas produtos não-ingredientes

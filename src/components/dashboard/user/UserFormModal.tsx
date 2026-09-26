@@ -10,6 +10,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { api } from '@/services/api';
@@ -125,33 +126,27 @@ export function UserFormModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop escuro */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-300"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative bg-gray-900 border border-gray-700 rounded-lg shadow-2xl w-full max-w-md mx-4 transform transition-all duration-300 scale-100 opacity-100 max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={open => { if (!open && !isSubmitting) onClose(); }}>
+      <DialogContent showCloseButton={false} className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <h3 className="text-lg font-semibold text-white">
+            <DialogTitle className="text-xl font-semibold">
               {mode === 'create' ? 'Registar Novo Colaborador' : 'Editar Perfil do Colaborador'}
-            </h3>
-            <p className="text-sm text-gray-400 mt-1">
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground mt-2">
               {mode === 'create'
                 ? 'Preencha os dados abaixo para registar um novo membro na equipa.'
                 : 'Atualize as informações de acesso e contacto do colaborador.'
               }
-            </p>
+            </DialogDescription>
           </div>
           <Button
             variant="ghost"
             size="sm"
+            aria-label="Fechar formulário"
             onClick={onClose}
-            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-800"
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
             disabled={isSubmitting}
           >
             <X className="w-4 h-4" />
@@ -159,9 +154,12 @@ export function UserFormModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <div className="overflow-y-auto p-6 space-y-6">
+        <fieldset className="grid gap-4 sm:grid-cols-2" disabled={isSubmitting}>
+          <legend className="mb-4 font-semibold">1. Dados do colaborador</legend>
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-gray-300">
+            <Label htmlFor="name" className="text-foreground">
               Nome Completo *
             </Label>
             <Input
@@ -170,13 +168,13 @@ export function UserFormModal({
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Digite o nome completo"
               required
-              className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-gray-500"
+              className="bg-background border-input text-foreground placeholder:text-muted-foreground"
               disabled={isSubmitting}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-300">
+            <Label htmlFor="email" className="text-foreground">
               Email *
             </Label>
             <Input
@@ -186,28 +184,30 @@ export function UserFormModal({
               onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="Digite o email"
               required
-              className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-gray-500"
+              className="bg-background border-input text-foreground placeholder:text-muted-foreground"
               disabled={isSubmitting}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="telefone" className="text-gray-300">
+            <Label htmlFor="telefone" className="text-foreground">
               Telefone *
             </Label>
             <Input
               id="telefone"
+              type="tel"
+              autoComplete="tel"
               value={formData.telefone}
               onChange={(e) => handleInputChange('telefone', e.target.value)}
               placeholder="Digite o telefone"
               required
-              className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-gray-500"
+              className="bg-background border-input text-foreground placeholder:text-muted-foreground"
               disabled={isSubmitting}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user_name" className="text-gray-300">
+            <Label htmlFor="user_name" className="text-foreground">
               Nome de Usuário *
             </Label>
             <Input
@@ -216,13 +216,17 @@ export function UserFormModal({
               onChange={(e) => handleInputChange('user_name', e.target.value)}
               placeholder="Digite o nome de usuário"
               required
-              className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-gray-500"
+              className="bg-background border-input text-foreground placeholder:text-muted-foreground"
               disabled={isSubmitting}
             />
           </div>
 
+        </fieldset>
+        <fieldset className="space-y-3 rounded-xl border bg-muted/30 p-4" disabled={isSubmitting}>
+          <legend className="px-1 font-semibold">2. Perfil de acesso</legend>
+          <p className="text-sm text-muted-foreground">O perfil define as telas e funcionalidades disponíveis para este colaborador.</p>
           <div className="space-y-2">
-            <Label htmlFor="role" className="text-gray-300">
+            <Label htmlFor="role" className="text-foreground">
               Perfil *
             </Label>
             <Select
@@ -230,62 +234,70 @@ export function UserFormModal({
               onValueChange={(value: string) => handleInputChange('role', value)}
               disabled={isSubmitting}
             >
-              <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
-                <SelectValue />
+              <SelectTrigger id="role" className="bg-popover border-border text-popover-foreground">
+                <SelectValue placeholder="Selecione um perfil" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600 text-white">
+              <SelectContent className="bg-popover border-border text-popover-foreground">
                 {access?.role==='SUPER ADMIN'&&<SelectItem value="SUPER ADMIN">Super Admin (acesso total)</SelectItem>}
                 {roles.map(role=><SelectItem key={role} value={role}>{role}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
 
+        </fieldset>
+        <fieldset className="grid gap-4 sm:grid-cols-2" disabled={isSubmitting}>
+          <legend className="mb-2 font-semibold">3. Segurança</legend>
+          <p className="text-sm text-muted-foreground sm:col-span-2">{mode === 'edit' ? 'Deixe a palavra-passe vazia para manter a atual.' : 'Defina uma palavra-passe com pelo menos 8 caracteres.'}</p>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-300">
-              {mode === 'create' ? 'Senha *' : 'Nova Senha (deixe em branco para manter atual)'}
+            <Label htmlFor="password" className="text-foreground">
+              {mode === 'create' ? 'Senha *' : 'Nova palavra-passe'}
             </Label>
             <Input
               id="password"
+              autoComplete="new-password"
               type="password"
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
               placeholder={mode === 'create' ? "Digite a senha" : "Deixe em branco para manter atual"}
               required={mode === 'create'}
               minLength={8}
-              className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-gray-500"
+              className="bg-background border-input text-foreground placeholder:text-muted-foreground"
               disabled={isSubmitting}
             />
           </div>
 
           {(mode === 'create' || formData.password) && (
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-gray-300">
+              <Label htmlFor="confirmPassword" className="text-foreground">
                 {mode === 'create' ? 'Confirmar Senha *' : 'Confirmar Nova Senha'}
               </Label>
               <Input
                 id="confirmPassword"
+                autoComplete="new-password"
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                 placeholder="Confirme a senha"
                 required={mode === 'create' || !!formData.password}
                 minLength={8}
-                className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-gray-500"
+                className="bg-background border-input text-foreground placeholder:text-muted-foreground"
                 disabled={isSubmitting}
               />
             </div>
           )}
 
+        </fieldset>
+        </div>
           {/* Footer */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t bg-background px-6 py-4 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+              className=""
             >
-              Descartar Alterações
+              Cancelar
             </Button>
             <Button
               type="submit"
@@ -298,12 +310,12 @@ export function UserFormModal({
                   {mode === 'create' ? 'A Processar Registo...' : 'A Guardar Mudanças...'}
                 </>
               ) : (
-                mode === 'create' ? 'Confirmar Registo do Colaborador' : 'Guardar Alterações do Perfil'
+                mode === 'create' ? 'Criar colaborador' : 'Guardar alterações'
               )}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

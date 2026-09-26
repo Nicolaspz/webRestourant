@@ -1,9 +1,9 @@
 'use client';
-import {createContext,useContext,useEffect,useState,useCallback,ReactNode} from 'react';
+import {createContext,useContext,useEffect,useState,useCallback,useRef,ReactNode} from 'react';
 import {usePathname} from 'next/navigation';
 import Link from 'next/link';
 import {AuthContext} from './AuthContext';
-import {api} from '@/services/api';
+import {cachedGet} from '@/services/api';
 type Access={role:string;permissions:string[];allAreas:boolean;areaIds:string[]};
 export const screenPermissions:Record<string,string>={
  '/dashboard/roles':'super','/dashboard/areas':'areaOrders.read','/dashboard/cozinha':'areaOrders.read','/dashboard/bar':'areaOrders.read',
@@ -21,11 +21,23 @@ export function AccessProvider({children}:{children:ReactNode}) {
  const {user}=useContext(AuthContext);
  const [access,setAccess]=useState<Access|null>(null);
  const [loading,setLoading]=useState(true);
- const refresh=useCallback(async()=>{
+ const scope = `${user?.id || ''}:${user?.organizationId || ''}:${user?.token || ''}`;
+ const activeScope = useRef(scope);
+ activeScope.current = scope;
+ const load=useCallback(async(force=false)=>{
   if(!user?.id){setAccess(null);setLoading(false);return;}
-  try{setAccess((await api.get('/access')).data);}catch{setAccess(null);}finally{setLoading(false);}
- },[user?.id]);
- useEffect(()=>{setAccess(null);setLoading(true);void refresh();const timer=setInterval(refresh,30000);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);};},[refresh]);
+  try{const response=await cachedGet<Access>('/access',{},60000,force);if(activeScope.current===scope)setAccess(response.data);}
+  catch{if(activeScope.current===scope)setAccess(null);}
+  finally{if(activeScope.current===scope)setLoading(false);}
+ },[scope,user?.id]);
+ const refresh=useCallback(()=>load(true),[load]);
+ useEffect(()=>{
+  setAccess(null);setLoading(true);void load();
+  const revalidate=()=>{if(document.visibilityState==='visible')void load();};
+  const timer=setInterval(revalidate,60000);
+  window.addEventListener('focus',revalidate);
+  return()=>{clearInterval(timer);window.removeEventListener('focus',revalidate);};
+ },[load]);
  const can=(key:string)=>!!access&&(access.role==='SUPER ADMIN'||(key!=='super'&&access.permissions.includes(key)));
  const canScreen=(path:string)=>{
   const route=Object.keys(screenPermissions).sort((a,b)=>b.length-a.length).find(route=>path===route||(route!=='/dashboard'&&path.startsWith(route+'/')));

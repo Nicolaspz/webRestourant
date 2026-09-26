@@ -41,6 +41,7 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
   const [pendingTables, setPendingTables] = useState<Set<string>>(() => new Set());
   const suppressSocketUntil = useRef(0);
   const requestId = useRef(0);
+  const preparing = useRef(false);
 
   const refresh = useCallback(async (silent = false) => {
     if (!organizationId) return;
@@ -82,11 +83,16 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
   }, [organizationId, refresh]);
 
   const togglePrepared = useCallback(async (itemId: string, prepared: boolean) => {
-    if (!organizationId || pendingItems.has(itemId)) return;
+    if (!organizationId) return;
+    if (preparing.current) {
+      toast.info('Aguarde a atualização do item anterior antes de marcar outro.', { toastId: 'preparing-item' });
+      return;
+    }
     if (prepared && orders.some(order => order.awaitingStockPickup && order.items.some(item => item.id === itemId))) {
       toast.warning('Aguarda entrega pelo economato. A marcação será ativada após a confirmação.');
       return;
     }
+    preparing.current = true;
     setPendingItems(current => new Set(current).add(itemId));
     setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared } : item) })));
     suppressSocketUntil.current = Date.now() + 900;
@@ -94,9 +100,10 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
       await ordersService.togglePrepared(itemId, prepared, organizationId, area.startsWith('area:') ? area.slice(5) : undefined);
     } catch (error: any) {
       setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared: !prepared } : item) })));
-      toast.error(error?.response?.data?.error || 'Não foi possível atualizar o item.');
+      toast.error('Não foi possível atualizar o item. Aguarde um momento, confirme o estado do pedido e tente novamente.');
       void refresh(true);
     } finally {
+      preparing.current = false;
       setPendingItems(current => { const next = new Set(current); next.delete(itemId); return next; });
     }
   }, [organizationId, pendingItems, orders, refresh, area]);
@@ -115,7 +122,7 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
       await ordersService.finishMany(group.orderIds, organizationId);
     } catch (error: any) {
       setOrders(snapshot);
-      toast.error(error?.response?.data?.error || 'Não foi possível fechar os pedidos.');
+      toast.error('Não foi possível concluir os pedidos. Atualize a lista e tente novamente.');
     } finally {
       setPendingTables(current => { const next = new Set(current); next.delete(group.id); return next; });
     }

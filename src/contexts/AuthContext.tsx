@@ -4,6 +4,7 @@ import { destroyCookie, setCookie, parseCookies } from 'nookies'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 import { api } from '../services/apiClients';
+import { readCache } from '../services/readCache';
 
 type AuthContextData = {
   user: UserProps | null;
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const inactivityWarningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearSession = useCallback(() => {
+    readCache.clear();
     destroyCookie(undefined, '@servFixe.token', { path: '/' });
     destroyCookie(undefined, '@servFixe.role', { path: '/' });
     destroyCookie(undefined, '@servFixe.organizationId', { path: '/' });
@@ -123,7 +125,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       api.defaults.headers['Authorization'] = `Bearer ${token}`;
-      const response = await api.get('/me');
+      const response = await api.get('/me', { timeout: 15000 });
 
       const { id, name, email, role: userRole, organizationId, user_name } = response.data;
       const orgData = response.data.Organization || {};
@@ -180,7 +182,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   async function signIn({ credential, password }: SignInProps) {
     try {
-      const response = await api.post('/session', { credential, password });
+      const response = await api.post('/session', { credential, password }, { timeout: 20000 });
       const { id, name, email, role, organizationId, user_name, token } = response.data;
       const orgData = response.data.Organization || {};
 
@@ -237,10 +239,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             : role?.toUpperCase() === 'BAR' ? '/dashboard/bar'
               : role?.toUpperCase() === 'ECONOMATO' ? '/dashboard/economato'
               : '/dashboard';
-      // Prefetch reduz o tempo percebido entre a resposta do login e a
-      // montagem do layout privado, sobretudo na primeira entrada.
-      router.prefetch(destination);
-      router.replace(destination);
+      setIsInitializing(false);
+      // Inicia a navegação com os cookies recém-gravados, sem reutilizar
+      // respostas do dashboard obtidas antes da autenticação.
+      window.location.replace(destination);
 
     } catch (err: any) {
       const errorMessage =
