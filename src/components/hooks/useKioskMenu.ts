@@ -67,6 +67,16 @@ export function useKioskMenu() {
     const { clientToken, isLoading: tokenLoading } = useClientToken(tableNumberFromUrl as string);
     const [sessionConflict, setSessionConflict] = useState<any>(null);
 
+    // A QR generated for a table already contains the table number in the
+    // route. Keep it in state too, so checkout never asks the customer to
+    // retype it (and accidentally choose another table).
+    useEffect(() => {
+        if (tableNumberFromUrl) {
+            setTableInput(String(tableNumberFromUrl));
+            setShowTableModal(false);
+        }
+    }, [tableNumberFromUrl]);
+
     // Carregar informações do visitante
     useEffect(() => {
         const saved = localStorage.getItem('guestInfo');

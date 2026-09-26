@@ -27,7 +27,7 @@ export default function TableSelectionPage() {
   const router = useRouter();
   const { user } = useContext(AuthContext);
   const [tables, setTables] = useState<Table[]>([]);
-  const [activeArea, setActiveArea] = useState('');
+  const [activeArea, setActiveArea] = useState('__all');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [opening, setOpening] = useState<number | null>(null);
@@ -58,7 +58,7 @@ export default function TableSelectionPage() {
   },[tableAreas,tables]);
   useEffect(() => {
     if (!loading && activeArea !== '__all' && !areaTabs.some(area=>area.id===activeArea)) {
-      setActiveArea(areaTabs[0]?.id || '__all');
+      setActiveArea('__all');
     }
   },[areaTabs,activeArea,loading]);
   const filteredTables = useMemo(() => {

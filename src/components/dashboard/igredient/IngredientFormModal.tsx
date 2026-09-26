@@ -118,10 +118,6 @@ export function IngredientFormModal({
   const handleSubmit = (e: React.FormEvent) => {
 
     e.preventDefault();
-    if (!formData.defaultAreaId) {
-      toast.error("Área de Consumo é obrigatório!");
-      return;
-    }
     // Preparar dados para envio
     const submitData = {
       name: formData.name,
@@ -227,51 +223,6 @@ export function IngredientFormModal({
                   className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-md p-2 w-full resize-y"
                   disabled={isSubmitting}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="defaultAreaId" className="flex items-center gap-2 text-gray-900 dark:text-white">
-                  <Warehouse className="w-4 h-4" />
-                  Área Padrão de Consumo *
-                </Label>
-
-
-                <Select
-                  value={formData.defaultAreaId}
-                  onValueChange={(value) => {
-                    handleInputChange('defaultAreaId', value);
-                  }}
-                  disabled={!isDataReady || isSubmitting}
-                  required
-                >
-                  <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
-                    <SelectValue placeholder="Selecione uma área padrão *">
-                      {formData.defaultAreaId ? (
-                        areas.find(area => area.id === formData.defaultAreaId)?.nome ||
-                        `ID: ${formData.defaultAreaId.substring(0, 8)}...`
-                      ) : (
-                        "Selecione uma área padrão *"
-                      )}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                    {/* NÃO há opção para valor vazio/vazio */}
-                    {areas.map(area => (
-                      <SelectItem
-                        key={area.id}
-                        value={area.id}
-                        className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        {area.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Defina a área padrão onde este ingrediente será consumido
-                </p>
               </div>
 
               <div className="space-y-2">
