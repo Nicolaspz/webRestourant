@@ -120,7 +120,7 @@ export const economatoService = {
   adjustStock: async (data: any, organizationId: string, userId: string) => {
     const api = setupAPIClient();
     const response = await api.put('/economato/ajuste', data, {
-      params: { organizationId, id: userId }
+      params: { organizationId }
     });
     return response.data;
   },
@@ -203,7 +203,7 @@ export const economatoService = {
   createConsumo: async (data: any, organizationId: string, userId: string) => {
     const api = setupAPIClient();
     const response = await api.post('/consumo-interno', data, {
-      params: { organizationId, id: userId }
+      params: { organizationId }
     });
     return response.data;
   },
