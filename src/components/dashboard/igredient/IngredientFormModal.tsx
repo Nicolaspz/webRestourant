@@ -347,8 +347,7 @@ export function IngredientFormModal({
               <div className="space-y-2">
                 <Label htmlFor="image" className="flex items-center gap-2 text-gray-900 dark:text-white">
                   <Image className="w-4 h-4" />
-                  Imagem do Ingrediente
-                  {mode === 'create' && <span className="text-red-500">*</span>}
+                  Imagem do Ingrediente (opcional)
                 </Label>
 
                 <div className="flex items-center gap-4">
@@ -394,7 +393,7 @@ export function IngredientFormModal({
 
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {mode === 'create'
-                    ? 'Imagem obrigatória para novo ingrediente'
+                    ? 'Pode adicionar a imagem depois. O sistema usará uma imagem padrão quando necessário.'
                     : 'Selecione uma nova imagem apenas se deseja alterar'
                   }
                 </p>
