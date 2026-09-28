@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useCallback, useMemo, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { AuthContext } from "@/contexts/AuthContext";
 import { setupAPIClient } from '@/services/api';
 import { toast } from 'react-toastify';
@@ -20,6 +20,7 @@ export type Product = {
   created_at?: string;
   isFeatured?: boolean;
   isNew?: boolean;
+  Stock?: { totalQuantity: number }[];
 };
 
 export type CartItem = {
@@ -116,6 +117,7 @@ export const useMenu = () => {
   const { user } = useContext(AuthContext);
   const apiClient = setupAPIClient();
   const params = useParams();
+  const pathname = usePathname();
 
   const organizationId = user?.organizationId;
   const tableNumber = params.number as string;
@@ -157,7 +159,7 @@ export const useMenu = () => {
       }
 
       const productsResponse = await apiClient.get('/produts', {
-        params: { organizationId },
+        params: { organizationId, includeUnavailable: pathname?.includes('/dashboard/') ? 'true' : 'false' },
         headers: { Authorization: `Bearer ${user?.token}` }
       });
 
@@ -387,8 +389,9 @@ export const useMenu = () => {
   const featuredProducts = useMemo(() => {
     switch (activeTab) {
       case 'popular':
-        return products.filter(product => product.isFeatured || (product.orderCount || 0) > 0)
+        const popular = products.filter(product => product.isFeatured || (product.orderCount || 0) > 0)
           .sort((a, b) => Number(Boolean(b.isFeatured)) - Number(Boolean(a.isFeatured)) || (b.orderCount || 0) - (a.orderCount || 0)).slice(0, 6);
+        return popular.length ? popular : products.slice(0, 6);
       case 'recent':
         return products.filter(product => product.isNew || (product.createdAt && new Date(product.createdAt).getTime() > Date.now() - 7 * 86400000))
           .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()).slice(0, 6);

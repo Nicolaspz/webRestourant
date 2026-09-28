@@ -6,6 +6,9 @@ import {AuthContext} from './AuthContext';
 import {cachedGet} from '@/services/api';
 type Access={role:string;permissions:string[];allAreas:boolean;areaIds:string[]};
 export const screenPermissions:Record<string,string>={
+ '/dashboard/clientes':'invoices.read',
+ '/dashboard/cobrancas':'invoices.read',
+ '/dashboard/proformas':'proformas.read',
  '/dashboard/roles':'super','/dashboard/areas':'areaOrders.read','/dashboard/cozinha':'areaOrders.read','/dashboard/bar':'areaOrders.read',
  '/dashboard/pedidos':'orders.read','/dashboard/mesa':'tables.read','/dashboard/cardapio':'tables.read',
  '/dashboard/category':'categories.read','/dashboard/takeaway':'orders.read','/dashboard/products':'products.read',

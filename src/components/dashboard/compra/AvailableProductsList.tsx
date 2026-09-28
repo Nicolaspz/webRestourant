@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -39,6 +39,8 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const addingRef = useRef(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     quantity: 1,
@@ -72,6 +74,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
   };
 
   const handleOpenModal = (product: Product) => {
+    if (addingRef.current) return;
     setSelectedProduct(product);
     setFormData({
       quantity: 1,
@@ -94,11 +97,14 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
   };
 
   const handleAddProduct = async () => {
+    if (addingRef.current) return;
     if (!selectedProduct || !user?.organizationId) {
       toast.error('Selecione um produto e certifique-se de estar autenticado');
       return;
     }
 
+    addingRef.current = true;
+    setIsAdding(true);
     try {
       // Se você sabe que o tipo "Alimentar" tem ID "1" no seu banco
       const productTypeId = formData.productTypeId || "f7dddb0a-9176-4993-9421-3c0b6b4dd9d4";
@@ -134,6 +140,9 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
       }
 
       console.log('Detalhes do erro:', response?.data);
+    } finally {
+      addingRef.current = false;
+      setIsAdding(false);
     }
   };
 
@@ -178,6 +187,8 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
           variant="ghost"
           size="sm"
           onClick={handleCloseModal}
+          disabled={isAdding}
+          aria-label="Fechar"
           className="h-8 w-8 p-0 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
         >
           <X className="h-4 w-4" />
@@ -192,6 +203,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
           <Input
             type="number"
             min="1"
+            disabled={isAdding}
             value={formData.quantity}
             onChange={(e) => setFormData({
               ...formData,
@@ -209,6 +221,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
             type="number"
             min="0"
             step="0.01"
+            disabled={isAdding}
             value={formData.purchasePrice}
             onChange={(e) => setFormData({
               ...formData,
@@ -235,15 +248,19 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
         <Button
           variant="outline"
           onClick={handleCloseModal}
+          disabled={isAdding}
           className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           Cancelar
         </Button>
         <Button
           onClick={handleAddProduct}
+          disabled={isAdding}
+          aria-busy={isAdding}
           className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
         >
-          Adicionar
+          {isAdding && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
+          {isAdding ? 'A adicionar…' : 'Adicionar'}
         </Button>
       </div>
     </div>
@@ -266,8 +283,8 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
           <p>{searchTerm ? "Nenhum produto encontrado" : "Nenhum produto disponível"}</p>
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden flex flex-col max-h-[400px]">
-          <div className="overflow-y-auto">
+        <div className="border rounded-lg overflow-hidden">
+          <div className="[&>[data-slot=table-container]]:max-h-[400px] [&>[data-slot=table-container]]:overflow-auto">
             <Table>
               <TableHeader className="sticky top-0 bg-white dark:bg-gray-900 z-10 shadow-sm">
                 <TableRow>

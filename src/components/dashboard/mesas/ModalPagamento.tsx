@@ -1,6 +1,8 @@
 'use client';
 
 import { GpayReferencePanel } from './GpayReferencePanel';
+import {BillingNoticeCheckout} from '@/components/BillingNoticeCheckout';
+import {useAccess} from '@/contexts/AccessContext';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +43,8 @@ export default function ModalPagamento({
     onSuccess,
 }: ModalPagamentoProps) {
     const [referencePending, setReferencePending] = useState(false);
+    const [billingNoticeOpen,setBillingNoticeOpen] = useState(false);
+    const {can}=useAccess();
     const [step, setStep] = useState<1 | 2>(1);
     const [conta, setConta] = useState<AccountPreview | null>(null);
     const [loadingPreview, setLoadingPreview] = useState(false);
@@ -492,6 +496,8 @@ export default function ModalPagamento({
                 </div>
 
                 {/* Footer Custom */}
+                {billingNoticeOpen && <BillingNoticeCheckout tableNumber={mesaNumber} sessionId={conta?.sessaoId||conta?.sessionId||''} onClose={()=>setBillingNoticeOpen(false)} onComplete={()=>{setBillingNoticeOpen(false);onClose();window.dispatchEvent(new Event('billing-notice-created'));}}/>}
+                {step===1 && can('invoices.submit') && <div className="px-6 pt-3"><Button className="w-full" variant="outline" disabled={loadingPreview||!conta||temItensPendentes||referencePending} onClick={()=>setBillingNoticeOpen(true)}>Concluir com aviso de cobrança (pagar depois)</Button></div>}
                 <div className="p-6 border-t bg-muted/30 flex gap-3">
                     {step === 1 ? (
                         <>

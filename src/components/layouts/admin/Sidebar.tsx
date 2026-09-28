@@ -99,12 +99,6 @@ const menuStructure: MenuItem[] = [
         href: "/dashboard/bar",
         icon: GlassWater,
         roles: ['SUPER ADMIN', 'ADMIN', 'BAR']
-      },
-      {
-        label: "Takeaway (Balcão)",
-        href: "/dashboard/takeaway",
-        icon: Package,
-        roles: ['SUPER ADMIN', 'ADMIN', 'CAIXA']
       }
     ]
   },
@@ -217,6 +211,9 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
         .filter(item => item.href ? canScreen(item.href) : !!item.subItems?.length);
       if(canScreen('/dashboard/roles')) filtered.push({label:'Roles e permissões',href:'/dashboard/roles',icon:UserCog,roles:[]});
       if(canScreen('/dashboard/areas')) filtered.push({label:'Pedidos por área',href:'/dashboard/areas',icon:UserCog,roles:[]});
+      if(canScreen('/dashboard/proformas')) filtered.push({label:'Proformas',href:'/dashboard/proformas',icon:Package,roles:[]});
+      if(canScreen('/dashboard/cobrancas')) filtered.push({label:'Avisos de cobrança',href:'/dashboard/cobrancas',icon:Package,roles:[]});
+      if(canScreen('/dashboard/clientes')) filtered.push({label:'Clientes',href:'/dashboard/clientes',icon:Package,roles:[]});
       for (const [href,label] of [['/dashboard/economato/areas','Áreas de consumo'],['/dashboard/economato/pedidos','Transferências'],['/dashboard/economato/consumo','Quebras e consumos']]) {
         if(canScreen(href)) filtered.push({label,href,icon:UserCog,roles:[]});
       }

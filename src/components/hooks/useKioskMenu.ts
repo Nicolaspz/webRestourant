@@ -99,15 +99,6 @@ export function useKioskMenu() {
         setShowWelcomeModal(false);
         toast.success(`Bem-vindo, ${name || 'Cliente'}!`, { theme: 'dark' });
 
-        // Guardar no backend para campanhas (sem bloquear o fluxo)
-        if (phone && organizationId) {
-            try {
-                await apiClient.post('/takeaway/cliente', { name, phone, organizationId });
-            } catch (err) {
-                // Silencioso — não bloquear o utilizador se falhar
-                console.warn('Não foi possível registar cliente no backend:', err);
-            }
-        }
     };
 
     useEffect(() => {

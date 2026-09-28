@@ -1,4 +1,6 @@
 export type OrderItem = {
+  areaId?: string;
+  areaName?: string;
   id: string;
   amount: number;
   notes?: string | null;

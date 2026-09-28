@@ -1,0 +1,14 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {CustomerPicker,Customer} from '@/components/CustomerPicker';
+import {api} from '@/services/api';
+import {Input} from '@/components/ui/input';
+import {Button} from '@/components/ui/button';
+import {toast} from 'react-toastify';
+export default function Customers(){
+ const [rows,setRows]=useState<Customer[]>([]),[search,setSearch]=useState(''),[name,setName]=useState(''),[nif,setNif]=useState(''),[editing,setEditing]=useState<Customer|null>(null),[kind,setKind]=useState('PARTICULAR'),[busy,setBusy]=useState(false);
+ const load=async()=>{try{setRows((await api.get('/customers')).data);}catch{toast.error('Não foi possível carregar os clientes.');}};
+ useEffect(()=>{void load();},[]);
+ const update=async()=>{if(!editing||!name.trim())return;setBusy(true);try{await api.put(`/customers/${editing.id}`,{name,taxId:nif,kind});setEditing(null);setName('');setNif('');await load();toast.success('Cliente atualizado.');}catch(e:any){toast.error(e.response?.data?.error||'Não foi possível atualizar.');}finally{setBusy(false);}};
+ return <section className="space-y-5"><h1 className="text-2xl font-bold">Clientes particulares e empresas</h1>{editing?<div className="rounded-xl border p-4 space-y-3"><h2 className="font-semibold">Atualizar cliente</h2><div className="grid gap-3 sm:grid-cols-3"><Input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome / empresa"/><Input value={nif} onChange={e=>setNif(e.target.value)} placeholder="NIF"/><select className="rounded border bg-background px-3" value={kind} onChange={e=>setKind(e.target.value)}><option value="PARTICULAR">Particular</option><option value="EMPRESA">Empresa</option></select></div><div className="flex gap-2"><Button disabled={busy||!name.trim()} onClick={update}>{busy?'A atualizar…':'Guardar alterações'}</Button><Button variant="outline" disabled={busy} onClick={()=>setEditing(null)}>Cancelar</Button></div></div>:<CustomerPicker name={name} nif={nif} onChange={(n,t)=>{setName(n);setNif(t);}}/>}<div className="flex gap-3"><Input placeholder="Pesquisar nome ou NIF" value={search} onChange={e=>setSearch(e.target.value)}/><Button onClick={load}>Atualizar lista</Button></div><div className="overflow-auto"><table className="w-full text-left"><thead><tr><th>Nome</th><th>Tipo</th><th>NIF</th><th>Ações</th></tr></thead><tbody>{rows.filter(c=>`${c.name} ${c.taxId||''}`.toLowerCase().includes(search.toLowerCase())).map(c=><tr key={c.id} className="border-t"><td className="py-3">{c.name}</td><td>{c.kind==='EMPRESA'?'Empresa':'Particular'}</td><td>{c.taxId||'N/A'}</td><td><Button variant="outline" size="sm" onClick={()=>{setEditing(c);setName(c.name);setNif(c.taxId||'');setKind(c.kind);}}>Editar</Button></td></tr>)}</tbody></table></div></section>;
+}

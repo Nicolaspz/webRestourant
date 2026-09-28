@@ -27,6 +27,7 @@ export function PurchaseProductsModal({ purchase, onClose, onSuccess }: Purchase
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState<string>("current");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [availableVisited, setAvailableVisited] = useState(false);
 
   const handleAddSuccess = () => {
     setActiveTab("current");
@@ -41,8 +42,8 @@ export function PurchaseProductsModal({ purchase, onClose, onSuccess }: Purchase
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm dark:bg-black/90" onClick={onClose} />
 
-      <div className="relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="relative flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-6xl mx-4 max-h-[90dvh] overflow-hidden">
+        <div className="flex shrink-0 items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Gestão de Produtos da Compra</h3>
             <div className="flex items-center gap-2 mt-1">
@@ -62,8 +63,11 @@ export function PurchaseProductsModal({ purchase, onClose, onSuccess }: Purchase
           </Button>
         </div>
 
-        <div className="p-6 bg-gray-50 dark:bg-gray-800/50">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 bg-gray-50 dark:bg-gray-800/50">
+          <Tabs value={activeTab} onValueChange={tab => {
+            setActiveTab(tab);
+            if (tab === 'available') setAvailableVisited(true);
+          }} className="space-y-4">
             <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
               <TabsTrigger
                 value="current"
@@ -80,32 +84,32 @@ export function PurchaseProductsModal({ purchase, onClose, onSuccess }: Purchase
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="current" className="space-y-4 mt-4">
+            <TabsContent forceMount value="current" className="space-y-4 mt-4 data-[state=inactive]:hidden">
               <PurchaseProductsList
                 purchaseId={purchase.id}
                 onUpdate={handleAddSuccess}
-                key={refreshKey}
+                refreshVersion={refreshKey}
                 status={purchase.status}
               />
             </TabsContent>
 
-            <TabsContent value="available" className="space-y-4 mt-4">
-              <AvailableProductsList
+            <TabsContent forceMount value="available" className="space-y-4 mt-4 data-[state=inactive]:hidden">
+              {availableVisited && <AvailableProductsList
                 purchaseId={purchase.id}
                 onAddSuccess={handleavailableSuccess}
-              />
+              />}
             </TabsContent>
           </Tabs>
         </div>
 
         {/* Footer com botão de conclusão */}
         {!purchase.status && (
-          <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
+          <div className="shrink-0 p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-3 justify-between items-center bg-gray-50 dark:bg-gray-900">
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <Package size={14} className="text-amber-500" />
               Após adicionar todos os itens, clique em concluir para atualizar o stock.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <Button variant="outline" onClick={onClose}>Continuar Editando Depois</Button>
               <AddToStockButton
                 purchaseId={purchase.id}

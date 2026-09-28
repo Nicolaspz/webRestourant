@@ -13,12 +13,14 @@ interface ProductCardProps {
     PrecoVenda: { preco_venda: number }[];
     isFeatured?: boolean;
     isNew?: boolean;
+    Stock?: { totalQuantity: number }[];
   };
   onAddToCart: () => void;
   variant?: 'grid' | 'featured';
 }
 
 export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductCardProps) {
+  const unavailable = (product.Stock?.[0]?.totalQuantity ?? 0) <= 0;
   if (variant === 'featured') {
     return (
       <motion.div
@@ -27,7 +29,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
       >
         <div
           className="h-full cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-xl"
-          onClick={onAddToCart}
+          onClick={() => !unavailable && onAddToCart()}
         >
           <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
               <ProductImage banner={product.banner} name={product.name} className="h-full w-full object-cover" />
@@ -46,6 +48,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
               </div>
           </div>
           <div className="p-4">
+            {unavailable && <span className="mb-1 inline-block rounded-full bg-red-100 px-2 py-1 text-[10px] font-bold uppercase text-red-700">Sem stock</span>}
             <h3 className="mb-2 line-clamp-2 min-h-10 text-sm font-bold leading-snug text-slate-900">
               {product.name}
             </h3>
@@ -66,7 +69,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
             ? 'border-amber-300 ring-1 ring-amber-300/30'
             : 'border-slate-200'
         }`}
-        onClick={onAddToCart}
+        onClick={() => !unavailable && onAddToCart()}
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           <ProductImage banner={product.banner} name={product.name} className="h-full w-full object-cover" />
@@ -78,6 +81,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
                 Destaque
               </span>
             )}
+            {unavailable && <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider border border-red-700/20">Sem stock</span>}
             {product.isNew && (
               <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider border border-green-600/20">
                 Lançamento
@@ -105,7 +109,7 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
             <span className="text-lg font-extrabold text-slate-950">
               {(product.PrecoVenda[0]?.preco_venda || 0).toLocaleString('pt-AO')} Kz
             </span>
-            <button aria-label={`Adicionar ${product.name}`} className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-sm transition-colors hover:bg-amber-400">
+            <button disabled={unavailable} aria-label={`Adicionar ${product.name}`} className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-sm transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
               <Plus className="h-5 w-5" strokeWidth={2.5} />
             </button>
           </div>

@@ -23,7 +23,7 @@ function groupOrders(orders: Order[], area: OrderQueueArea): GroupedOrder[] {
       id: groupKey, name: table == null ? (order.name || "Takeaway") : `Mesa ${table}`, created_at: order.created_at,
       Session: order.Session, items: [], orderIds: [], allPrepared: true,
     };
-    group.items.push(...visibleItems.map(item => ({ ...item, awaitingStockPickup: Boolean(order.awaitingStockPickup) })));
+    group.items.push(...visibleItems.map(item => ({ ...item, awaitingStockPickup: item.awaitingStockPickup ?? Boolean(order.awaitingStockPickup) })));
     group.awaitingStockPickup = Boolean(group.awaitingStockPickup || order.awaitingStockPickup);
     group.orderIds.push(order.id);
     group.allPrepared = Boolean(group.allPrepared) && order.items.every(item => item.prepared || item.canceled);
@@ -88,7 +88,7 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
       toast.info('Aguarde a atualização do item anterior antes de marcar outro.', { toastId: 'preparing-item' });
       return;
     }
-    if (prepared && orders.some(order => order.awaitingStockPickup && order.items.some(item => item.id === itemId))) {
+    if (prepared && orders.some(order => order.items.some(item => item.id === itemId && (item.awaitingStockPickup ?? order.awaitingStockPickup)))) {
       toast.warning('Aguarda entrega pelo economato. A marcação será ativada após a confirmação.');
       return;
     }
@@ -97,7 +97,8 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
     setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared } : item) })));
     suppressSocketUntil.current = Date.now() + 900;
     try {
-      await ordersService.togglePrepared(itemId, prepared, organizationId, area.startsWith('area:') ? area.slice(5) : undefined);
+      const itemAreaId = orders.flatMap(order=>order.items).find(item=>item.id===itemId)?.areaId;
+      await ordersService.togglePrepared(itemId, prepared, organizationId, area.startsWith('area:') ? itemAreaId || area.slice(5) : undefined);
     } catch (error: any) {
       setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared: !prepared } : item) })));
       toast.error('Não foi possível atualizar o item. Aguarde um momento, confirme o estado do pedido e tente novamente.');
@@ -119,14 +120,19 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
     setOrders(current => current.filter(order => !group.orderIds.includes(order.id)));
     suppressSocketUntil.current = Date.now() + 1200;
     try {
-      await ordersService.finishMany(group.orderIds, organizationId);
+      if (area.startsWith('area:')) {
+        const areaIds = [...new Set(group.items.map(item=>item.areaId).filter((id): id is string=>Boolean(id)))];
+        for (const id of areaIds) await ordersService.deliverArea(id, group.items.filter(item=>item.areaId===id).map(item=>item.id), organizationId);
+        await refresh(true);
+      } else await ordersService.finishMany(group.orderIds, organizationId);
     } catch (error: any) {
       setOrders(snapshot);
       toast.error('Não foi possível concluir os pedidos. Atualize a lista e tente novamente.');
+      void refresh(true);
     } finally {
       setPendingTables(current => { const next = new Set(current); next.delete(group.id); return next; });
     }
-  }, [organizationId, orders, pendingTables]);
+  }, [organizationId, orders, pendingTables, area, refresh]);
 
   const groupedOrders = useMemo(() => groupOrders(orders, area), [area, orders]);
   const hasPendingStockPickup = orders.some(order => {

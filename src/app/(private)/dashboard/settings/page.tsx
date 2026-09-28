@@ -13,6 +13,7 @@ import Head from 'next/head'
 import { setupAPIClient } from "@/services/api"
 import { PrinterSettingsSection } from '@/components/settings/PrinterSettingsSection'
 import { OnlinePaymentSettingsSection } from '@/components/settings/OnlinePaymentSettingsSection'
+import { MenuStockVisibilitySection } from '@/components/settings/MenuStockVisibilitySection'
 
 export default function SettingsPage() {
   const { user } = useContext(AuthContext)
@@ -149,6 +150,7 @@ export default function SettingsPage() {
       icon: "credit-card",
       content: <OnlinePaymentSettingsSection />
     },
+    { id: "menu-stock", label: "Menu e stock", icon: "warehouse", content: <MenuStockVisibilitySection /> },
     {
       id: "area",
       label: "Áreas de consumo / stock",

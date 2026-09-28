@@ -38,12 +38,13 @@ interface Purchase {
 }
 
 interface PurchaseProductsListProps {
+  refreshVersion?: number;
   purchaseId: string;
   onUpdate: () => void;
   status: boolean;
 }
 
-export function PurchaseProductsList({ purchaseId, onUpdate, status }: PurchaseProductsListProps) {
+export function PurchaseProductsList({ purchaseId, onUpdate, status, refreshVersion = 0 }: PurchaseProductsListProps) {
   const { user } = useContext(AuthContext);
   const [products, setProducts] = useState<PurchaseProduct[]>([]);
   const [purchase, setPurchase] = useState<Purchase | null>(null);
@@ -105,7 +106,6 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status }: PurchaseP
       });
 
       toast.success('Produto removido da compra');
-      fetchProducts();
       onUpdate();
     } catch (error) {
       console.error('Erro ao remover produto:', error);
@@ -130,7 +130,7 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status }: PurchaseP
     if (user?.token) {
       fetchProducts();
     }
-  }, [purchaseId, user?.token]);
+  }, [purchaseId, user?.token, refreshVersion]);
 
   const filteredProducts = products.filter(p =>
     p.product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -196,8 +196,8 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status }: PurchaseP
           />
         </div>
 
-        <div className="border rounded-lg overflow-hidden flex flex-col max-h-[400px]">
-          <div className="overflow-y-auto">
+        <div className="border rounded-lg overflow-hidden">
+          <div className="[&>[data-slot=table-container]]:max-h-[400px] [&>[data-slot=table-container]]:overflow-auto">
             <Table>
               <TableHeader className="sticky top-0 bg-white dark:bg-gray-900 z-10 shadow-sm">
                 <TableRow>
