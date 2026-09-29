@@ -1,4 +1,6 @@
 "use client";
+import {ActionForm,ActionButton} from '@/components/ui/action-feedback';
+
 
 import { useState, useContext, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -119,7 +121,7 @@ export default function LoginPage() {
                 Introduza as suas credenciais para aceder ao painel
               </p>
 
-              <form onSubmit={handleLogin} className="space-y-5">
+              <ActionForm onSubmit={handleLogin} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="credential" className="text-gray-700 font-medium">
                     Email ou Telefone
@@ -152,7 +154,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
-                    <button
+                    <ActionButton
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'}
@@ -160,20 +162,20 @@ export default function LoginPage() {
                       className="absolute inset-y-0 right-0 flex min-w-11 items-center justify-center text-gray-400 hover:text-gray-600"
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
+                    </ActionButton>
                   </div>
                   <div className="flex justify-end">
-                    <button
+                    <ActionButton
                       type="button"
                       className="text-sm text-blue-700 hover:text-blue-800 font-medium cursor-pointer"
                       onClick={() => setForgotMode(true)}
                     >
                       Esqueci a senha
-                    </button>
+                    </ActionButton>
                   </div>
                 </div>
 
-                <button
+                <ActionButton
                   type="submit"
                   disabled={loading}
                   className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all duration-300 shadow-md shadow-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -186,8 +188,8 @@ export default function LoginPage() {
                   ) : (
                     "Entrar"
                   )}
-                </button>
-              </form>
+                </ActionButton>
+              </ActionForm>
 
               <p className="text-center text-sm text-gray-500 mt-6">
                 Ainda não tem conta?{" "}
@@ -199,14 +201,14 @@ export default function LoginPage() {
           ) : (
             /* ===== FORGOT PASSWORD FORM ===== */
             <div>
-              <button
+              <ActionButton
                 type="button"
                 onClick={() => setForgotMode(false)}
                 className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm mb-6 cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Voltar ao login
-              </button>
+              </ActionButton>
 
               <h1 className="text-2xl font-bold text-gray-900 mb-1">
                 Recuperar senha
@@ -215,7 +217,7 @@ export default function LoginPage() {
                 Informe o seu email para receber o link de redefinição
               </p>
 
-              <form onSubmit={handleForgotPassword} className="space-y-5">
+              <ActionForm onSubmit={handleForgotPassword} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="reset-email" className="text-gray-700 font-medium">
                     Email
@@ -232,7 +234,7 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <button
+                <ActionButton
                   type="submit"
                   disabled={loading}
                   className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all duration-300 shadow-md shadow-blue-900/10 disabled:opacity-50"
@@ -245,8 +247,8 @@ export default function LoginPage() {
                   ) : (
                     "Enviar link de recuperação"
                   )}
-                </button>
-              </form>
+                </ActionButton>
+              </ActionForm>
             </div>
           )}
         </div>

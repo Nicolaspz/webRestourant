@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { useAccess } from '@/contexts/AccessContext';
 import Image from 'next/image';
 import logoImg from '../../../../public/Logo.png'
@@ -51,145 +53,43 @@ type MenuItem = {
 }
 
 const menuStructure: MenuItem[] = [
-  {
-    icon: Home,
-    label: "Visão geral",
-    href: "/dashboard",
-    roles: ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA', 'COZINHA', 'BAR', 'ECONOMATO']
-  },
-
-  // Gestão do Restaurante
-  {
-    icon: Utensils,
-    label: "Atendimento",
-    roles: ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA', 'COZINHA', 'BAR', 'ECONOMATO'],
-    subItems: [
-      {
-        label: "Gestão de Pedidos",
-        href: "/dashboard/pedidos",
-        icon: Package,
-        roles: ['SUPER ADMIN', 'ADMIN']
-      },
-      {
-        label: "Mapa de Mesas",
-        href: "/dashboard/mesa",
-        icon: Table2,
-        roles: ['SUPER ADMIN', 'ADMIN', 'GARCON', 'CAIXA']
-      },
-      {
-        label: "Menu & Cardápio",
-        href: "/dashboard/cardapio",
-        icon: ClipboardList,
-        roles: ['SUPER ADMIN', 'ADMIN', 'GARCON']
-      },
-      {
-        label: "Gestão de Categorias",
-        href: "/dashboard/category",
-        icon: ClipboardList,
-        roles: ['SUPER ADMIN', 'ADMIN']
-      },
-      {
-        label: "Painel da Cozinha",
-        href: "/dashboard/cozinha",
-        icon: ChefHat,
-        roles: ['SUPER ADMIN', 'ADMIN', 'COZINHA']
-      },
-      {
-        label: "Painel do Bar",
-        href: "/dashboard/bar",
-        icon: GlassWater,
-        roles: ['SUPER ADMIN', 'ADMIN', 'BAR']
-      }
-    ]
-  },
-
-  // Gestão de Produtos
-  {
-    icon: Package,
-    label: "Produtos e stock",
-    roles: ['SUPER ADMIN', 'ADMIN', 'ECONOMATO', 'COZINHA', 'BAR', 'GARCON', 'CAIXA'],
-    subItems: [
-
-      {
-        label: "Produtos/Pratos",
-        href: "/dashboard/products",
-        icon: Package,
-        roles: ['SUPER ADMIN', 'ADMIN']
-      },
-      {
-        label: "Ingredientes",
-        href: "/dashboard/igredient",
-        icon: Carrot,
-        roles: ['SUPER ADMIN', 'ADMIN']
-      },
-      {
-        label: "Stock",
-        href: "/dashboard/stock",
-        icon: Warehouse,
-        roles: ['SUPER ADMIN', 'ADMIN', 'ECONOMATO']
-      },
-      {
-        label: "Economato",
-        href: "/dashboard/economato",
-        icon: Archive,
-        roles: ['SUPER ADMIN', 'ADMIN', 'ECONOMATO', 'COZINHA', 'BAR', 'GARCON', 'CAIXA']
-      }
-    ]
-  },
-
-  // Gestão Financeira
-  {
-    icon: DollarSign,
-    label: "Financeiro",
-    roles: ['SUPER ADMIN', 'ADMIN', 'CAIXA'],
-    subItems: [
-      {
-        label: "Gestão de Caixa",
-        href: "/dashboard/caixa",
-        icon: Calculator,
-        roles: ['SUPER ADMIN', 'ADMIN', 'CAIXA']
-      },
-      {
-        label: "Compras",
-        href: "/dashboard/compra",
-        icon: ShoppingCart,
-        roles: ['SUPER ADMIN', 'ADMIN']
-      },
-      {
-        label: "Fornecedores",
-        href: "/dashboard/fornecedores",
-        icon: Users,
-        roles: ['SUPER ADMIN', 'ADMIN']
-      },
-      {
-        label: "Dash Avançado",
-        href: "/dashboard/advanced",
-        icon: TrendingUp,
-        roles: ['SUPER ADMIN']
-      }
-    ]
-  },
-
-  // Administração
-  {
-    icon: UserCog,
-    label: "Gestão",
-    roles: ['SUPER ADMIN', 'ADMIN'],
-    subItems: [
-      {
-        label: "Gestão do Usuário",
-        href: "/dashboard/users",
-        icon: Users,
-        roles: ['SUPER ADMIN', 'ADMIN']
-      },
-      {
-        label: "Definições",
-        href: "/dashboard/settings",
-        icon: Settings,
-        roles: ['SUPER ADMIN']
-      }
-    ]
-  }
+  {icon:Home,label:'Visão geral',roles:[],subItems:[
+    {label:'Painel principal',href:'/dashboard',icon:Home,roles:[]},
+  ]},
+  {icon:Utensils,label:'Atendimento',roles:[],subItems:[
+    {label:'Gestão de Pedidos',href:'/dashboard/pedidos',icon:Package,roles:[]},
+    {label:'Mapa de Mesas',href:'/dashboard/mesa',icon:Table2,roles:[]},
+    {label:'Menu & Cardápio',href:'/dashboard/cardapio',icon:ClipboardList,roles:[]},
+    {label:'Painel da Cozinha',href:'/dashboard/cozinha',icon:ChefHat,roles:[]},
+    {label:'Painel do Bar',href:'/dashboard/bar',icon:GlassWater,roles:[]},
+    {label:'Pedidos por área',href:'/dashboard/areas',icon:ClipboardList,roles:[]},
+  ]},
+  {icon:Package,label:'Produtos e stock',roles:[],subItems:[
+    {label:'Produtos/Pratos',href:'/dashboard/products',icon:Package,roles:[]},
+    {label:'Gestão de Categorias',href:'/dashboard/category',icon:ClipboardList,roles:[]},
+    {label:'Ingredientes',href:'/dashboard/igredient',icon:Carrot,roles:[]},
+    {label:'Stock',href:'/dashboard/stock',icon:Warehouse,roles:[]},
+    {label:'Economato',href:'/dashboard/economato',icon:Archive,roles:[]},
+    {label:'Áreas de consumo',href:'/dashboard/economato/areas',icon:Utensils,roles:[]},
+    {label:'Transferências',href:'/dashboard/economato/pedidos',icon:Package,roles:[]},
+    {label:'Quebras e consumos',href:'/dashboard/economato/consumo',icon:ClipboardList,roles:[]},
+  ]},
+  {icon:ShoppingCart,label:'Compras e fornecedores',roles:[],subItems:[
+    {label:'Compras',href:'/dashboard/compra',icon:ShoppingCart,roles:[]},
+    {label:'Fornecedores',href:'/dashboard/fornecedores',icon:Users,roles:[]},
+  ]},
+  {icon:Calculator,label:'Contabilidade',roles:[],subItems:[
+    {label:'Gestão de Caixa',href:'/dashboard/caixa',icon:Calculator,roles:[]},
+    {label:'Proformas',href:'/dashboard/proformas',icon:ClipboardList,roles:[]},
+    {label:'Avisos de cobrança',href:'/dashboard/cobrancas',icon:DollarSign,roles:[]},
+    {label:'Clientes',href:'/dashboard/clientes',icon:Users,roles:[]},
+    {label:'Painel financeiro',href:'/dashboard/advanced',icon:TrendingUp,roles:[]},
+  ]},
+  {icon:UserCog,label:'Administração',roles:[],subItems:[
+    {label:'Gestão do Usuário',href:'/dashboard/users',icon:Users,roles:[]},
+    {label:'Roles e permissões',href:'/dashboard/roles',icon:UserCog,roles:[]},
+    {label:'Definições',href:'/dashboard/settings',icon:Settings,roles:[]},
+  ]},
 ]
 
 export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void }) {
@@ -209,14 +109,6 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
       // Filtrar menu baseado na role
       const filtered = menuStructure.map(item => item.subItems ? {...item,subItems:item.subItems.filter(sub=>canScreen(sub.href))} : item)
         .filter(item => item.href ? canScreen(item.href) : !!item.subItems?.length);
-      if(canScreen('/dashboard/roles')) filtered.push({label:'Roles e permissões',href:'/dashboard/roles',icon:UserCog,roles:[]});
-      if(canScreen('/dashboard/areas')) filtered.push({label:'Pedidos por área',href:'/dashboard/areas',icon:UserCog,roles:[]});
-      if(canScreen('/dashboard/proformas')) filtered.push({label:'Proformas',href:'/dashboard/proformas',icon:Package,roles:[]});
-      if(canScreen('/dashboard/cobrancas')) filtered.push({label:'Avisos de cobrança',href:'/dashboard/cobrancas',icon:Package,roles:[]});
-      if(canScreen('/dashboard/clientes')) filtered.push({label:'Clientes',href:'/dashboard/clientes',icon:Package,roles:[]});
-      for (const [href,label] of [['/dashboard/economato/areas','Áreas de consumo'],['/dashboard/economato/pedidos','Transferências'],['/dashboard/economato/consumo','Quebras e consumos']]) {
-        if(canScreen(href)) filtered.push({label,href,icon:UserCog,roles:[]});
-      }
       setFilteredMenu(filtered)
 
       // Abrir menus que contenham o path atual
@@ -229,7 +121,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
           initialOpenState[item.label] = true
         }
       })
-      setOpenMenus(initialOpenState)
+      setOpenMenus(previous => ({...initialOpenState,...previous}))
     }
   }, [pathname, access])
 
@@ -252,7 +144,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
           <p className="truncate text-sm font-semibold" title={user?.name_org}>{user?.name_org || 'ServeFixe'}</p>
           <p className="mt-1 text-xs text-slate-400">Gestão do restaurante</p>
         </div>
-        {closeSidebar && <button type="button" onClick={closeSidebar} aria-label="Fechar menu principal" className="h-11 w-11 rounded-lg hover:bg-white/10 text-xl">×</button>}
+        {closeSidebar && <ActionButton type="button" onClick={closeSidebar} aria-label="Fechar menu principal" className="h-11 w-11 rounded-lg hover:bg-white/10 text-xl">×</ActionButton>}
       </div>
       <nav className="admin-navigation" aria-label="Secções do painel">
         {!userRole && <p role="status" className="p-4 text-sm text-slate-400">A carregar o menu…</p>}
@@ -266,13 +158,13 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
           const open = !!openMenus[item.label];
           const id = 'menu-' + item.label.replace(/\s+/g, '-').toLowerCase();
           return <div key={item.label} className="admin-nav-section">
-            <button type="button" className="admin-nav-heading" onClick={() => toggleMenu(item.label)} aria-expanded={open} aria-controls={id}>
+            <ActionButton type="button" className="admin-nav-heading" onClick={() => toggleMenu(item.label)} aria-expanded={open} aria-controls={id}>
               {item.label}<ChevronDown size={14} className={cn("transition-transform", !open && "-rotate-90")} />
-            </button>
+            </ActionButton>
             <div id={id} hidden={!open} className="space-y-1">
               {children.map(child => {
                 const Icon = child.icon || item.icon;
-                const active = pathname === child.href || pathname.startsWith(child.href + '/');
+                const active = pathname === child.href || (child.href !== '/dashboard' && pathname.startsWith(child.href + '/') && !filteredMenu.some(section => section.subItems?.some(other => other.href.length > child.href.length && (pathname === other.href || pathname.startsWith(other.href + '/')))));
                 return <Link key={child.href} href={child.href} onClick={closeSidebar} className="admin-nav-link" aria-current={active ? 'page' : undefined}>
                   <Icon size={18} aria-hidden="true" /><span>{child.label}</span>
                   {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-300" />}

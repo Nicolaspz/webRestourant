@@ -1,4 +1,6 @@
 "use client";
+import {ActionForm,ActionButton} from '@/components/ui/action-feedback';
+
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -76,7 +78,7 @@ function VerifyOrganizationContent() {
                             <p className="text-sm text-gray-400">A redirecionar para o login...</p>
                         </div>
                     ) : (
-                        <form onSubmit={handleVerify} className="space-y-6">
+                        <ActionForm onSubmit={handleVerify} className="space-y-6">
                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mb-2">
                                 <Smartphone className="h-8 w-8 text-blue-700" />
                             </div>
@@ -104,7 +106,7 @@ function VerifyOrganizationContent() {
                                 />
                             </div>
 
-                            <button
+                            <ActionButton
                                 type="submit"
                                 disabled={loading || code.length !== 6}
                                 className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all shadow-md disabled:opacity-50"
@@ -120,18 +122,18 @@ function VerifyOrganizationContent() {
                                         <ArrowRight className="h-5 w-5" />
                                     </>
                                 )}
-                            </button>
+                            </ActionButton>
 
                             <div className="pt-2">
-                                <button
+                                <ActionButton
                                     type="button"
                                     onClick={() => router.push("/register")}
                                     className="text-sm text-gray-500 hover:text-blue-700 transition-colors"
                                 >
                                     Não recebeu o código? Tente novamente
-                                </button>
+                                </ActionButton>
                             </div>
-                        </form>
+                        </ActionForm>
                     )}
                 </div>
             </div>

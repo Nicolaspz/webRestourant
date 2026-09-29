@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 import { API_BASE_URL, getMediaUrl } from '../../../../config';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -397,7 +399,7 @@ export function ProductFormModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <ActionForm onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="productKind" className="text-gray-900 dark:text-white">Tipo *</Label>
             <Select
@@ -717,7 +719,7 @@ export function ProductFormModal({
               {mode === 'create' ? 'Criar Produto' : 'Salvar Alterações'}
             </Button>
           </div>
-        </form>
+        </ActionForm>
       </div>
     </div>
   );

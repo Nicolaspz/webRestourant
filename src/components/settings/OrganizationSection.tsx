@@ -1,5 +1,7 @@
 // components/settings/OrganizationSection.tsx
 "use client"
+import {ActionForm} from '@/components/ui/action-feedback';
+
 import { useState, useRef, ChangeEvent, FormEvent, useContext, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { AuthContext } from '@/contexts/AuthContext'
@@ -173,7 +175,7 @@ export function OrganizationSection({ organization, onUpdateSuccess }: Organizat
         <p className="text-sm text-gray-600">Gerencie os dados da sua empresa</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <ActionForm onSubmit={handleSubmit} className="space-y-6">
         {/* Upload de Logo */}
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
@@ -321,7 +323,7 @@ export function OrganizationSection({ organization, onUpdateSuccess }: Organizat
             </>
           )}
         </div>
-      </form>
+      </ActionForm>
     </Card>
   )
 }

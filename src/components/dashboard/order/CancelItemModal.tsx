@@ -27,7 +27,7 @@ export function CancelItemModal({ isOpen, onClose, onConfirm, isLoading, itemNam
 
     const handleConfirm = () => {
         if (reason.trim().length < 3) return;
-        onConfirm(reason);
+        return onConfirm(reason);
     };
 
     return (

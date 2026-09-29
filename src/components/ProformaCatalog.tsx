@@ -1,0 +1,12 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {api} from '@/services/api';
+import {Input} from '@/components/ui/input';
+import {Button} from '@/components/ui/button';
+type Product={id:string;name:string;isDerived:boolean;isIgredient:boolean;PrecoVenda:{preco_venda:number|string}[]};
+export function ProformaCatalog({organizationId,onChoose}:{organizationId:string;onChoose:(line:{nome:string;quantidade:number;precoUnitario:number})=>void}) {
+ const [products,setProducts]=useState<Product[]>([]),[search,setSearch]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState(false),[retry,setRetry]=useState(0);
+ useEffect(()=>{let active=true;setLoading(true);setError(false);api.get('/produts',{params:{organizationId,includeUnavailable:true}}).then(({data})=>{if(active)setProducts(data.filter((p:Product)=>!p.isIgredient));}).catch(()=>{if(active)setError(true);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[organizationId,retry]);
+ const filtered=products.filter(p=>p.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
+ return <details className="rounded-lg border p-3"><summary className="cursor-pointer font-medium">Escolher produtos do catálogo (opcional)</summary><p className="my-2 text-sm text-muted-foreground">Adicione pratos simples ou compostos com o preço atual. Pode ajustar os dados da proposta ou preencher manualmente.</p><Input aria-label="Pesquisar produtos" placeholder="Pesquisar prato ou produto…" value={search} onChange={e=>setSearch(e.target.value)}/>{loading?<p>A carregar produtos…</p>:error?<Button type="button" variant="outline" onClick={()=>setRetry(n=>n+1)}>Tentar carregar novamente</Button>:<div className="mt-2 max-h-64 overflow-auto">{(['Simples','Compostos'] as const).map(group=><div key={group}><h3 className="font-semibold py-2">{group}</h3>{filtered.filter(p=>Boolean(p.isDerived)===(group==='Compostos')).map(p=><div key={p.id} className="flex items-center justify-between gap-3 border-t py-2"><span>{p.name} — {p.PrecoVenda.length?Number(p.PrecoVenda[0].preco_venda).toLocaleString('pt-AO')+' Kz':'Preço por definir'}</span><Button type="button" size="sm" variant="outline" onClick={()=>onChoose({nome:p.name,quantidade:1,precoUnitario:Number(p.PrecoVenda[0]?.preco_venda??0)})}>Adicionar</Button></div>)}</div>)}{!filtered.length&&<p>Nenhum produto encontrado. Pode preencher manualmente.</p>}</div>}</details>;
+}

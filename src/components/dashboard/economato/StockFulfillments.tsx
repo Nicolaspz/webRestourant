@@ -1,4 +1,6 @@
 "use client";
+import {ActionForm} from '@/components/ui/action-feedback';
+
 import {useAccess} from '@/contexts/AccessContext';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
@@ -101,7 +103,7 @@ export function StockFulfillments() {
  return <section className="space-y-4">
    <div className="flex flex-wrap justify-between gap-3"><h2 className="text-xl font-semibold">Levantamentos dos pedidos</h2><div className="flex gap-2">{can("pickups.export") && <Button variant="outline" onClick={exportReport} disabled={exporting || loading || error}>{exporting ? 'A exportar…' : 'Exportar CSV'}</Button>}<Button variant="outline" onClick={refresh} disabled={loading}>{loading ? 'A carregar…' : 'Atualizar'}</Button></div></div>
    <p className="text-muted-foreground">Requisições automáticas dos pedidos de clientes. O stock fica reservado até o economato conferir os produtos e confirmar o código. O cancelamento antes do levantamento liberta a reserva.</p>
-   <form className="grid gap-3 rounded-xl border bg-muted/30 p-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={e => {
+   <ActionForm className="grid gap-3 rounded-xl border bg-muted/30 p-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={e => {
      e.preventDefault();
      if (draftFilters.startDate && draftFilters.endDate && draftFilters.startDate > draftFilters.endDate) { toast.error('A data inicial deve ser anterior ou igual à final.'); return; }
      setPage(1); setFilters({ ...draftFilters });
@@ -112,7 +114,7 @@ export function StockFulfillments() {
      <div className="space-y-1"><Label htmlFor="pickup-start">Desde (Luanda)</Label><Input id="pickup-start" type="date" value={draftFilters.startDate} onChange={e => setDraftFilters({ ...draftFilters, startDate: e.target.value })} /></div>
      <div className="space-y-1"><Label htmlFor="pickup-end">Até, inclusive (Luanda)</Label><Input id="pickup-end" type="date" value={draftFilters.endDate} onChange={e => setDraftFilters({ ...draftFilters, endDate: e.target.value })} /></div>
      <div className="flex items-end gap-2"><Button type="submit">Aplicar filtros</Button><Button type="button" variant="outline" onClick={() => { const defaults = todayFilters(); setDraftFilters(defaults); setFilters(defaults); setPage(1); }}>Repor hoje</Button></div>
-   </form>
+   </ActionForm>
    <p className="text-sm text-muted-foreground">{total} levantamento(s) nos filtros aplicados. Datas na hora de Luanda. A exportação inclui todas as páginas filtradas, uma linha por produto, sem códigos de confirmação.</p>
    {error ? <p role="alert">Não foi possível carregar. Tente atualizar ou rever os filtros.</p> : !items.length && !loading ? <p>Sem levantamentos encontrados.</p> : items.map(p => <article key={p.id} className="rounded-xl border p-5 space-y-3">
      <div className="flex flex-wrap justify-between gap-2"><h3 className="font-semibold">{location(p)} · Pedido {p.orderId.slice(0, 8)}</h3><span className={p.status === 'pendente' ? 'text-amber-600' : 'text-muted-foreground'}>{p.status === 'pendente' ? 'Reservado — aguarda levantamento' : p.status === 'entregue' ? 'Entregue pelo economato' : 'Cancelado — reserva libertada'}</span></div>
@@ -132,11 +134,11 @@ export function StockFulfillments() {
    <Dialog open={!!selected} onOpenChange={open => { if (!open && !saving) setSelected(null); }}><DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
      <DialogHeader><DialogTitle>Conferir entrega do economato</DialogTitle><DialogDescription>{selected && location(selected)} · Pedido {selected?.orderId.slice(0, 8)}. Entregue os produtos a {selected?.requestedByName} e peça o código.</DialogDescription></DialogHeader>
      <ul>{selected?.lines.filter(l => l.quantity > 0).map(l => <li className="flex justify-between gap-3 py-2" key={l.id}><span>{l.productName}</span><strong>{l.quantity} {l.unit}</strong></li>)}</ul>
-     <form className="space-y-4" onSubmit={e => { e.preventDefault(); void confirm(); }}>
+     <ActionForm className="space-y-4" onSubmit={e => { e.preventDefault(); return confirm(); }}>
        <Label htmlFor="stock-pickup-code">Código apresentado pelo funcionário</Label><Input autoFocus id="stock-pickup-code" type="text" inputMode="numeric" autoComplete="one-time-code" placeholder="Seis dígitos" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required pattern="[0-9]{6}" maxLength={6} readOnly={saving} className="h-14 text-center font-mono text-xl tracking-widest" />
        <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} disabled={saving} />Conferi os produtos e as quantidades e estou a entregá-los ao funcionário indicado.</label>
        <DialogFooter><Button type="button" variant="outline" disabled={saving} onClick={() => setSelected(null)}>Cancelar</Button><Button type="submit" disabled={saving || !checked || !/^\d{6}$/.test(code)}>{saving ? 'A confirmar…' : 'Confirmar entrega'}</Button></DialogFooter>
-     </form>
+     </ActionForm>
    </DialogContent></Dialog>
  </section>;
 }

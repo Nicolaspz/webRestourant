@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { ProductImage } from '@/components/ProductImage';
 // components/menu/ProductCard.tsx
 import { motion } from 'framer-motion';
@@ -109,9 +111,9 @@ export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductC
             <span className="text-lg font-extrabold text-slate-950">
               {(product.PrecoVenda[0]?.preco_venda || 0).toLocaleString('pt-AO')} Kz
             </span>
-            <button disabled={unavailable} aria-label={`Adicionar ${product.name}`} className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-sm transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
+            <ActionButton disabled={unavailable} aria-label={`Adicionar ${product.name}`} className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-sm transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
               <Plus className="h-5 w-5" strokeWidth={2.5} />
-            </button>
+            </ActionButton>
           </div>
         </div>
       </div>

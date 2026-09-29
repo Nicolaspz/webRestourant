@@ -1,4 +1,6 @@
+'use client';
 import * as React from "react"
+import {ActionSpinner,useButtonFeedback} from './action-feedback'
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -41,19 +43,28 @@ function Button({
   variant,
   size,
   asChild = false,
+  loading = false,
+  loadingText = 'A processar…',
+  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    loading?: boolean
+    loadingText?: string
   }) {
   const Comp = asChild ? Slot : "button"
+  const feedback=useButtonFeedback({...props,loading});
 
   return (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
-    />
+      disabled={feedback.disabled}
+      aria-busy={feedback.pending||undefined}
+      onClick={feedback.onClick}
+    >{asChild?children:feedback.pending?<><ActionSpinner/><span className={size?.startsWith('icon')?'sr-only':undefined}>{loadingText}</span></>:children}</Comp>
   )
 }
 

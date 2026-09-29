@@ -199,7 +199,7 @@ export function CaixaControl() {
                     <DropdownMenuSeparator />
 
                     {loading ? <div role="status" className="p-3 text-sm">A consultar o estado do caixa…</div> : statusError ? (
-                        <div className="p-3 space-y-3 text-sm"><p>Não foi possível consultar o caixa. Tente novamente.</p><Button variant="outline" onClick={() => { setLoading(true); void loadCaixaStatus(); }}>Tentar novamente</Button></div>
+                        <div className="p-3 space-y-3 text-sm"><p>Não foi possível consultar o caixa. Tente novamente.</p><Button variant="outline" onClick={() => { setLoading(true); return loadCaixaStatus(); }}>Tentar novamente</Button></div>
                     ) : otherUserHasCaixaOpen && !isMyCaixaOpen ? (
                         // Mostrar mensagem de caixa ocupado por outro usuário
                         <>

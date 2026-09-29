@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 import { downloadPurchaseDocument } from '@/utils/downloadPurchaseDocument';
 
 import { useState, useContext, useEffect } from "react";
@@ -190,7 +192,7 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <ActionForm onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-gray-900 dark:text-white">Nome da Compra *</Label>
             <Input
@@ -266,7 +268,7 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
                           className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40"
                         >
                           <a
-                            href="#" onClick={event => { event.preventDefault(); void downloadPurchaseDocument(purchase.id, img); }}
+                            href="#" onClick={event => { event.preventDefault(); return downloadPurchaseDocument(purchase.id, img); }}
                             
                             rel="noopener noreferrer"
                           >
@@ -326,7 +328,7 @@ export function CreatePurchaseModal({ isOpen, onClose, onSuccess, purchase }: Cr
               {isSubmitting ? "Salvando..." : purchase ? "Salvar Alterações" : "Salvar Rascunho"}
             </Button>
           </div>
-        </form>
+        </ActionForm>
       </div>
     </div>
   );

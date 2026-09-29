@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 // components/menu/AddToCartModal.tsx
 import { motion, AnimatePresence } from 'framer-motion';
 import { Minus, Plus } from 'lucide-react';
@@ -55,19 +57,19 @@ export function AddToCartModal({
           </div>
 
           <div className="flex items-center justify-between mb-6 p-4 rounded-lg bg-blue-50">
-            <button
+            <ActionButton
               onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
               className="p-2 rounded-full border border-gray-300 hover:bg-white transition-colors"
             >
               <Minus className="w-4 h-4 text-blue-600" />
-            </button>
+            </ActionButton>
             <span className="text-2xl font-bold text-gray-900">{quantity}</span>
-            <button
+            <ActionButton
               onClick={() => onQuantityChange(quantity + 1)}
               className="p-2 rounded-full border border-gray-300 hover:bg-white transition-colors"
             >
               <Plus className="w-4 h-4 text-blue-600" />
-            </button>
+            </ActionButton>
           </div>
 
           <div className="flex gap-3">

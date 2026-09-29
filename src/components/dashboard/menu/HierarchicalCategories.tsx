@@ -1,4 +1,6 @@
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 import {useEffect,useState} from 'react';
 import {useParams} from 'next/navigation';
 import {setupAPIClient} from '@/services/api';
@@ -28,12 +30,12 @@ export function HierarchicalCategories({categories,activeCategory,onSelect,dark=
     {root && categories.includes(root.name) && <option value={root.name}>Produtos de {root.name}</option>}
     {subcategories.map(c=><option key={c.id} value={c.name}>{c.name.replace(`${root?.name} / `,'')}</option>)}
    </select>}
-   {error && <button type="button" onClick={load} className="text-xs text-slate-600 underline">Recarregar categorias</button>}
+   {error && <ActionButton type="button" onClick={load} className="text-xs text-slate-600 underline">Recarregar categorias</ActionButton>}
   </nav>;
  }
- if(error)return <button onClick={load} className={style(false)}>Tentar carregar categorias novamente</button>;
- if(!ready)return <nav aria-label="Categorias do cardápio" className="w-full overflow-x-auto py-3"><div className="flex gap-2"><button className={style(!activeCategory)} onClick={()=>onSelect('')}>Todas as categorias</button>{categories.map(name=><button key={name} className={style(activeCategory===name)} onClick={()=>onSelect(name)}>{name}</button>)}</div></nav>;
- return <nav aria-label="Categorias do cardápio" className="w-full space-y-2 py-3"><div className={`flex gap-2 overflow-x-auto ${dark?'md:flex-col':''}`}>{extras.map(name=><button key={name} className={style(!parentId&&activeCategory===name)} onClick={()=>{setParentId(null);onSelect(name);}}>{name}</button>)}{roots.map(root=><button key={root.id} className={style(parentId===root.id||(!parentId&&activeCategory===root.name))} aria-expanded={parentId===root.id} onClick={()=>{const availableChildren=catalog.filter(c=>c.parentId===root.id&&categories.includes(c.name));setParentId(availableChildren.length?root.id:null);onSelect(categories.includes(root.name)?root.name:availableChildren[0]?.name||root.name);}}>{root.name}</button>)}</div>
- {parent&&children.length>0&&<div className={`border-l-2 border-amber-500 pl-3 ${dark?'text-gray-300':'text-slate-600'}`}><p className="mb-2 text-xs font-semibold">Subcategorias de {parent.name}</p><div className={`flex gap-2 overflow-x-auto ${dark?'md:flex-col':''}`}>{categories.includes(parent.name)&&<button className={style(activeCategory===parent.name)} onClick={()=>onSelect(parent.name)}>Produtos de {parent.name}</button>}{children.map(child=><button key={child.id} className={style(activeCategory===child.name)} onClick={()=>onSelect(child.name)}>{child.name.startsWith(parent.name + ' / ') ? child.name.slice(parent.name.length + 3) : child.name}</button>)}</div></div>}
+ if(error)return <ActionButton onClick={load} className={style(false)}>Tentar carregar categorias novamente</ActionButton>;
+ if(!ready)return <nav aria-label="Categorias do cardápio" className="w-full overflow-x-auto py-3"><div className="flex gap-2"><ActionButton className={style(!activeCategory)} onClick={()=>onSelect('')}>Todas as categorias</ActionButton>{categories.map(name=><ActionButton key={name} className={style(activeCategory===name)} onClick={()=>onSelect(name)}>{name}</ActionButton>)}</div></nav>;
+ return <nav aria-label="Categorias do cardápio" className="w-full space-y-2 py-3"><div className={`flex gap-2 overflow-x-auto ${dark?'md:flex-col':''}`}>{extras.map(name=><ActionButton key={name} className={style(!parentId&&activeCategory===name)} onClick={()=>{setParentId(null);onSelect(name);}}>{name}</ActionButton>)}{roots.map(root=><ActionButton key={root.id} className={style(parentId===root.id||(!parentId&&activeCategory===root.name))} aria-expanded={parentId===root.id} onClick={()=>{const availableChildren=catalog.filter(c=>c.parentId===root.id&&categories.includes(c.name));setParentId(availableChildren.length?root.id:null);onSelect(categories.includes(root.name)?root.name:availableChildren[0]?.name||root.name);}}>{root.name}</ActionButton>)}</div>
+ {parent&&children.length>0&&<div className={`border-l-2 border-amber-500 pl-3 ${dark?'text-gray-300':'text-slate-600'}`}><p className="mb-2 text-xs font-semibold">Subcategorias de {parent.name}</p><div className={`flex gap-2 overflow-x-auto ${dark?'md:flex-col':''}`}>{categories.includes(parent.name)&&<ActionButton className={style(activeCategory===parent.name)} onClick={()=>onSelect(parent.name)}>Produtos de {parent.name}</ActionButton>}{children.map(child=><ActionButton key={child.id} className={style(activeCategory===child.name)} onClick={()=>onSelect(child.name)}>{child.name.startsWith(parent.name + ' / ') ? child.name.slice(parent.name.length + 3) : child.name}</ActionButton>)}</div></div>}
  </nav>;
 }

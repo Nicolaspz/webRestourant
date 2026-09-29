@@ -1,4 +1,6 @@
 'use client'
+import {ActionForm} from '@/components/ui/action-feedback';
+
 
 import { useForm } from 'react-hook-form'
 import { 
@@ -44,7 +46,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <ActionForm onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="type"
@@ -97,7 +99,7 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
             Confirm
           </Button>
         </div>
-      </form>
+      </ActionForm>
     </Form>
   )
 }

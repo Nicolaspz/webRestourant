@@ -1,5 +1,7 @@
 // components/products/PriceUpdateModal.tsx
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,7 +121,7 @@ export function PriceUpdateModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <ActionForm onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="productName" className="text-gray-900 dark:text-white">
               Produto
@@ -208,7 +210,7 @@ export function PriceUpdateModal({
               Atualizar Preço
             </Button>
           </div>
-        </form>
+        </ActionForm>
       </div>
     </div>
   );

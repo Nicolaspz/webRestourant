@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { ProductImage } from '@/components/ProductImage';
 import { motion } from "framer-motion";
 import { Plus, Star, Utensils, TrendingUp } from "lucide-react";
@@ -54,7 +56,7 @@ export function KioskProductCard({ product, onSelect, onAdd }: KioskProductCardP
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
+                    <ActionButton
                         className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-orange-500 px-3 py-3 text-xs font-black uppercase tracking-wide text-black transition-all hover:bg-orange-400 hover:shadow-lg hover:shadow-orange-500/20"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -63,7 +65,7 @@ export function KioskProductCard({ product, onSelect, onAdd }: KioskProductCardP
                     >
                         <Plus size={16} strokeWidth={3} />
                         Adicionar
-                    </button>
+                    </ActionButton>
                 </div>
             </div>
         </motion.div>

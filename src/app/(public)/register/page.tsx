@@ -1,4 +1,6 @@
 "use client";
+import {ActionForm,ActionButton} from '@/components/ui/action-feedback';
+
 
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
@@ -136,7 +138,7 @@ export default function RegisterOrganizationPage() {
                 Preencha os dados principais. Os detalhes da empresa podem ser actualizados depois no dashboard.
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <ActionForm onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field label="Nome completo *" id="adminName">
                     <Input
@@ -216,14 +218,14 @@ export default function RegisterOrganizationPage() {
                         required
                         className="h-12 bg-white pr-12 text-gray-900"
                       />
-                      <button
+                      <ActionButton
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                         aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
+                      </ActionButton>
                     </div>
                   </Field>
 
@@ -253,7 +255,7 @@ export default function RegisterOrganizationPage() {
                   <p className="text-sm text-red-500">As senhas nao coincidem.</p>
                 )}
 
-                <button
+                <ActionButton
                   type="submit"
                   disabled={loading || !passwordIsValid}
                   className="w-full h-12 bg-[#2459a6] text-white font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer hover:bg-[#1d4887] transition-all duration-300 shadow-md shadow-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -269,8 +271,8 @@ export default function RegisterOrganizationPage() {
                       Criar conta e enviar codigo
                     </>
                   )}
-                </button>
-              </form>
+                </ActionButton>
+              </ActionForm>
 
               <p className="text-center text-sm text-gray-500 mt-6">
                 Ja tem conta?{" "}

@@ -1,3 +1,5 @@
+
+import {ActionForm} from '@/components/ui/action-feedback';
 // components/add-payment-method-modal.tsx
 import { useState, useEffect } from 'react';
 import {
@@ -69,7 +71,7 @@ export function AddPaymentMethodModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    return onSubmit(formData);
   };
 
   const handleChange = (field: keyof PaymentMethodData, value: string) => {
@@ -96,7 +98,7 @@ export function AddPaymentMethodModal({
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <ActionForm onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">RSA Key</label>
@@ -208,7 +210,7 @@ export function AddPaymentMethodModal({
               {submitButtonText}
             </Button>
           </div>
-        </form>
+        </ActionForm>
 
         
       </DialogContent>

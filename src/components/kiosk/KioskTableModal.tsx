@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { motion } from "framer-motion";
 import { Loader2, Utensils } from "lucide-react";
 
@@ -37,19 +39,19 @@ export function KioskTableModal({ isOpen, tableInput, isSubmitting, onTableInput
                 />
 
                 <div className="flex gap-3">
-                    <button
+                    <ActionButton
                         onClick={onCancel}
                         className="flex-1 py-3 font-bold text-gray-400 hover:text-white transition-colors"
                     >
                         Cancelar
-                    </button>
-                    <button
+                    </ActionButton>
+                    <ActionButton
                         onClick={onConfirm}
                         disabled={isSubmitting}
                         className="flex-[2] bg-orange-500 hover:bg-orange-400 text-black py-3 rounded-xl font-bold flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? <Loader2 className="animate-spin" /> : 'Confirmar'}
-                    </button>
+                    </ActionButton>
                 </div>
             </motion.div>
         </div>

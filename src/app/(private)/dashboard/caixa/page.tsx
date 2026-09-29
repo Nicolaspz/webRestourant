@@ -1,4 +1,6 @@
 'use client'
+import {ActionButton} from '@/components/ui/action-feedback';
+
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import CaixaHeader from '@/components/dashboard/caixa/CaixaHeader';
@@ -165,9 +167,11 @@ const Caixa = () => {
       };
 
       socket.on('orders_refresh', handleRefresh);
+      socket.on('fiscal_updated', handleRefresh);
 
       return () => {
         socket.off('orders_refresh', handleRefresh);
+        socket.off('fiscal_updated', handleRefresh);
       };
     }
   }, [socket, user, selectedDate, activeTab]);
@@ -426,8 +430,8 @@ const Caixa = () => {
         <div className="fixed bottom-4 left-1/2 z-[90] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 gap-2 overflow-x-auto rounded-2xl border bg-background/95 p-2 shadow-2xl backdrop-blur">
           {fechosAbertos.map(fecho => (
             <div key={fecho.mesaId} className={`flex min-w-max items-center rounded-xl border ${fechoAtivo === fecho.mesaNumber ? 'border-primary bg-primary/10' : 'bg-muted/40'}`}>
-              <button type="button" onClick={() => setFechoAtivo(fecho.mesaNumber)} className="flex min-h-12 items-center gap-2 px-4 font-semibold"><CreditCard className="h-4 w-4" />Mesa {fecho.mesaNumber}</button>
-              <button type="button" onClick={() => fecharJanelaConta(fecho.mesaNumber)} aria-label={`Fechar pagamento da mesa ${fecho.mesaNumber}`} className="mr-1 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><X className="h-4 w-4" /></button>
+              <ActionButton type="button" onClick={() => setFechoAtivo(fecho.mesaNumber)} className="flex min-h-12 items-center gap-2 px-4 font-semibold"><CreditCard className="h-4 w-4" />Mesa {fecho.mesaNumber}</ActionButton>
+              <ActionButton type="button" onClick={() => fecharJanelaConta(fecho.mesaNumber)} aria-label={`Fechar pagamento da mesa ${fecho.mesaNumber}`} className="mr-1 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><X className="h-4 w-4" /></ActionButton>
             </div>
           ))}
         </div>

@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -131,7 +133,7 @@ export function IngredientFormModal({
       defaultAreaId: formData.defaultAreaId
     };
     //console.log("dados",submitData)
-    onSubmit(submitData);
+    return onSubmit(submitData);
 
   };
 
@@ -192,7 +194,7 @@ export function IngredientFormModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <ActionForm onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -372,7 +374,7 @@ export function IngredientFormModal({
               {mode === 'create' ? 'Criar Ingrediente' : 'Salvar Alterações'}
             </Button>
           </div>
-        </form>
+        </ActionForm>
       </div>
     </div>
   );

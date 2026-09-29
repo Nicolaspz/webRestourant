@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,7 +114,7 @@ export function UserFormModal({
       organizationId: organizationId
     };
 
-    onSubmit(submitData);
+    return onSubmit(submitData);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -154,7 +156,7 @@ export function UserFormModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <ActionForm onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="overflow-y-auto p-6 space-y-6">
         <fieldset className="grid gap-4 sm:grid-cols-2" disabled={isSubmitting}>
           <legend className="mb-4 font-semibold">1. Dados do colaborador</legend>
@@ -314,7 +316,7 @@ export function UserFormModal({
               )}
             </Button>
           </div>
-        </form>
+        </ActionForm>
       </DialogContent>
     </Dialog>
   );

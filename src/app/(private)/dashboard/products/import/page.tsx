@@ -1,4 +1,6 @@
 "use client";
+import {ActionForm} from '@/components/ui/action-feedback';
+
 
 import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "@/contexts/AuthContext";
@@ -209,7 +211,7 @@ export default function ImportProductsPage() {
                         <CardDescription>Selecione a planilha com os dados e as imagens em lote.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <ActionForm onSubmit={handleSubmit} className="space-y-6">
 
                             {/* Configurações Padrão */}
                             <div className="space-y-4 p-4 border rounded-xl bg-slate-50/50">
@@ -308,7 +310,7 @@ export default function ImportProductsPage() {
                                     </>
                                 )}
                             </Button>
-                        </form>
+                        </ActionForm>
                     </CardContent>
                 </Card>
 

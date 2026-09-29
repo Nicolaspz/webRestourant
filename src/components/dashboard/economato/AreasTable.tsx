@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 
 import Link from 'next/link';
 import { useAccess } from '@/contexts/AccessContext';
@@ -142,7 +144,7 @@ export function AreasTable() {
                   Configure os detalhes da área de armazenamento.
                 </SheetDescription>
               </SheetHeader>
-              <form onSubmit={handleSubmit} className="space-y-4 pt-6">
+              <ActionForm onSubmit={handleSubmit} className="space-y-4 pt-6">
                 <div className="space-y-2">
                   <Label>Nome da Área</Label>
                   <Input 
@@ -165,7 +167,7 @@ export function AreasTable() {
                     {editingArea ? 'Salvar Alterações' : 'Criar Área'}
                   </Button>
                 </SheetFooter>
-              </form>
+              </ActionForm>
             </SheetContent>
           </Sheet>
 

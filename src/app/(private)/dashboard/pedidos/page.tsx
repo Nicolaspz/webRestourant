@@ -38,7 +38,7 @@ export default function OrdersPage() {
             <div className="rounded-2xl bg-primary/10 p-3 text-primary"><ChefHat className="h-7 w-7" /></div>
             <div><div className="flex items-center gap-2"><h1 className="text-2xl font-bold tracking-tight">Pedidos</h1><Badge variant="secondary">{orders.groupedOrders.length} mesas</Badge></div><p className="text-sm text-muted-foreground">Atualização imediata e sincronização em tempo real</p></div>
           </div>
-          <Button variant="outline" onClick={() => void orders.refresh()} disabled={orders.loading}><RefreshCw className={`mr-2 h-4 w-4 ${orders.loading ? 'animate-spin' : ''}`} />Atualizar</Button>
+          <Button variant="outline" onClick={() => orders.refresh()} disabled={orders.loading}><RefreshCw className={`mr-2 h-4 w-4 ${orders.loading ? 'animate-spin' : ''}`} />Atualizar</Button>
         </header>
 
         {orders.hasPendingStockPickup && <Link href="/dashboard/economato" className="block rounded-xl border-2 border-amber-500 bg-amber-100 p-4 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">

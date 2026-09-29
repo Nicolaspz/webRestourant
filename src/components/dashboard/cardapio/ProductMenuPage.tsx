@@ -1,4 +1,6 @@
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { useMemo, useState } from 'react';
 import { useMenu } from '@/components/hooks/useMenu';
@@ -46,7 +48,7 @@ export function ProductMenuPage() {
       {!selectedCategory && <FeaturedProducts products={menu.getFeaturedProductsByTab()} activeTab={menu.activeTab}
         onTabChange={menu.setActiveTab} onAddToCart={menu.addToCart} />}
       <main className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6">
-        {selectedCategory && <button className="mb-6 rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" onClick={() => setSelectedCategory(null)}>Ver todas as secções</button>}
+        {selectedCategory && <ActionButton className="mb-6 rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" onClick={() => setSelectedCategory(null)}>Ver todas as secções</ActionButton>}
         {!selectedCategory && <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4"><p className="font-semibold text-slate-900">Menu completo</p><p className="mt-1 text-sm text-slate-600">Os produtos estão organizados por secções. Escolha uma categoria acima para filtrar.</p></div>}
         {selectedCategory && !menu.groupedProducts[selectedCategory]?.length && <p className="text-slate-600">Selecione uma subcategoria acima para ver os produtos. Se não houver subcategorias, esta categoria ainda não tem produtos disponíveis.</p>}
         {Object.entries(menu.groupedProducts).filter(([category])=>!selectedCategory || category===selectedCategory).map(([category, products]) => (

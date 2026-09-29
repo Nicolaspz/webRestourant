@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 import {useAccess} from '@/contexts/AccessContext';
 import { StockRequestDialog } from './StockRequestDialog';
 
@@ -537,7 +539,7 @@ export function PedidosTable() {
               <DialogTitle>Confirmar levantamento</DialogTitle>
               <DialogDescription>Peça o código ao solicitante e confira os produtos entregues. Ao confirmar, o stock é transferido e o pedido fica recebido.</DialogDescription>
             </DialogHeader>
-            <form onSubmit={e => { e.preventDefault(); void handleConfirmReceipt(); }} className="space-y-5">
+            <ActionForm onSubmit={e => { e.preventDefault(); return handleConfirmReceipt(); }} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="pickup-code">Código de levantamento (6 dígitos)</Label>
                 <Input id="pickup-code" autoFocus type="text" inputMode="numeric" autoComplete="one-time-code"
@@ -548,7 +550,7 @@ export function PedidosTable() {
               </div>
               <DialogFooter><Button type="button" variant="outline" disabled={isSubmitting} onClick={() => setIsConfirmSheetOpen(false)}>Cancelar</Button>
                 <Button type="submit" disabled={isSubmitting || !/^\d{6}$/.test(confirmCode)}>{isSubmitting ? 'A confirmar…' : 'Confirmar entrega e recebimento'}</Button></DialogFooter>
-            </form>
+            </ActionForm>
           </DialogContent>
         </Dialog>
 

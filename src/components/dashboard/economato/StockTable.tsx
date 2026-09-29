@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 import {useAccess} from '@/contexts/AccessContext';
 import { StockRequestDialog } from './StockRequestDialog';
 
@@ -231,7 +233,7 @@ export function StockTable() {
                   <SheetTitle>Adicionar Item ao Stock</SheetTitle>
                   <SheetDescription>Selecione um produto para começar a rastrear nesta área.</SheetDescription>
                 </SheetHeader>
-                <form onSubmit={handleAddStock} className="space-y-4 pt-6">
+                <ActionForm onSubmit={handleAddStock} className="space-y-4 pt-6">
                   <div className="space-y-2">
                     <Label>Produto</Label>
                     <Select
@@ -258,7 +260,7 @@ export function StockTable() {
                   <SheetFooter>
                     <Button type="submit" disabled={isSubmitting}>Adicionar</Button>
                   </SheetFooter>
-                </form>
+                </ActionForm>
               </SheetContent>
             </Sheet>
 

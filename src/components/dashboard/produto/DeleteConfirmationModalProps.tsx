@@ -26,7 +26,7 @@ export function DeleteConfirmationModal({
   };
 
   const handleConfirm = () => {
-    onConfirm();
+    return onConfirm();
   };
 
   if (!isOpen) return null;

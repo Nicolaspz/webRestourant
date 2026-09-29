@@ -1,5 +1,7 @@
 // components/dashboard/menu/CartSidebar.tsx
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
@@ -121,12 +123,12 @@ const CartSidebar = ({
                   {tableNumber === 'TAKEAWAY' ? 'Takeaway' : `Mesa ${tableNumber}`}
                 </p>
               </div>
-              <button
+              <ActionButton
                 onClick={onClose}
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors"
               >
                 <X className="w-5 h-5" style={{ color: customColors.textSecondary }} />
-              </button>
+              </ActionButton>
             </div>
 
             {/* Itens */}
@@ -135,7 +137,7 @@ const CartSidebar = ({
                 <div className="text-center py-12">
                   <ShoppingCart className="w-16 h-16 mx-auto mb-4" style={{ color: customColors.borderLight }} />
                   <p className="text-lg mb-4" style={{ color: customColors.textSecondary }}>Seu carrinho está vazio</p>
-                  <button 
+                  <ActionButton 
                     className="px-6 py-2 rounded-lg border transition-colors font-medium"
                     style={{ 
                       borderColor: customColors.primary,
@@ -145,7 +147,7 @@ const CartSidebar = ({
                     onClick={onClose}
                   >
                     Continuar Comprando
-                  </button>
+                  </ActionButton>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -164,23 +166,23 @@ const CartSidebar = ({
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
+                        <ActionButton
                           onClick={() => onUpdateItem(item.product.id, item.quantity - 1)}
                           className="p-1 rounded border transition-colors hover:bg-white"
                           style={{ borderColor: customColors.borderLight }}
                         >
                           <Minus className="w-3 h-3" style={{ color: customColors.primary }} />
-                        </button>
+                        </ActionButton>
                         <span className="w-8 text-center font-medium" style={{ color: customColors.textPrimary }}>
                           {item.quantity}
                         </span>
-                        <button
+                        <ActionButton
                           onClick={() => onUpdateItem(item.product.id, item.quantity + 1)}
                           className="p-1 rounded border transition-colors hover:bg-white"
                           style={{ borderColor: customColors.borderLight }}
                         >
                           <Plus className="w-3 h-3" style={{ color: customColors.primary }} />
-                        </button>
+                        </ActionButton>
                       </div>
                     </div>
                   ))}
@@ -195,7 +197,7 @@ const CartSidebar = ({
                   <span style={{ color: customColors.textPrimary }}>Total:</span>
                   <span style={{ color: customColors.primary }}>{total.toFixed(2)} Kz</span>
                 </div>
-                <button
+                <ActionButton
                   onClick={submitOrder}
                   disabled={isSubmitting}
                   className="w-full py-3 rounded-lg text-white font-semibold text-lg transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
@@ -209,7 +211,7 @@ const CartSidebar = ({
                   ) : (
                     'Finalizar Pedido'
                   )}
-                </button>
+                </ActionButton>
               </div>
             )}
           </div>

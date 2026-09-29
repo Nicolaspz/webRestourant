@@ -1,5 +1,7 @@
 // components/dashboard/menu/ProductGrid.tsx
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { ProductImage } from '@/components/ProductImage';
 import { motion } from 'framer-motion';
@@ -73,12 +75,12 @@ const ProductGrid = ({ products, onProductClick }: ProductGridProps) => {
                 <span className="font-bold text-lg" style={{ color: customColors.primary }}>
                   {(product.PrecoVenda[0]?.preco_venda || 0).toFixed(2)} Kz
                 </span>
-                <button 
+                <ActionButton 
                   className="p-2 rounded-full border transition-colors hover:bg-blue-50"
                   style={{ borderColor: customColors.borderLight }}
                 >
                   <Plus className="w-4 h-4" style={{ color: customColors.primary }} />
-                </button>
+                </ActionButton>
               </div>
             </div>
           </div>

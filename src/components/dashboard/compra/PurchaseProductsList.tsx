@@ -171,7 +171,7 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status, refreshVers
             {purchase.images.map((img) => (
               <a
                 key={img.id}
-                href="#" onClick={event => { event.preventDefault(); void downloadPurchaseDocument(purchaseId, img); }}
+                href="#" onClick={event => { event.preventDefault(); return downloadPurchaseDocument(purchaseId, img); }}
                 
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-md text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors"

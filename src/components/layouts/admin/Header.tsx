@@ -1,4 +1,6 @@
 "use client"
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { Button } from "@/components/ui/button"
 import {
@@ -57,12 +59,12 @@ export default function Header({ toggleSidebar, toggleDesktopSidebar, sidebarCol
     <header className="admin-header">
       {/* Esquerda: Menu e Título */}
       <div className="flex items-center gap-3 min-w-0">
-        <button type="button" onClick={toggleDesktopSidebar} className={`hidden lg:inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${sidebarCollapsed ? 'border-[var(--sidebar-border)] bg-muted text-foreground' : 'border-transparent hover:bg-muted'}`} aria-controls="desktop-sidebar" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Abrir menu principal' : 'Recolher menu principal'} title={sidebarCollapsed ? 'Abrir menu' : 'Recolher menu'}>
+        <ActionButton type="button" onClick={toggleDesktopSidebar} className={`hidden lg:inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${sidebarCollapsed ? 'border-[var(--sidebar-border)] bg-muted text-foreground' : 'border-transparent hover:bg-muted'}`} aria-controls="desktop-sidebar" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Abrir menu principal' : 'Recolher menu principal'} title={sidebarCollapsed ? 'Abrir menu' : 'Recolher menu'}>
           {sidebarCollapsed ? <PanelLeftOpen className="h-6 w-6" aria-hidden="true" /> : <PanelLeftClose className="h-6 w-6" aria-hidden="true" />}
-        </button>
-        <button type="button" onClick={toggleSidebar} className="lg:hidden rounded-md p-2 hover:bg-muted" aria-label="Abrir menu principal">
+        </ActionButton>
+        <ActionButton type="button" onClick={toggleSidebar} className="lg:hidden rounded-md p-2 hover:bg-muted" aria-label="Abrir menu principal">
           <Menu className="w-6 h-6 text-foreground cursor-pointer" />
-        </button>
+        </ActionButton>
         <div>
           <h1 className="text-sm sm:text-base font-semibold tracking-tight">{currentPage.title}</h1>
           <p className="hidden text-sm text-[var(--muted-foreground)] sm:block">{currentPage.subtitle}</p>

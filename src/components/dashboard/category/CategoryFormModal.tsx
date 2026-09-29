@@ -1,4 +1,6 @@
 "use client";
+import {ActionButton,ActionForm} from '@/components/ui/action-feedback';
+
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -121,15 +123,15 @@ export function CategoryFormModal({
                             Organize o cardapio e o stock com categorias e subcategorias.
                         </p>
                     </div>
-                    <button
+                    <ActionButton
                         onClick={onClose}
                         className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors p-1"
                     >
                         <X className="w-5 h-5" />
-                    </button>
+                    </ActionButton>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <ActionForm onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="category-name" className="text-gray-700 dark:text-gray-300">
                             Nome
@@ -192,7 +194,7 @@ export function CategoryFormModal({
                             )}
                         </Button>
                     </div>
-                </form>
+                </ActionForm>
             </div>
         </div>
     );

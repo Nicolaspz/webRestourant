@@ -1,3 +1,5 @@
+
+import {ActionForm,ActionButton} from '@/components/ui/action-feedback';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone, User, ArrowRight, UtensilsCrossed } from "lucide-react";
@@ -50,7 +52,7 @@ export function KioskWelcomeModal({ isOpen, onConfirm }: KioskWelcomeModalProps)
                             </p>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <ActionForm onSubmit={handleSubmit} className="space-y-4">
                             <div className="relative group">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-orange-500 transition-colors" size={20} />
                                 <input
@@ -73,15 +75,15 @@ export function KioskWelcomeModal({ isOpen, onConfirm }: KioskWelcomeModalProps)
                                 />
                             </div>
 
-                            <button
+                            <ActionButton
                                 type="submit"
                                 disabled={Boolean(phone) && phone.replace(/\D/g, '').length < 9}
                                 className="w-full bg-orange-500 hover:bg-orange-400 disabled:bg-gray-800 disabled:text-gray-600 font-black text-black py-5 rounded-2xl text-lg flex items-center justify-center gap-3 shadow-2xl shadow-orange-500/20 transition-all active:scale-[0.98]"
                             >
                                 VER CARDÁPIO
                                 <ArrowRight size={24} strokeWidth={3} />
-                            </button>
-                        </form>
+                            </ActionButton>
+                        </ActionForm>
 
                         <p className="text-center mt-8 text-[10px] text-gray-600 uppercase tracking-widest font-bold">
                             Pode continuar sem preencher os dados

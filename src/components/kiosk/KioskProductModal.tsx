@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { motion } from "framer-motion";
 import { ShoppingCart, X } from "lucide-react";
 import { API_BASE_URL, getMediaUrl } from "../../../config";
@@ -33,12 +35,12 @@ export function KioskProductModal({ product, onClose, onAddToCart }: KioskProduc
                             alt={product.name}
                         />
                     )}
-                    <button
+                    <ActionButton
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/80 backdrop-blur-md rounded-full text-white transition-colors"
                     >
                         <X size={24} />
-                    </button>
+                    </ActionButton>
                 </div>
                 <div className="p-8">
                     <div className="flex justify-between items-start mb-4">
@@ -52,13 +54,13 @@ export function KioskProductModal({ product, onClose, onAddToCart }: KioskProduc
                     </p>
 
                     <div className="flex gap-4">
-                        <button
+                        <ActionButton
                             onClick={() => onAddToCart(product)}
                             className="flex-1 py-4 bg-orange-500 hover:bg-orange-400 text-black font-black text-xl rounded-xl transition-colors flex items-center justify-center gap-3"
                         >
                             <ShoppingCart className="fill-current" />
                             ADICIONAR AO PEDIDO
-                        </button>
+                        </ActionButton>
                     </div>
                 </div>
             </motion.div>

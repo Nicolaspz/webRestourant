@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { motion } from "framer-motion";
 import { ArrowRight, Minus, Plus, ShoppingCart, X } from "lucide-react";
 import { API_BASE_URL, getMediaUrl } from "../../../config";
@@ -37,9 +39,9 @@ export function KioskCartDrawer({ isOpen, cart, total, onClose, onUpdateQuantity
                     <h2 className="text-2xl font-bold flex items-center gap-2" style={{ color: theme.text }}>
                         <ShoppingCart className="text-orange-500" /> Seu Pedido
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white">
+                    <ActionButton onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white">
                         <X />
-                    </button>
+                    </ActionButton>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -47,12 +49,12 @@ export function KioskCartDrawer({ isOpen, cart, total, onClose, onUpdateQuantity
                         <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4">
                             <ShoppingCart size={64} className="opacity-20" />
                             <p>Seu carrinho está vazio.</p>
-                            <button
+                            <ActionButton
                                 onClick={onClose}
                                 className="text-orange-500 font-bold hover:underline"
                             >
                                 Explorar Cardápio
-                            </button>
+                            </ActionButton>
                         </div>
                     ) : (
                         cart.map(item => (
@@ -71,19 +73,19 @@ export function KioskCartDrawer({ isOpen, cart, total, onClose, onUpdateQuantity
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3 bg-[#333] self-start rounded-lg p-1 text-white">
-                                        <button
+                                        <ActionButton
                                             onClick={() => onUpdateQuantity(item.product.id, -1)}
                                             className="p-1 hover:bg-white/10 rounded"
                                         >
                                             <Minus size={16} />
-                                        </button>
+                                        </ActionButton>
                                         <span className="text-sm font-bold min-w-[20px] text-center">{item.quantity}</span>
-                                        <button
+                                        <ActionButton
                                             onClick={() => onUpdateQuantity(item.product.id, 1)}
                                             className="p-1 hover:bg-white/10 rounded"
                                         >
                                             <Plus size={16} />
-                                        </button>
+                                        </ActionButton>
                                     </div>
                                 </div>
                             </div>
@@ -99,14 +101,14 @@ export function KioskCartDrawer({ isOpen, cart, total, onClose, onUpdateQuantity
                         </span>
                     </div>
 
-                    <button
+                    <ActionButton
                         onClick={onCheckout}
                         disabled={cart.length === 0}
                         className="w-full py-4 rounded-xl font-bold text-black text-lg flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{ backgroundColor: theme.primary }}
                     >
                         Finalizar Pedido <ArrowRight strokeWidth={3} />
-                    </button>
+                    </ActionButton>
                 </div>
             </motion.div>
         </>

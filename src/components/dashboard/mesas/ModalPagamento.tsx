@@ -1,4 +1,6 @@
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { GpayReferencePanel } from './GpayReferencePanel';
 import {BillingNoticeCheckout} from '@/components/BillingNoticeCheckout';
@@ -201,17 +203,17 @@ export default function ModalPagamento({
                             {step === 1 ? <>🧾 Conta — Mesa {mesaNumber}</> : <>💳 Pagamento — Mesa {mesaNumber}</>}
                         </h2>
                         {step === 2 && (
-                            <button
+                            <ActionButton
                                 onClick={form.toggleSplit}
                                 className="text-xs font-semibold text-primary hover:underline text-left mt-1"
                             >
                                 {isSplit ? '🔄 Pagamento Único' : '➕ Dividir Conta'}
-                            </button>
+                            </ActionButton>
                         )}
                     </div>
                     <div className="flex items-center gap-1">
-                        {onMinimize && <button type="button" onClick={onMinimize} title="Pausar este fecho" className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"><Minus size={20} /></button>}
-                        <button type="button" onClick={onClose} title="Cancelar este fecho" className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"><X size={20} /></button>
+                        {onMinimize && <ActionButton type="button" onClick={onMinimize} title="Pausar este fecho" className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"><Minus size={20} /></ActionButton>}
+                        <ActionButton type="button" onClick={onClose} title="Cancelar este fecho" className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"><X size={20} /></ActionButton>
                     </div>
                 </div>
 
@@ -302,12 +304,12 @@ export default function ModalPagamento({
                                                     </span>
                                                     <div className="flex items-center gap-4">
                                                         <span className="font-black text-foreground">{p.valor.toLocaleString()} Kz</span>
-                                                        <button
+                                                        <ActionButton
                                                             onClick={() => removerPagamento(i)}
                                                             className="text-muted-foreground hover:text-destructive p-1.5 hover:bg-destructive/10 rounded-full transition-all"
                                                         >
                                                             <X size={14} />
-                                                        </button>
+                                                        </ActionButton>
                                                     </div>
                                                 </div>
                                             ))}
@@ -318,14 +320,14 @@ export default function ModalPagamento({
                                         <div className="p-4 border rounded-2xl bg-primary/5 border-primary/20 space-y-4 shadow-inner">
                                             <div className="grid grid-cols-4 gap-2">
                                                 {METODOS.map(m => (
-                                                    <button
+                                                    <ActionButton
                                                         key={m.value}
                                                         onClick={() => setMetodo(m.value)}
                                                         className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${metodo === m.value ? 'bg-primary text-primary-foreground border-primary shadow-lg scale-105' : 'bg-background hover:border-primary/40 border-border/50'}`}
                                                     >
                                                         {m.icon}
                                                         <span className="text-[10px] font-bold uppercase tracking-tighter">{m.label}</span>
-                                                    </button>
+                                                    </ActionButton>
                                                 ))}
                                             </div>
                                             <div className="flex gap-2">
@@ -348,7 +350,7 @@ export default function ModalPagamento({
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
                                         {METODOS.map(m => (
-                                            <button
+                                            <ActionButton
                                                 key={m.value}
                                                 onClick={() => { setMetodo(m.value); setTrocoPara(''); }}
                                                 className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-sm font-bold ${metodo === m.value ? 'border-primary bg-primary/10 text-primary shadow-md scale-[1.02]' : 'border-border/50 hover:border-primary/40 hover:bg-muted/50'}`}
@@ -358,7 +360,7 @@ export default function ModalPagamento({
                                                 </div>
                                                 {m.label}
                                                 {metodo === m.value && <div className="ml-auto bg-primary rounded-full p-1"><CheckCircle2 className="h-3 w-3 text-white" /></div>}
-                                            </button>
+                                            </ActionButton>
                                         ))}
                                     </div>
 
@@ -417,7 +419,7 @@ export default function ModalPagamento({
                                 <div className="space-y-2">
                                     <Label className="text-sm font-bold block mb-1">Tipo de Cliente (Fatura)</Label>
                                     <div className="grid grid-cols-3 gap-2">
-                                        <button
+                                        <ActionButton
                                             type="button"
                                             onClick={() => {
                                                 setTipoCliente('final');
@@ -428,8 +430,8 @@ export default function ModalPagamento({
                                         >
                                             <User className="h-4 w-4" />
                                             <span>Cons. Final</span>
-                                        </button>
-                                        <button
+                                        </ActionButton>
+                                        <ActionButton
                                             type="button"
                                             onClick={() => {
                                                 setTipoCliente('singular');
@@ -438,8 +440,8 @@ export default function ModalPagamento({
                                         >
                                             <User className="h-4 w-4" />
                                             <span>Particular</span>
-                                        </button>
-                                        <button
+                                        </ActionButton>
+                                        <ActionButton
                                             type="button"
                                             onClick={() => {
                                                 setTipoCliente('empresa');
@@ -448,7 +450,7 @@ export default function ModalPagamento({
                                         >
                                             <Building2 className="h-4 w-4" />
                                             <span>Empresa</span>
-                                        </button>
+                                        </ActionButton>
                                     </div>
                                 </div>
 

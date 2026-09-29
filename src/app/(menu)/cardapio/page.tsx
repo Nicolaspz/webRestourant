@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 
 import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
@@ -78,7 +80,7 @@ export default function TableSelection() {
           </CardHeader>
           
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <ActionForm onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="tableNumber" className="text-sm font-medium text-gray-700">
                   Número da Mesa
@@ -110,7 +112,7 @@ export default function TableSelection() {
                   'Acessar Cardápio'
                 )}
               </Button>
-            </form>
+            </ActionForm>
           </CardContent>
         </Card>
       </motion.div>

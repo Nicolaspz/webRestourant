@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { Badge } from "@/components/ui/badge";
 import { Utensils, Star, TrendingUp } from "lucide-react";
 import { Product } from "../hooks/useKioskMenu";
@@ -72,9 +74,9 @@ export function KioskHighlights({ products, onSelect }: KioskHighlightsProps) {
                         <span className="text-3xl font-black text-orange-500">
                              {(topFeatured.PrecoVenda[0]?.preco_venda || 0).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                         </span>
-                        <button className="bg-orange-500 text-black px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-white transition-colors shadow-lg shadow-orange-500/20">
+                        <ActionButton className="bg-orange-500 text-black px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-white transition-colors shadow-lg shadow-orange-500/20">
                             Ver Detalhes
-                        </button>
+                        </ActionButton>
                     </div>
                 </div>
 

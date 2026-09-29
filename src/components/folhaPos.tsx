@@ -1,5 +1,7 @@
 // components/dashboard/mesas/SimplePosReceipt.tsx
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
@@ -170,7 +172,7 @@ export default function PosReceipt({ isOpen, onClose, data, onConfirmPayment }: 
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
               {['dinheiro', 'multicaixa', 'cartao', 'transferencia'].map((method) => (
-                <button
+                <ActionButton
                   key={method}
                   onClick={() => setSelectedPayment(method)}
                   className={`p-3 rounded border ${
@@ -180,7 +182,7 @@ export default function PosReceipt({ isOpen, onClose, data, onConfirmPayment }: 
                   }`}
                 >
                   <span className="capitalize font-medium">{method}</span>
-                </button>
+                </ActionButton>
               ))}
             </div>
 

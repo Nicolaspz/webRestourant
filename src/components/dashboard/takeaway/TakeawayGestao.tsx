@@ -1,4 +1,6 @@
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { setupAPIClient } from '@/services/api';
@@ -105,13 +107,13 @@ function PedidoCard({
             <CardContent className="p-4 pt-2 space-y-3">
                 {/* Itens */}
                 <div>
-                    <button
+                    <ActionButton
                         onClick={() => setExpanded(!expanded)}
                         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                         {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         {expanded ? 'Ocultar itens' : 'Ver itens'}
-                    </button>
+                    </ActionButton>
 
                     {expanded && (
                         <div className="mt-2 space-y-1.5 bg-muted/40 rounded-lg p-3">

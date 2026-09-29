@@ -1,4 +1,6 @@
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { ProductImage } from '@/components/ProductImage';
 import { useState, useEffect, useRef } from 'react';
@@ -163,7 +165,7 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
               </div>
             </div>
             
-            <button
+            <ActionButton
               onClick={shareMenu}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all hover:shadow-md"
               style={{ 
@@ -174,7 +176,7 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
             >
               <Share2 className="w-5 h-5" />
               <span>Compartilhar</span>
-            </button>
+            </ActionButton>
           </div>
 
           {/* Informações de contato */}
@@ -205,7 +207,7 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
           <div className="w-full">
             <div className="flex flex-wrap gap-2 py-3">
               {Object.keys(groupedProducts).map(category => (
-                <button
+                <ActionButton
                   key={category}
                   onClick={() => scrollToCategory(category)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
@@ -220,7 +222,7 @@ export default function ProductMenuPublic({ organizationId }: ProductMenuPublicP
                   }}
                 >
                   {category}
-                </button>
+                </ActionButton>
               ))}
             </div>
           </div>

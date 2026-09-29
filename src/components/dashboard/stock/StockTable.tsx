@@ -1,4 +1,6 @@
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { useState } from "react";
 import {
@@ -300,14 +302,14 @@ export function StockTable({ products, isLoading }: StockTableProps) {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           {selectedProduct.name}
         </h3>
-        <button
+        <ActionButton
           onClick={() => setSelectedProduct(null)}
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </button>
+        </ActionButton>
       </div>
       
       {/* Content */}
@@ -382,12 +384,12 @@ export function StockTable({ products, isLoading }: StockTableProps) {
 
       {/* Footer */}
       <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
-        <button
+        <ActionButton
           onClick={() => setSelectedProduct(null)}
           className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
           Fechar
-        </button>
+        </ActionButton>
       </div>
     </div>
   </div>

@@ -1,5 +1,7 @@
 // components/dashboard/cardapio/ProductModal.tsx
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import { motion } from 'framer-motion';
 import { Minus, Plus } from 'lucide-react';
@@ -77,25 +79,25 @@ const ProductModal = ({ product, isOpen, onClose, onConfirm }: ProductModalProps
         </div>
         
         <div className="flex items-center justify-between mb-6 p-4 rounded-lg" style={{ backgroundColor: customColors.primaryBg }}>
-          <button
+          <ActionButton
             onClick={() => setQuantity(q => Math.max(1, q - 1))}
             className="p-2 rounded-full border transition-colors hover:bg-white"
             style={{ borderColor: customColors.borderLight }}
           >
             <Minus className="w-4 h-4" style={{ color: customColors.primary }} />
-          </button>
+          </ActionButton>
           <span className="text-2xl font-bold" style={{ color: customColors.textPrimary }}>{quantity}</span>
-          <button
+          <ActionButton
             onClick={() => setQuantity(q => q + 1)}
             className="p-2 rounded-full border transition-colors hover:bg-white"
             style={{ borderColor: customColors.borderLight }}
           >
             <Plus className="w-4 h-4" style={{ color: customColors.primary }} />
-          </button>
+          </ActionButton>
         </div>
         
         <div className="flex gap-3">
-          <button
+          <ActionButton
             onClick={onClose}
             className="flex-1 py-3 rounded-lg border transition-colors font-medium"
             style={{ 
@@ -105,14 +107,14 @@ const ProductModal = ({ product, isOpen, onClose, onConfirm }: ProductModalProps
             }}
           >
             Cancelar
-          </button>
-          <button
+          </ActionButton>
+          <ActionButton
             onClick={handleConfirm}
             className="flex-1 py-3 rounded-lg text-white font-medium transition-colors"
             style={{ backgroundColor: customColors.primary }}
           >
             Adicionar
-          </button>
+          </ActionButton>
         </div>
       </motion.div>
     </div>

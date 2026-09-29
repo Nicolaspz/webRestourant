@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 import { StockProductPicker, StockOption } from './StockProductPicker';
 
 import { useState, useEffect, useContext } from "react";
@@ -273,7 +275,7 @@ export function ConsumoTable() {
                   <SheetTitle>Registrar Quebra / Consumo</SheetTitle>
                   <SheetDescription>Escolha onde ocorreu a quebra ou consumo: Stock Geral ou uma área. A baixa desconta apenas esse local.</SheetDescription>
                 </SheetHeader>
-                <form onSubmit={handleSubmit} className="space-y-6 pt-6">
+                <ActionForm onSubmit={handleSubmit} className="space-y-6 pt-6">
                   <div className="space-y-2">
                     <Label>Área (Baixa de Stock)</Label>
                     <Select 
@@ -336,7 +338,7 @@ export function ConsumoTable() {
                       Registrar Baixa
                     </Button>
                   </SheetFooter>
-                </form>
+                </ActionForm>
               </SheetContent>
             </Sheet>
 

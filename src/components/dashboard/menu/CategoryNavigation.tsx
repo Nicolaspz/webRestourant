@@ -1,5 +1,7 @@
 // components/dashboard/menu/CategoryNavigation.tsx
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 interface CategoryNavigationProps {
   categories: string[];
@@ -22,7 +24,7 @@ const CategoryNavigation = ({
     <div className="w-full">
       <div className="flex flex-wrap gap-2 py-3">
         {categories.map(category => (
-          <button
+          <ActionButton
             key={category}
             onClick={() => onCategoryChange(category)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
@@ -37,7 +39,7 @@ const CategoryNavigation = ({
             }}
           >
             {category}
-          </button>
+          </ActionButton>
         ))}
       </div>
     </div>

@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 // components/menu/SessionConflictModal.tsx
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, User, RefreshCw, ArrowLeft } from 'lucide-react';
@@ -76,13 +78,13 @@ export function SessionConflictModal({
               <User className="w-4 h-4 mr-2" />
               Sim, é o mesmo cliente
             </Button>
-            <button
+            <ActionButton
               onClick={handleGoBack} // Agora volta para /cardapio
               className="w-full py-2 text-sm font-medium text-gray-600 hover:underline flex items-center justify-center gap-1 cursor-pointer"
             >
               <ArrowLeft className="w-3 h-3" />
               Ler Qr novamente ou Inserir outra Mesa!
-            </button>
+            </ActionButton>
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-500">

@@ -1,4 +1,6 @@
 "use client"
+import {ActionForm} from '@/components/ui/action-feedback';
+
 
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -68,7 +70,7 @@ export default function ResetPasswordPage() {
         </CardHeader>
         <CardContent className="flex flex-col items-center space-y-4">
           {status === "form" && (
-            <form onSubmit={handleSubmit} className="w-full space-y-4">
+            <ActionForm onSubmit={handleSubmit} className="w-full space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Nova Senha</Label>
                 <Input
@@ -92,7 +94,7 @@ export default function ResetPasswordPage() {
               <Button type="submit" className="w-full">
                 Redefinir Senha
               </Button>
-            </form>
+            </ActionForm>
           )}
 
           {status === "loading" && (

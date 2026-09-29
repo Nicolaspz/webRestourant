@@ -1,4 +1,6 @@
 'use client';
+import {ActionForm} from '@/components/ui/action-feedback';
+
 
 import { useState, useEffect, useContext } from "react";
 import { setupAPIClient } from "@/services/api";
@@ -237,7 +239,7 @@ export function SupplierSection() {
                             Insira as informações de contacto e fiscais do seu parceiro comercial.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                    <ActionForm onSubmit={handleSubmit} className="space-y-4 py-4">
                         <div className="space-y-2">
                             <Label htmlFor="name">Nome / Razão Social</Label>
                             <Input
@@ -295,7 +297,7 @@ export function SupplierSection() {
                                 {isSubmitting ? "A Guardar Dados..." : editingSupplier ? "Confirmar Atualização" : "Finalizar Registo"}
                             </Button>
                         </DialogFooter>
-                    </form>
+                    </ActionForm>
                 </DialogContent>
             </Dialog>
         </div>

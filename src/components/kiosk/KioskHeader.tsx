@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { Search, ShoppingCart, Flame } from "lucide-react";
 import { theme } from "../hooks/useKioskMenu";
 
@@ -23,7 +25,7 @@ export function KioskHeader({ activeCategory, searchQuery, cartItemCount, onSear
                 </div>
 
                 {/* Mobile Cart Toggle */}
-                <button
+                <ActionButton
                     className="md:hidden relative p-3 rounded-2xl bg-orange-500 text-black shadow-lg shadow-orange-500/20"
                     onClick={onOpenCart}
                 >
@@ -33,7 +35,7 @@ export function KioskHeader({ activeCategory, searchQuery, cartItemCount, onSear
                             {cartItemCount}
                         </span>
                     )}
-                </button>
+                </ActionButton>
             </div>
 
             <div className="w-full md:w-auto flex items-center gap-4">
@@ -47,7 +49,7 @@ export function KioskHeader({ activeCategory, searchQuery, cartItemCount, onSear
                         className="min-h-12 w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-white outline-none ring-orange-500 transition-all placeholder:text-gray-500 focus:ring-2 md:w-72"
                     />
                 </div>
-                <button
+                <ActionButton
                     className="hidden md:flex relative p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all text-white border border-white/10 group"
                     onClick={onOpenCart}
                 >
@@ -57,7 +59,7 @@ export function KioskHeader({ activeCategory, searchQuery, cartItemCount, onSear
                             {cartItemCount}
                         </span>
                     )}
-                </button>
+                </ActionButton>
             </div>
         </header>
     );

@@ -1,4 +1,6 @@
 'use client'
+import {ActionButton} from '@/components/ui/action-feedback';
+
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -73,7 +75,7 @@ export default function Header() {
           </nav>
 
           {/* Mobile toggle */}
-          <button
+          <ActionButton
             className="md:hidden p-2 text-slate-900"
             aria-label={mobileOpen ? "Fechar navegação" : "Abrir navegação"}
             aria-expanded={mobileOpen}
@@ -85,7 +87,7 @@ export default function Header() {
             ) : (
               <Menu className={`h-6 w-6 ${scrolled ? 'text-gray-900' : 'text-gray-900'}`} />
             )}
-          </button>
+          </ActionButton>
         </div>
 
         {/* Mobile Menu */}

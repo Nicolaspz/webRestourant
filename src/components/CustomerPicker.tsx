@@ -1,4 +1,6 @@
 'use client';
+import {ActionButton} from '@/components/ui/action-feedback';
+
 import {useEffect,useState,useRef} from 'react';
 import {api} from '@/services/api';
 import {Button} from '@/components/ui/button';
@@ -14,7 +16,7 @@ export function CustomerPicker({name,nif,onChange,disabled=false}:{name:string;n
  async function save(){if(lock.current)return;lock.current=true;setBusy(true);try{const r=await api.post('/customers',{name,taxId:nif,kind});setRows(v=>[...v,r.data]);setMode(r.data.id);toast.success('Cliente guardado.');}catch(e:any){toast.error(e.response?.data?.error||'Não foi possível guardar.');}finally{lock.current=false;setBusy(false);}}
  return <fieldset disabled={disabled||busy} className="space-y-3 rounded-xl border p-4"><legend className="px-2 font-semibold">Cliente</legend>
  {can('invoices.read')&&<label className="block text-sm">Selecionar cliente<select className="mt-1 h-10 w-full rounded border bg-background px-3" value={mode} onChange={e=>{setMode(e.target.value);const c=rows.find(r=>r.id===e.target.value);onChange(c?.name||'',c?.taxId||'');}}><option value="manual">Preencher manualmente</option>{rows.map(c=><option key={c.id} value={c.id}>{c.name} {c.taxId?`— ${c.taxId}`:''}</option>)}</select></label>}
- {failed&&<button type="button" className="text-sm underline" onClick={()=>void load()}>Recarregar clientes</button>}
+ {failed&&<ActionButton type="button" className="text-sm underline" onClick={()=>load()}>Recarregar clientes</ActionButton>}
  <div className="grid gap-3 sm:grid-cols-2"><label>Nome / empresa<Input required readOnly={mode!=='manual'} value={name} onChange={e=>onChange(e.target.value,nif)}/></label><label>NIF (opcional)<Input readOnly={mode!=='manual'} value={nif} onChange={e=>onChange(name,e.target.value)}/></label></div>
  {mode==='manual'&&can('proformas.create')&&<div className="flex flex-wrap gap-2"><select aria-label="Tipo de cliente" className="rounded border bg-background px-3" value={kind} onChange={e=>setKind(e.target.value)}><option value="PARTICULAR">Particular</option><option value="EMPRESA">Empresa</option></select><Button type="button" variant="outline" disabled={!name.trim()||busy} onClick={save}>{busy?'A guardar…':'Guardar cliente para reutilizar'}</Button><span className="self-center text-xs text-muted-foreground">Opcional — pode emitir sem cadastrar.</span></div>}
  </fieldset>;

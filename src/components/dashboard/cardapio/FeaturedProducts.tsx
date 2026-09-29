@@ -1,3 +1,5 @@
+
+import {ActionButton} from '@/components/ui/action-feedback';
 import { Star, Clock, TrendingUp } from "lucide-react";
 import { ProductCard } from './ProductCard';
 
@@ -28,10 +30,10 @@ export function FeaturedProducts({ products, activeTab, onTabChange, onAddToCart
             {tabs.map(tab => {
               const Icon = tab.icon;
               return (
-                <button key={tab.value} onClick={() => onTabChange(tab.value)}
+                <ActionButton key={tab.value} onClick={() => onTabChange(tab.value)}
                   className={`flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all md:flex-none ${activeTab === tab.value ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
                   <Icon className="h-4 w-4" /><span>{tab.label}</span>
-                </button>
+                </ActionButton>
               );
             })}
           </div>

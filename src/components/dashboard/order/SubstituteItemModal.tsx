@@ -56,7 +56,7 @@ export function SubstituteItemModal({ isOpen, onClose, onConfirm, isLoading, ori
 
     const handleConfirm = () => {
         if (!selectedProductId) return;
-        onConfirm(selectedProductId);
+        return onConfirm(selectedProductId);
     };
 
     return (
