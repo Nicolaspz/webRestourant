@@ -2,6 +2,7 @@
 import {ActionButton} from '@/components/ui/action-feedback';
 
 import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import CaixaHeader from '@/components/dashboard/caixa/CaixaHeader';
 import { AuthContext } from '@/contexts/AuthContext';
@@ -35,6 +36,7 @@ const Caixa = () => {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [loading, setLoading] = useState(false);
+  const [caixaAbertoParaAtender, setCaixaAbertoParaAtender] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState('abertas');
   const [estatisticas, setEstatisticas] = useState(null);
@@ -50,6 +52,8 @@ const Caixa = () => {
   const [fechoAtivo, setFechoAtivo] = useState<number | null>(null);
 
   const { user } = useContext(AuthContext);
+  const isCashier = user?.role === 'CAIXA';
+  const router = useRouter();
   const { socket } = useSocket();
   const apiClient = setupAPIClient();
   const { settings: posSettings } = usePosSettings(user?.organizationId);
@@ -67,18 +71,27 @@ const Caixa = () => {
     if (!user?.organizationId) return;
     if (!silent) setLoading(true);
     try {
+      if (isCashier) {
+        const cashStatus = await apiClient.get('/caixa/current', { params: { organizationId: user.organizationId } });
+        const ownCashIsOpen = Boolean(cashStatus.data && !cashStatus.data.isClosed && cashStatus.data.id);
+        setCaixaAbertoParaAtender(ownCashIsOpen);
+        if (!ownCashIsOpen) {
+          setMesas([]);
+          if (!silent) setLoading(false);
+          return;
+        }
+      }
       const response = await apiClient.get('/mesas', {
         params: { organizationId: user.organizationId }
       });
-      // Filtrar apenas mesas ocupadas para o checkout no caixa
-      const mesasOcupadas = response.data.filter((m: Mesa) => m.status === 'ocupada');
-      setMesas(mesasOcupadas);
-      mesasCache.current = { data: mesasOcupadas, updatedAt: Date.now() };
+      const mesasDoCaixa = response.data.filter((m: Mesa) => m.number > 0);
+      setMesas(mesasDoCaixa);
+      mesasCache.current = { data: mesasDoCaixa, updatedAt: Date.now() };
     } catch (error) {
       console.error('Erro ao buscar mesas:', error);
       if (!silent) {
         setMesas([]);
-        toast.error('Não foi possível carregar as mesas abertas.');
+      toast.error('Não foi possível carregar as mesas.');
       }
     } finally {
       if (!silent) setLoading(false);
@@ -126,6 +139,7 @@ const Caixa = () => {
       const dataInicio = formatDate(date);
       const dataFim = formatDate(date);
 
+      if (isCashier) { setEstatisticas(null); return; }
       const response = await apiClient.get('/estatisticas/vendas', {
         params: {
           organizationId: user.organizationId,
@@ -323,10 +337,8 @@ const Caixa = () => {
       <div className="max-w-[90vw] mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Caixa do Restaurante</h1>
-            <p className="text-muted-foreground">
-              Gerencie faturas e pagamentos do seu estabelecimento
-            </p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Caixa do Restaurante</h1>
+            <p className="text-muted-foreground">Abra mesas livres e feche mesas em atendimento.</p>
           </div>
         </div>
 
@@ -336,16 +348,21 @@ const Caixa = () => {
           </div>
         )}
 
-        <CaixaHeader
+        {!isCashier && <CaixaHeader
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-        />
+          cashier={isCashier}
+        />}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
-            {activeTab === 'abertas' ? (
+          <div className={isCashier ? 'lg:col-span-4' : 'lg:col-span-3'}>
+            {isCashier ? (
+              !caixaAbertoParaAtender ? <Card className="col-span-full p-8 text-center"><CardTitle className="mb-2">Abra o caixa para começar a atender</CardTitle><CardContent className="text-muted-foreground">Use o controlo de caixa no cabeçalho. As mesas ficam disponíveis depois da abertura.</CardContent></Card> : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{loading ? <p>A carregar mesas...</p> : mesas.length > 0 ? mesas.map(mesa => <Card key={mesa.id} className="border-2"><CardHeader className="pb-2"><div className="flex justify-between items-center"><CardTitle className="text-xl">Mesa {mesa.number}</CardTitle><Badge className={mesa.status === 'ocupada' ? 'bg-amber-600' : mesa.status === 'reservada' ? 'bg-blue-600' : 'bg-emerald-600'}>{mesa.status === 'ocupada' ? 'Em atendimento' : mesa.status === 'reservada' ? 'Reservada' : 'Livre'}</Badge></div></CardHeader><CardContent>{mesa.status === 'ocupada' ? <Button className="w-full bg-red-600 hover:bg-red-700" onClick={() => openCheckoutMesa(mesa)}>Fechar mesa</Button> : mesa.status === 'livre' ? <Button className="w-full" onClick={() => router.push(`/dashboard/cardapio/${user?.organizationId}/${mesa.number}`)}>Abrir mesa</Button> : <Button className="w-full" variant="outline" disabled>Reservada</Button>}</CardContent></Card>) : <Card className="col-span-full p-8 text-center text-muted-foreground">Nenhuma mesa configurada.</Card>}</div>
+              )
+            ) : activeTab === 'abertas' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {loading ? (
                   <p>A carregar mesas...</p>
@@ -406,9 +423,7 @@ const Caixa = () => {
             )}
           </div>
 
-          <div className="lg:col-span-1">
-            <Estatisticas data={estatisticas} />
-          </div>
+          {!isCashier && <div className="lg:col-span-1"><Estatisticas data={estatisticas} /></div>}
         </div>
       </div>
 

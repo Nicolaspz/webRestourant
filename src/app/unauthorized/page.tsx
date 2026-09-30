@@ -2,7 +2,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
-import { Shield, ArrowLeft, Home } from "lucide-react"
+import { Info, ArrowLeft } from "lucide-react"
 import { useEffect } from 'react'
 
 export default function UnauthorizedPage() {
@@ -19,16 +19,16 @@ export default function UnauthorizedPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-md w-full space-y-6 text-center">
-        <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 dark:bg-red-900">
-          <Shield className="h-10 w-10 text-red-600 dark:text-red-400" />
+        <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 dark:bg-blue-900/40">
+          <Info className="h-10 w-10 text-blue-600 dark:text-blue-400" />
         </div>
         
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Acesso Negado
+            Permissão necessária
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Você não tem permissão para acessar esta página com o seu tipo de usuário.
+            O seu perfil não tem acesso a esta página. Peça ao SUPER ADMIN para rever as permissões.
           </p>
         </div>
 

@@ -15,9 +15,10 @@ interface CaixaHeaderProps {
   onDateChange: (date: Date) => void;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  cashier?: boolean;
 }
 
-const CaixaHeader = ({ selectedDate, onDateChange, activeTab, onTabChange }: CaixaHeaderProps) => {
+const CaixaHeader = ({ selectedDate, onDateChange, activeTab, onTabChange, cashier = false }: CaixaHeaderProps) => {
   const tabs = [
     {
       id: 'abertas',
@@ -46,7 +47,7 @@ const CaixaHeader = ({ selectedDate, onDateChange, activeTab, onTabChange }: Cai
   return (
     <Card className="mb-6 border-l-4 border-l-primary">
       <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+        {!cashier && <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
           <div className="flex items-center gap-4">
             <Popover>
               <PopoverTrigger asChild>
@@ -91,11 +92,11 @@ const CaixaHeader = ({ selectedDate, onDateChange, activeTab, onTabChange }: Cai
             <PrinterIcon className="h-4 w-4" aria-hidden="true" />
             Imprimir relatório
           </Button>
-        </div>
+        </div>}
 
-        <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+        <Tabs value={cashier ? 'abertas' : activeTab} onValueChange={cashier ? undefined : onTabChange} className="w-full">
           <TabsList className="flex h-auto w-full justify-start overflow-x-auto p-1">
-            {tabs.map((tab) => (
+            {tabs.filter(tab => !cashier || tab.id === 'abertas').map((tab) => (
               <TabsTrigger
                 key={tab.id}
                 value={tab.id}

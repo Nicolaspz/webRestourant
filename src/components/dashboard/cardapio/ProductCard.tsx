@@ -15,14 +15,40 @@ interface ProductCardProps {
     PrecoVenda: { preco_venda: number }[];
     isFeatured?: boolean;
     isNew?: boolean;
+    isDerived?: boolean;
     Stock?: { totalQuantity: number }[];
+    recipeItems?: Array<{
+      quantity: number;
+      impactaPreco: boolean;
+      ingredient: {
+        isDerived?: boolean;
+        defaultAreaId?: string | null;
+        Stock?: { totalQuantity: number }[];
+        economatoes?: { areaId: string; quantity: number }[];
+      };
+    }>;
   };
   onAddToCart: () => void;
   variant?: 'grid' | 'featured';
 }
 
 export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductCardProps) {
-  const unavailable = (product.Stock?.[0]?.totalQuantity ?? 0) <= 0;
+  const recipeItems = product.recipeItems?.filter(item => item.impactaPreco) ?? [];
+  const hasRecipe = product.isDerived && recipeItems.length > 0;
+  const recipeAvailable = hasRecipe && recipeItems.every(({ quantity, ingredient }) => {
+    // A disponibilidade de pratos derivados vem dos ingredientes; o prato não
+    // precisa de uma quantidade própria registada no stock.
+    if (ingredient.isDerived) return true;
+    const generalStock = ingredient.Stock?.[0]?.totalQuantity ?? 0;
+    const areaStock = ingredient.defaultAreaId
+      ? ingredient.economatoes?.filter(area => area.areaId === ingredient.defaultAreaId).reduce((sum, area) => sum + area.quantity, 0) ?? 0
+      : 0;
+    const availableStock = ingredient.defaultAreaId ? generalStock + areaStock : generalStock;
+    return availableStock >= quantity;
+  });
+  const unavailable = hasRecipe
+    ? !recipeAvailable
+    : (product.Stock?.[0]?.totalQuantity ?? 0) <= 0;
   if (variant === 'featured') {
     return (
       <motion.div

@@ -7,8 +7,6 @@ import {
   Coffee, 
   Users, 
   Clock,
-  Utensils,
-  TrendingUp,
   TrendingDown
 } from "lucide-react";
 import { AuthContext } from "@/contexts/AuthContext";
@@ -168,6 +166,11 @@ export default function Dashboard() {
   // Monitora mudanças na autenticação e no dateRange
   useEffect(() => {
     if (isAuthenticated && user) {
+      if (user.role === 'CAIXA') {
+        setDashboardData(defaultDashboardData);
+        setIsLoading(false);
+        return;
+      }
       fetchDashboard();
     } else {
       // Se não está autenticado, usa dados padrão
@@ -186,6 +189,14 @@ export default function Dashboard() {
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  if (user?.role === 'CAIXA') {
+    return <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-8 text-center shadow-sm">
+      <h1 className="text-2xl font-bold">Área do caixa</h1>
+      <p className="mt-2 text-muted-foreground">Abra o caixa para começar a atender. O estado das mesas e as ações de abertura e fecho estão na área do caixa.</p>
+      <a href="/dashboard/caixa" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 font-medium text-primary-foreground">Ir para o caixa</a>
+    </div>;
   }
 
   return (
@@ -238,27 +249,6 @@ export default function Dashboard() {
               title="Pedidos Pendentes"
               value={(displayData.metrics.pendingOrders || 0).toString()}
               icon={<Clock className="text-muted-foreground" size={20} />}
-            />
-          </div>
-
-          {/* Métricas secundárias - Mesas - SEMPRE MOSTRA */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-            <MetricCard
-              title="Mesas Ocupadas"
-              value={`${displayData.metrics.occupiedTables || 0}/${displayData.metrics.totalTables || 0}`}
-              description={displayData.metrics.totalTables ? 
-                `${(((displayData.metrics.occupiedTables || 0) / displayData.metrics.totalTables) * 100).toFixed(1)}% de ocupação` : 
-                'Nenhuma mesa configurada'
-              }
-              icon={<Utensils className="text-muted-foreground" size={20} />}
-            />
-            <MetricCard
-              title="Taxa de Ocupação"
-              value={displayData.metrics.totalTables ? 
-                `${(((displayData.metrics.occupiedTables || 0) / displayData.metrics.totalTables) * 100).toFixed(1)}%` : 
-                '0%'
-              }
-              icon={<TrendingUp className="text-muted-foreground" size={20} />}
             />
           </div>
 
