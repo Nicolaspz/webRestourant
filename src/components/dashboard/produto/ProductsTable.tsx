@@ -1,5 +1,4 @@
 'use client';
-import { API_BASE_URL, getMediaUrl } from '../../../../config';
 import { DeleteConfirmationModal } from './DeleteConfirmationModalProps';
 import { useState, useEffect, useContext } from "react";
 import {
@@ -64,6 +63,7 @@ import { AuthContext } from "@/contexts/AuthContext";
 import { Product, Category } from "@/types/product";
 import { parseCookies } from "nookies";
 import { PriceUpdateModal } from './PriceUpdateModal';
+import { ProductImage } from '@/components/ProductImage';
 
 
 interface ProductsTableProps {
@@ -142,7 +142,8 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
     const q = searchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const pName = product.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const pDesc = product.description ? product.description.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
-    const matchesSearch = pName.includes(q) || pDesc.includes(q);
+    const pCategory = product.Category?.name ? product.Category.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+    const matchesSearch = pName.includes(q) || pDesc.includes(q) || pCategory.includes(q);
     const matchesType = typeFilter === "all" ||
       (typeFilter === "derived" && product.isDerived) ||
       (typeFilter === "simple" && !product.isDerived);
@@ -158,6 +159,8 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredProducts.slice(startIndex, endIndex);
+  const derivedCount = products.filter(product => product.isDerived).length;
+  const simpleCount = products.length - derivedCount;
 
 
   // Resetar para página 1 quando filtrar
@@ -280,13 +283,13 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
   return (
     <div className="space-y-4">
       {/* Header com filtros e ações */}
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b bg-muted/20">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <CardTitle>Gestão de Produtos</CardTitle>
+              <CardTitle>Catálogo</CardTitle>
               <CardDescription>
-                Gerencie os produtos do sistema ({products.length} produtos)
+                Pesquise, filtre e mantenha os produtos e pratos do restaurante.
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -301,25 +304,27 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-3 mb-6">
-            {/* Linha 1: Busca */}
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou descrição..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+        <CardContent className="p-4 sm:p-6">
+          <div className="mb-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border bg-background p-3"><p className="text-xs text-muted-foreground">No catálogo</p><p className="mt-1 text-xl font-semibold">{products.length}</p></div>
+            <div className="rounded-xl border bg-background p-3"><p className="text-xs text-muted-foreground">Simples</p><p className="mt-1 text-xl font-semibold">{simpleCount}</p></div>
+            <div className="rounded-xl border bg-background p-3"><p className="text-xs text-muted-foreground">Derivados · com ficha técnica</p><p className="mt-1 text-xl font-semibold">{derivedCount}</p></div>
+          </div>
 
-            {/* Linha 2: Filtros */}
-            <div className="flex flex-wrap gap-2">
-              {/* Filtro por Categoria */}
+          <div className="mb-4 flex flex-col gap-3">
+            <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_220px_170px_auto]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Pesquisar por nome, descrição ou categoria…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="w-4 h-4 mr-2" />
+                <SelectTrigger>
+                  <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -332,9 +337,8 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                 </SelectContent>
               </Select>
 
-              {/* Filtro por Tipo */}
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger>
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -344,20 +348,12 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                 </SelectContent>
               </Select>
 
-              {/* Limpar filtros */}
-              {(categoryFilter !== "all" || typeFilter !== "all" || searchTerm) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
+              <div className="flex gap-2">
+                {(categoryFilter !== "all" || typeFilter !== "all" || searchTerm) && <Button
+                  variant="outline"
                   onClick={() => { setCategoryFilter("all"); setTypeFilter("all"); setSearchTerm(""); }}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Limpar filtros
-                </Button>
-              )}
-
-              <div className="ml-auto">
-                {/* Itens por página */}
+                  className="whitespace-nowrap"
+                >Limpar</Button>}
                 <Select
                   value={itemsPerPage.toString()}
                   onValueChange={(value) => {
@@ -365,7 +361,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger className="w-full min-w-[84px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -378,15 +374,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
               </div>
             </div>
 
-            {/* Resumo dos filtros ativos */}
-            {(categoryFilter !== "all" || typeFilter !== "all" || searchTerm) && (
-              <p className="text-xs text-muted-foreground">
-                {filteredProducts.length} produto(s) encontrado(s)
-                {categoryFilter !== "all" && ` • Categoria: ${categories.find(c => c.id === categoryFilter)?.name}`}
-                {typeFilter !== "all" && ` • Tipo: ${typeFilter === "simple" ? "Simples" : "Derivados"}`}
-                {searchTerm && ` • Busca: "${searchTerm}"`}
-              </p>
-            )}
+            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground"><span>{filteredProducts.length} produto(s) nesta lista</span><span>Filtre por categoria, tipo ou nome</span></div>
           </div>
 
           {/* Tabela */}
@@ -416,34 +404,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                       <TableCell>
                         {product.banner ? (
                           <div>
-                            <img
-                              src={getMediaUrl(product.banner)}
-                              alt={product.name}
-                              className="w-10 h-10 object-cover rounded-lg"
-                              onError={(e) => {
-                                console.error('❌ ERRO COMPLETO:', {
-                                  produto: product.name,
-                                  banner: product.banner,
-                                  urlTentada: getMediaUrl(product.banner),
-                                  apiBaseUrl: API_BASE_URL,
-                                  timestamp: new Date().toISOString()
-                                });
-                                // Mostra placeholder em caso de erro
-                                e.currentTarget.style.display = 'none';
-                                // Mostra um fallback
-                                const parent = e.currentTarget.parentElement;
-                                if (parent) {
-                                  const fallback = document.createElement('div');
-                                  fallback.className = 'w-10 h-10 bg-muted rounded-lg flex items-center justify-center';
-                                  fallback.innerHTML = '<svg class="w-4 h-4 text-muted-foreground" ...></svg>';
-                                  parent.appendChild(fallback);
-                                }
-                              }}
-                              onLoad={() => console.log('✅ Imagem carregada:', {
-                                produto: product.name,
-                                url: getMediaUrl(product.banner)
-                              })}
-                            />
+                            <ProductImage banner={product.banner} name={product.name} className="h-10 w-10 rounded-lg bg-muted object-cover" />
                           </div>
                         ) : (
                           <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -471,13 +432,13 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4 text-green-600" />
                           <span>
                             {product.PrecoVenda?.[0]?.preco_venda?.toFixed(2) || '0.00'} Kz
                           </span>
-                          {(product.PrecoVenda?.[0]?.precoSugerido || true) && (
-                            <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -503,8 +464,16 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                                   </span>
                                 </>
                               )}
-                            </div>
-                          )}
+                          </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            Custo: {product.costPending || product.unitCost == null ? 'Pendente' : `${product.unitCost.toFixed(2)} Kz`}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Margem: {product.grossMarginPercent == null ? '—' : `${product.grossMarginPercent.toFixed(1)}%`}
+                            {product.grossProfit != null && ` (${product.grossProfit.toFixed(2)} Kz)`}
+                          </span>
+                          {product.suggestedPrice != null && <span className="text-xs text-blue-600">Alvo {product.targetMarginPercent}%: {product.suggestedPrice.toFixed(2)} Kz</span>}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -530,7 +499,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
                             {product.isDerived && (
                               <DropdownMenuItem onClick={() => openRecipeModal(product)}>
                                 <Utensils className="w-4 h-4 mr-2" />
-                                Ver Receita
+                                Ficha técnica
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => openEditModal(product)}>

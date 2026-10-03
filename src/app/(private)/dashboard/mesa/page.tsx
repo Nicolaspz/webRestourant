@@ -8,10 +8,12 @@ import { AuthContext } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { TableAreaDialog } from '@/components/dashboard/mesas/TableAreaDialog';
 import { Plus } from 'lucide-react';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 
 // Components
 import MesaStatusTabs from '@/components/dashboard/mesas/MesaStatusTabs';
 import ModalPagamento from '@/components/dashboard/mesas/ModalPagamento';
+import { CashierPOS } from '@/components/dashboard/caixa/CashierPOS';
 
 // Types
 import { Mesa } from '@/types/product';
@@ -259,6 +261,20 @@ export default function GerenciamentoMesasPage() {
     );
   }
 
+  if (user?.role === 'GARCON') {
+    return <CashierPOS
+      mode="waiter"
+      organizationId={user.organizationId || ''}
+      userId={user.id}
+      mesas={mesas.filter(mesa => mesa.number > 0)}
+      loadingMesas={isLoading}
+      caixaAberto
+      onRefreshMesas={fetchMesas}
+      onOpenCheckout={() => undefined}
+      onPrintConsumption={() => undefined}
+    />;
+  }
+
   return (
     <div className="container mx-auto p-6">
       <Header />
@@ -276,6 +292,7 @@ export default function GerenciamentoMesasPage() {
         onFecharMesa={fecharMesa}
         onEliminarMesa={eliminarMesa}
         onFactMesa={GetFact}
+        onTransferComplete={() => fetchMesas()}
       />
 
 
@@ -293,10 +310,5 @@ export default function GerenciamentoMesasPage() {
 }
 
 // Subcomponentes da página
-const Header = () => (
-  <div className="mb-8">
-    <h1 className="text-2xl font-semibold text-foreground">Gestão de mesas</h1>
-    <p className="text-muted-foreground">Gerencie mesas, reservas e QR Codes</p>
-  </div>
-);
+const Header = () => <DashboardPageHeader title="Mesas" description="Gerencie mesas, reservas e códigos QR do restaurante." />;
 

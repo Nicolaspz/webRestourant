@@ -1,7 +1,6 @@
 'use client';
 import {createContext,useContext,useEffect,useState,useCallback,useRef,ReactNode} from 'react';
 import {usePathname} from 'next/navigation';
-import Link from 'next/link';
 import {AuthContext} from './AuthContext';
 import {cachedGet} from '@/services/api';
 type Access={role:string;permissions:string[];allAreas:boolean;areaIds:string[]};
@@ -52,6 +51,6 @@ export function AccessGate({children}:{children:ReactNode}) {
  const path=usePathname();const {loading,access,canScreen}=useAccess();
  if(loading) return <p role="status" className="p-6">A validar permissões…</p>;
  if(!access) return <p role="alert" className="p-6">Não foi possível validar o acesso. Atualize a página ou inicie sessão novamente.</p>;
- if(!canScreen(path)) return <section className="p-6 space-y-4"><h1>Sem acesso a esta tela</h1><p>Peça ao SUPER ADMIN para atualizar o seu role.</p><nav className="flex flex-col gap-3">{Object.keys(screenPermissions).filter(canScreen).map(url=><Link key={url} href={url}>{url.replace('/dashboard/','').replace('/dashboard','Painel')}</Link>)}</nav></section>;
+ if(!canScreen(path)) return <section className="p-6"><h1>Acesso negado</h1></section>;
  return <>{children}</>;
 }

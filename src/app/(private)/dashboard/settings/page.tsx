@@ -62,6 +62,8 @@ export default function SettingsPage() {
           nif: user.nif || '',
           imageLogo: user.imageLogo || null,
           posSettings: null,
+          margin_dish: user.margin_dish == null ? 30 : Number(user.margin_dish),
+          margin_stock: user.margin_stock == null ? 15 : Number(user.margin_stock),
         }
         //console.log('📦 Org data from user:', orgData)
 
@@ -79,7 +81,9 @@ export default function SettingsPage() {
             address: detailedOrg.address || '',
             nif: detailedOrg.nif || '',
             imageLogo: detailedOrg.imageLogo || null,
-            posSettings: detailedOrg.posSettings || null
+            posSettings: detailedOrg.posSettings || null,
+            margin_dish: detailedOrg.margin_dish ?? 30,
+            margin_stock: detailedOrg.margin_stock ?? 15
           }
           
           //console.log('📦 Dados mapeados:', mappedOrg)
@@ -97,6 +101,8 @@ export default function SettingsPage() {
           address: user.address || '',
           nif: user.nif || '',
           imageLogo: user.imageLogo || null,
+          margin_dish: user.margin_dish == null ? 30 : Number(user.margin_dish),
+          margin_stock: user.margin_stock == null ? 15 : Number(user.margin_stock),
         })
       } finally {
         setIsLoading(false)

@@ -53,6 +53,12 @@ export interface Product {
   taxPercentage?: number;
   taxExemptionCode?: string | null;
   PrecoVenda: PrecoVenda[];
+  unitCost?: number | null;
+  costPending?: boolean;
+  grossProfit?: number | null;
+  grossMarginPercent?: number | null;
+  targetMarginPercent?: number;
+  suggestedPrice?: number | null;
   recipeItems: RecipeItem[];
   categoryId: string;
   organizationId: string;
@@ -173,6 +179,8 @@ export interface Organization {
   address: string
   nif: string
   imageLogo?: string | null
+  margin_dish?: number | null
+  margin_stock?: number | null
 }
 
 // types/mesa.ts
@@ -190,10 +198,14 @@ export interface Mesa {
   sessaoAtiva?: {
     id: string;
     abertaEm: string;
+    userId?: string | null;
+    ownerName?: string | null;
+    ownerRole?: string | null;
   } | null;
   podeFechar?: boolean;
   temItensPendentes?: boolean;
   temPedidoEmDraft?: boolean;
+  transferItems?: Array<{ id: string; name: string; amount: number; prepared: boolean }>;
 }
 
 export interface Reserva {

@@ -67,13 +67,7 @@ export function ProductFormModal({
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
-  const availableCategories = categories.filter((category) => {
-    if (formData.productKind === 'INGREDIENT') {
-      return category.kind === 'STOCK' || !category.kind;
-    }
-
-    return category.kind === 'MENU' || !category.kind;
-  });
+  const availableCategories = categories.filter(category => category.kind === 'MENU' || !category.kind);
   const categoryLabel = (category: Category) => category.parent
     ? `${category.parent.name} › ${category.name}`
     : category.name;
@@ -130,10 +124,10 @@ export function ProductFormModal({
           unit: initialData.unit || 'un',
           isDerived: initialData.isDerived || false,
           allowAsIngredient: initialData.allowAsIngredient || false,
-          isIgredient: initialData.isIgredient || false,
+          isIgredient: false,
           isFeatured: initialData.isFeatured || false,
           isNew: initialData.isNew || false,
-          productKind: initialData.productKind || (initialData.isIgredient ? 'INGREDIENT' : initialData.isDerived ? 'RECIPE_PRODUCT' : 'SIMPLE_PRODUCT'),
+          productKind: initialData.isDerived ? 'RECIPE_PRODUCT' : 'SIMPLE_PRODUCT',
           categoryId: initialData.categoryId || initialData.Category?.id || '',
           file: null,
           previewImage: initialData.banner ? getMediaUrl(initialData.banner) : '',
@@ -295,7 +289,7 @@ export function ProductFormModal({
       setFormData(prev => ({
         ...prev,
         productKind: value,
-        isIgredient: value === 'INGREDIENT',
+        isIgredient: false,
         isDerived: value === 'RECIPE_PRODUCT',
         categoryId: '',
         defaultAreaId: value === 'RECIPE_PRODUCT' ? '' : prev.defaultAreaId,
@@ -403,7 +397,7 @@ export function ProductFormModal({
           <div className="space-y-2">
             <Label htmlFor="productKind" className="text-gray-900 dark:text-white">Tipo *</Label>
             <Select
-              value={formData.productKind}
+              value={formData.productKind === 'RECIPE_PRODUCT' ? 'RECIPE_PRODUCT' : 'SIMPLE_PRODUCT'}
               onValueChange={(value) => handleInputChange('productKind', value)}
               disabled={!isDataReady || isSubmitting}
             >
@@ -413,11 +407,10 @@ export function ProductFormModal({
               <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                 <SelectItem value="SIMPLE_PRODUCT">Produto de venda</SelectItem>
                 <SelectItem value="RECIPE_PRODUCT">Prato / Receita</SelectItem>
-                <SelectItem value="INGREDIENT">Ingrediente</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Ingredientes entram no stock/receitas. Pratos derivados também podem ser usados dentro de outros pratos.
+              Produtos de venda controlam o stock diretamente. Pratos e receitas consomem os ingredientes definidos na ficha técnica.
             </p>
           </div>
 

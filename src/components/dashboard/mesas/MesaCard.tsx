@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Users, X } from 'lucide-react';
 import { Mesa } from "@/types/product";
 import QRCodePrinter from "./QRCodePDFGenerator";
+import { MesaTransferDialog } from './MesaTransferDialog';
 
 interface MesaCardProps {
   mesa: Mesa;
@@ -17,9 +18,11 @@ interface MesaCardProps {
   onFecharMesa: (mesaId: string) => void;
   onEliminarMesa: (mesaId: string) => void;
   onFactMesa: (mesaId: string) => void;
+  mesas: Mesa[];
+  onTransferComplete: () => void;
 }
 
-const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFactMesa }: MesaCardProps) => {
+const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFactMesa, mesas, onTransferComplete }: MesaCardProps) => {
  const {can}=useAccess();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -95,6 +98,7 @@ const MesaCard = ({ mesa, user, onReservar, onFecharMesa, onEliminarMesa, onFact
                   </Button>
                 ) : null}
               </div>
+              {can('transfers.create') && <MesaTransferDialog mesa={mesa} mesas={mesas} onComplete={onTransferComplete} />}
 
               {/* Aviso quando não pode fechar */}
               {!mesa.podeFechar && (

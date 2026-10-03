@@ -9,7 +9,12 @@ export function MenuStockVisibilitySection() {
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  useEffect(() => { setupAPIClient().get('/organization/menu-stock-visibility').then(({ data }) => setEnabled(Boolean(data.showUnavailableProductsInMenu))).catch(() => toast.error('Não foi possível carregar esta preferência.')).finally(() => setLoading(false)) }, [])
+  useEffect(() => {
+    setupAPIClient().get('/organization/menu-stock-visibility')
+      .then(({ data }) => setEnabled(Boolean(data.showUnavailableProductsInMenu)))
+      .catch(() => toast.error('Não foi possível carregar esta preferência.', { toastId: 'menu-stock-visibility-load' }))
+      .finally(() => setLoading(false))
+  }, [])
   async function update(value: boolean) {
     setSaving(true)
     try { await setupAPIClient().put('/organization/menu-stock-visibility', { showUnavailableProductsInMenu: value }); setEnabled(value); toast.success('Visibilidade do menu atualizada.') }

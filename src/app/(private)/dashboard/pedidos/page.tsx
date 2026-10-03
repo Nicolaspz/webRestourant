@@ -4,11 +4,12 @@ import Link from 'next/link';
 
 import { useCallback, useContext, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { ChefHat, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useKitchenOrders } from '@/hooks/useKitchenOrders';
 import { OrdersGrid } from '@/components/dashboard/order/OrdersGrid';
 import { Badge } from '@/components/ui/badge';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 
 const OrderManagerModal = dynamic(
@@ -33,13 +34,12 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-[1500px] space-y-6">
-        <header className="flex flex-col gap-4 rounded-2xl border bg-background p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="rounded-2xl bg-primary/10 p-3 text-primary"><ChefHat className="h-7 w-7" /></div>
-            <div><div className="flex items-center gap-2"><h1 className="text-2xl font-bold tracking-tight">Pedidos</h1><Badge variant="secondary">{orders.groupedOrders.length} mesas</Badge></div><p className="text-sm text-muted-foreground">Atualização imediata e sincronização em tempo real</p></div>
-          </div>
-          <Button variant="outline" onClick={() => orders.refresh()} disabled={orders.loading}><RefreshCw className={`mr-2 h-4 w-4 ${orders.loading ? 'animate-spin' : ''}`} />Atualizar</Button>
-        </header>
+        <DashboardPageHeader
+          title="Pedidos"
+          description="Acompanhe a preparação e o estado dos pedidos em tempo real."
+          meta={<Badge variant="secondary">{orders.groupedOrders.length} mesas</Badge>}
+          actions={<Button variant="outline" onClick={() => orders.refresh()} disabled={orders.loading}><RefreshCw className={`mr-2 h-4 w-4 ${orders.loading ? 'animate-spin' : ''}`} />Atualizar</Button>}
+        />
 
         {orders.hasPendingStockPickup && <Link href="/dashboard/economato" className="block rounded-xl border-2 border-amber-500 bg-amber-100 p-4 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">
           Há pedidos com produtos pendentes de receber. Abra os <strong>Levantamentos para mesas</strong> e confirme a entrega com o economato.

@@ -1,5 +1,5 @@
 import { HierarchicalCategories } from '../menu/HierarchicalCategories';
-import { ShoppingCart, ChefHat, MapPin } from 'lucide-react';
+import { ShoppingCart, ChefHat, MapPin, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
@@ -11,6 +11,8 @@ interface HeaderProps {
   onCategoryClick: (category: string) => void;
   isCheckingSession?: boolean;
   hasSessionConflict?: boolean;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
 }
 
 export function Header({
@@ -21,7 +23,9 @@ export function Header({
   onCartClick,
   onCategoryClick,
   isCheckingSession,
-  hasSessionConflict
+  hasSessionConflict,
+  searchValue,
+  onSearchChange
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl">
@@ -67,7 +71,11 @@ export function Header({
 </Button>
         </div>
 
-        <div className="border-t border-slate-100">
+        <div className="border-t border-slate-100 py-2">
+          <label className="relative mb-2 block">
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input aria-label="Pesquisar produto" type="search" value={searchValue} onChange={event => onSearchChange(event.target.value)} placeholder="Pesquisar produto ou prato…" className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100" />
+          </label>
           <HierarchicalCategories compact categories={Object.keys(groupedProducts)} activeCategory={activeCategory} onSelect={onCategoryClick} />
         </div>
       </div>

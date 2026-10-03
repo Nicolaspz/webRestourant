@@ -217,7 +217,7 @@ export function StockTable() {
 
             <Button variant="outline" onClick={() => setIsRequestDialogOpen(true)} disabled={!selectedAreaId}>
               <ArrowRightLeft className="w-4 h-4 mr-2" />
-              Solicitar Stock
+              Solicitar reposição
             </Button>
 
             <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>

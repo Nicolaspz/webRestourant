@@ -4,10 +4,12 @@ import {ActionButton} from '@/components/ui/action-feedback';
 import {useEffect,useState} from 'react';
 import {useParams} from 'next/navigation';
 import {setupAPIClient} from '@/services/api';
+import {Search} from 'lucide-react';
 type Category={id:string;name:string;parentId?:string|null;kind?:string};
 export function HierarchicalCategories({categories,activeCategory,onSelect,dark=false,compact=false,organizationId:providedOrganizationId}:{categories:string[];activeCategory:string|null;onSelect:(name:string)=>void;dark?:boolean;compact?:boolean;organizationId?:string}){
  const params=useParams();const organizationId=providedOrganizationId || params.organizationId as string;
  const [catalog,setCatalog]=useState<Category[]>([]),[parentId,setParentId]=useState<string|null>(null),[ready,setReady]=useState(false),[error,setError]=useState(false);
+ const [categorySearch,setCategorySearch]=useState('');
  async function load(){setReady(false);setError(false);try{const {data}=await setupAPIClient().get('/category',{params:{organizationId,kind:'MENU'}});setCatalog(data.filter((c:Category)=>!c.kind||c.kind==='MENU'));setReady(true);}catch{setError(true);}}
  useEffect(()=>{setParentId(null);if(organizationId)void load();},[organizationId]);
  const roots=catalog.filter(c=>!c.parentId && (categories.includes(c.name)||catalog.some(child=>child.parentId===c.id&&categories.includes(child.name))));
@@ -20,13 +22,23 @@ export function HierarchicalCategories({categories,activeCategory,onSelect,dark=
   const root = selected?.parentId ? catalog.find(c=>c.id===selected.parentId) : selected;
   const subcategories = root ? catalog.filter(c=>c.parentId===root.id && categories.includes(c.name)) : [];
   const options = ready ? [...roots.map(c=>c.name), ...extras] : categories;
-  const selectStyle = 'h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500';
+  const selectStyle = 'h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500';
   return <nav aria-label="Categorias do cardápio" className="flex min-w-0 flex-wrap items-center gap-2 py-2">
-   <select aria-label="Categoria" className={`${selectStyle} !w-auto max-w-full flex-1 sm:max-w-72`} value={root?.name || activeCategory || ''} onChange={e=>{
+   <div className="relative min-w-0 flex-1 sm:max-w-44">
+    <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+    <input aria-label="Pesquisar categoria" list="menu-category-search-options" className={`${selectStyle} pl-8`} placeholder="Pesquisar categoria" value={categorySearch} onChange={e=>{
+     const value=e.target.value;
+     setCategorySearch(value);
+     const match=categories.find(name=>name.toLocaleLowerCase()===value.trim().toLocaleLowerCase());
+     if(match){onSelect(match);setCategorySearch('');}
+    }} />
+    <datalist id="menu-category-search-options">{categories.map(name=><option key={name} value={name}/>)}</datalist>
+   </div>
+   <select aria-label="Categoria" className={`${selectStyle} !w-auto max-w-full flex-1 sm:max-w-52`} value={root?.name || activeCategory || ''} onChange={e=>{
     const name=e.target.value; const next=catalog.find(c=>c.name===name);
     onSelect(!name ? '' : categories.includes(name) ? name : catalog.find(c=>c.parentId===next?.id && categories.includes(c.name))?.name || name);
    }}><option value="">Todas as categorias</option>{options.map(name=><option key={name} value={name}>{name}</option>)}</select>
-   {subcategories.length>0 && <select aria-label="Subcategoria" className={`${selectStyle} !w-auto max-w-full flex-1 sm:max-w-64`} value={activeCategory || ''} onChange={e=>onSelect(e.target.value)}>
+   {subcategories.length>0 && <select aria-label="Subcategoria" className={`${selectStyle} !w-auto max-w-full flex-1 sm:max-w-44`} value={activeCategory || ''} onChange={e=>onSelect(e.target.value)}>
     {root && categories.includes(root.name) && <option value={root.name}>Produtos de {root.name}</option>}
     {subcategories.map(c=><option key={c.id} value={c.name}>{c.name.replace(`${root?.name} / `,'')}</option>)}
    </select>}

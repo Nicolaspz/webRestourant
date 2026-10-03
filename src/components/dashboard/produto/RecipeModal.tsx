@@ -96,7 +96,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       setRecipeItems(itemsWithPrices);
     } catch (error) {
       console.error("Error fetching recipe data:", error);
-      toast.error("Erro ao carregar dados da receita");
+      toast.error("Erro ao carregar a ficha técnica");
     } finally {
       setIsLoading(false);
     }
@@ -238,10 +238,10 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
           <div>
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <Calculator className="w-5 h-5" />
-              Receita: {product.name} 
+              Ficha técnica: {product.name} 
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Gerencie os ingredientes e custos da receita deste produto
+              Gerencie os ingredientes e custos deste produto
             </p>
           </div>
           <Button
@@ -266,7 +266,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <DollarSign className="w-5 h-5" />
-                    Custo da Receita
+                    Custo da ficha técnica
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

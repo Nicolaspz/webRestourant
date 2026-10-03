@@ -58,8 +58,7 @@ const menuStructure: MenuItem[] = [
   ]},
   {icon:Utensils,label:'Atendimento',roles:[],subItems:[
     {label:'Gestão de Pedidos',href:'/dashboard/pedidos',icon:Package,roles:[]},
-    {label:'Mapa de Mesas',href:'/dashboard/mesa',icon:Table2,roles:[]},
-    {label:'Menu & Cardápio',href:'/dashboard/cardapio',icon:ClipboardList,roles:[]},
+    {label:'Menu',href:'/dashboard/mesa',icon:Table2,roles:[]},
     {label:'Painel da Cozinha',href:'/dashboard/cozinha',icon:ChefHat,roles:[]},
     {label:'Painel do Bar',href:'/dashboard/bar',icon:GlassWater,roles:[]},
     {label:'Pedidos por área',href:'/dashboard/areas',icon:ClipboardList,roles:[]},
@@ -69,10 +68,13 @@ const menuStructure: MenuItem[] = [
     {label:'Gestão de Categorias',href:'/dashboard/category',icon:ClipboardList,roles:[]},
     {label:'Ingredientes',href:'/dashboard/igredient',icon:Carrot,roles:[]},
     {label:'Stock',href:'/dashboard/stock',icon:Warehouse,roles:[]},
-    {label:'Economato',href:'/dashboard/economato',icon:Archive,roles:[]},
-    {label:'Áreas de consumo',href:'/dashboard/economato/areas',icon:Utensils,roles:[]},
-    {label:'Transferências',href:'/dashboard/economato/pedidos',icon:Package,roles:[]},
+  ]},
+  {icon:Archive,label:'Economato',roles:[],subItems:[
+    {label:'Levantamentos de pedidos',href:'/dashboard/economato',icon:ClipboardList,roles:[]},
+    {label:'Stock por área',href:'/dashboard/economato/stock',icon:Warehouse,roles:[]},
+    {label:'Reposição de áreas',href:'/dashboard/economato/pedidos',icon:Package,roles:[]},
     {label:'Quebras e consumos',href:'/dashboard/economato/consumo',icon:ClipboardList,roles:[]},
+    {label:'Áreas',href:'/dashboard/economato/areas',icon:Utensils,roles:[]},
   ]},
   {icon:ShoppingCart,label:'Compras e fornecedores',roles:[],subItems:[
     {label:'Compras',href:'/dashboard/compra',icon:ShoppingCart,roles:[]},
@@ -107,7 +109,9 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
       setUserRole(role as UserRole)
 
       // Filtrar menu baseado na role
-      const filtered = menuStructure.map(item => item.subItems ? {...item,subItems:item.subItems.filter(sub=>canScreen(sub.href))} : item)
+      const filtered = menuStructure.map(item => item.subItems ? {...item,subItems:item.subItems.filter(sub=>
+        canScreen(sub.href) && !(role === 'GARCON' && sub.href === '/dashboard/economato/areas')
+      )} : item)
         .filter(item => item.href ? canScreen(item.href) : !!item.subItems?.length);
       setFilteredMenu(filtered)
 

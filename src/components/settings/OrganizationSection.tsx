@@ -104,6 +104,8 @@ export function OrganizationSection({ organization, onUpdateSuccess }: Organizat
       formDataToSend.append('name', formData.name || '')
       formDataToSend.append('address', formData.address || '')
       formDataToSend.append('nif', formData.nif || '')
+      formDataToSend.append('margin_dish', String(formData.margin_dish ?? 30))
+      formDataToSend.append('margin_stock', String(formData.margin_stock ?? 15))
 
       if (fileInputRef.current?.files?.[0]) {
         console.log('📎 Anexando arquivo:', fileInputRef.current.files[0].name)
@@ -165,7 +167,9 @@ export function OrganizationSection({ organization, onUpdateSuccess }: Organizat
     name: formData?.name || '',
     nif: formData?.nif || '',
     address: formData?.address || '',
-    imageLogo: formData?.imageLogo || null
+    imageLogo: formData?.imageLogo || null,
+    margin_dish: formData?.margin_dish ?? 30,
+    margin_stock: formData?.margin_stock ?? 15
   }
 
   return (
@@ -280,6 +284,16 @@ export function OrganizationSection({ organization, onUpdateSuccess }: Organizat
               disabled={!isEditing || isLoading}
               placeholder="Endereço completo"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="margin_dish">Margem alvo dos pratos (%)</Label>
+            <Input id="margin_dish" name="margin_dish" type="number" min="0" max="99" step="1" value={safeFormData.margin_dish} onChange={handleInputChange} disabled={!isEditing || isLoading} />
+            <p className="text-xs text-gray-500">Calculada sobre o preço de venda, com base na ficha técnica.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="margin_stock">Margem alvo dos produtos de stock (%)</Label>
+            <Input id="margin_stock" name="margin_stock" type="number" min="0" max="99" step="1" value={safeFormData.margin_stock} onChange={handleInputChange} disabled={!isEditing || isLoading} />
+            <p className="text-xs text-gray-500">Calculada sobre o preço de venda, com base no custo de compra.</p>
           </div>
         </div>
 

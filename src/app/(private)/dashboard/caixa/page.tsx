@@ -16,6 +16,7 @@ import { toast } from 'react-toastify';
 import { CreditCard, X } from 'lucide-react';
 import { usePosSettings } from '@/hooks/usePosSettings';
 import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
+import { CashierPOS } from '@/components/dashboard/caixa/CashierPOS';
 
 const FaturaList = dynamic(() => import('@/components/dashboard/caixa/FaturaList'));
 const Estatisticas = dynamic(() => import('@/components/dashboard/caixa/Estatisticas'));
@@ -36,7 +37,7 @@ const Caixa = () => {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [loading, setLoading] = useState(false);
-  const [caixaAbertoParaAtender, setCaixaAbertoParaAtender] = useState(true);
+  const [caixaAbertoParaAtender, setCaixaAbertoParaAtender] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState('abertas');
   const [estatisticas, setEstatisticas] = useState(null);
@@ -334,13 +335,13 @@ const Caixa = () => {
 
   return (
     <div className="space-y-6">
-      <div className="max-w-[90vw] mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+      <div className={isCashier ? 'w-full' : 'max-w-[90vw] mx-auto space-y-6'}>
+        {!isCashier && <div className="flex items-center justify-between">
           <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Caixa do Restaurante</h1>
             <p className="text-muted-foreground">Abra mesas livres e feche mesas em atendimento.</p>
           </div>
-        </div>
+        </div>}
 
         {!user?.organizationId && (
           <div className="bg-destructive/15 border border-destructive/50 text-destructive dark:text-destructive-foreground px-4 py-3 rounded-lg">
@@ -359,9 +360,16 @@ const Caixa = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className={isCashier ? 'lg:col-span-4' : 'lg:col-span-3'}>
             {isCashier ? (
-              !caixaAbertoParaAtender ? <Card className="col-span-full p-8 text-center"><CardTitle className="mb-2">Abra o caixa para começar a atender</CardTitle><CardContent className="text-muted-foreground">Use o controlo de caixa no cabeçalho. As mesas ficam disponíveis depois da abertura.</CardContent></Card> : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{loading ? <p>A carregar mesas...</p> : mesas.length > 0 ? mesas.map(mesa => <Card key={mesa.id} className="border-2"><CardHeader className="pb-2"><div className="flex justify-between items-center"><CardTitle className="text-xl">Mesa {mesa.number}</CardTitle><Badge className={mesa.status === 'ocupada' ? 'bg-amber-600' : mesa.status === 'reservada' ? 'bg-blue-600' : 'bg-emerald-600'}>{mesa.status === 'ocupada' ? 'Em atendimento' : mesa.status === 'reservada' ? 'Reservada' : 'Livre'}</Badge></div></CardHeader><CardContent>{mesa.status === 'ocupada' ? <Button className="w-full bg-red-600 hover:bg-red-700" onClick={() => openCheckoutMesa(mesa)}>Fechar mesa</Button> : mesa.status === 'livre' ? <Button className="w-full" onClick={() => router.push(`/dashboard/cardapio/${user?.organizationId}/${mesa.number}`)}>Abrir mesa</Button> : <Button className="w-full" variant="outline" disabled>Reservada</Button>}</CardContent></Card>) : <Card className="col-span-full p-8 text-center text-muted-foreground">Nenhuma mesa configurada.</Card>}</div>
-              )
+              <CashierPOS
+                organizationId={user?.organizationId || ''}
+                userId={user?.id}
+                mesas={mesas}
+                loadingMesas={loading}
+                caixaAberto={caixaAbertoParaAtender}
+                onRefreshMesas={() => fetchMesas(true)}
+                onOpenCheckout={openCheckoutMesa}
+                onPrintConsumption={mesaNumber => imprimirPreConta(`/fact/${mesaNumber}`)}
+              />
             ) : activeTab === 'abertas' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {loading ? (

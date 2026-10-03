@@ -4,6 +4,7 @@ import { destroyCookie, setCookie, parseCookies } from 'nookies'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 import { api } from '../services/apiClients';
+import { getConnectionErrorMessage } from '../services/api';
 import { readCache } from '../services/readCache';
 
 type AuthContextData = {
@@ -246,6 +247,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     } catch (err: any) {
       const errorMessage =
+        getConnectionErrorMessage(err) ||
         err.response?.data?.error ||
         err.response?.data?.message ||
         err.message ||

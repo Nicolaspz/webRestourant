@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'react-toastify';
+import { Filter } from 'lucide-react';
 
 type Pickup = {
  id: string; orderId: string; status: string; code?: string; createdAt: string; deliveredAt?: string;
@@ -40,6 +41,7 @@ export function StockFulfillments() {
  const [checked, setChecked] = useState(false);
  const [filters, setFilters] = useState(todayFilters);
  const [draftFilters, setDraftFilters] = useState(filters);
+ const [filtersOpen, setFiltersOpen] = useState(false);
  const [page, setPage] = useState(1);
  const [total, setTotal] = useState(0);
  const [pageSize, setPageSize] = useState(25);
@@ -102,8 +104,13 @@ export function StockFulfillments() {
  const location = (p: Pickup) => p.order.tipoOrder === 'takeaway' ? 'Takeaway' : p.order.tipoOrder === 'balcao' ? 'Balcão' : `Mesa ${p.order.Session?.mesa.number ?? '—'}`;
  return <section className="space-y-4">
    <div className="flex flex-wrap justify-between gap-3"><h2 className="text-xl font-semibold">Levantamentos dos pedidos</h2><div className="flex gap-2">{can("pickups.export") && <Button variant="outline" onClick={exportReport} disabled={exporting || loading || error}>{exporting ? 'A exportar…' : 'Exportar CSV'}</Button>}<Button variant="outline" onClick={refresh} disabled={loading}>{loading ? 'A carregar…' : 'Atualizar'}</Button></div></div>
-   <p className="text-muted-foreground">Requisições automáticas dos pedidos de clientes. O stock fica reservado até o economato conferir os produtos e confirmar o código. O cancelamento antes do levantamento liberta a reserva.</p>
-   <ActionForm className="grid gap-3 rounded-xl border bg-muted/30 p-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={e => {
+   <p className="text-muted-foreground">Aqui o economato confere e entrega artigos reservados para pedidos de clientes. Isto não transfere stock entre áreas: a reposição de áreas é feita na secção própria. O cancelamento do pedido antes do levantamento liberta a reserva.</p>
+   <div>
+    <Button type="button" variant="outline" size="sm" aria-expanded={filtersOpen} aria-controls="pickup-filters" onClick={() => setFiltersOpen(open => !open)}>
+      <Filter className="mr-2 h-4 w-4" />{filtersOpen ? 'Ocultar filtros' : 'Filtros'}
+    </Button>
+   </div>
+   {filtersOpen && <ActionForm id="pickup-filters" className="grid gap-3 rounded-xl border bg-muted/30 p-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={e => {
      e.preventDefault();
      if (draftFilters.startDate && draftFilters.endDate && draftFilters.startDate > draftFilters.endDate) { toast.error('A data inicial deve ser anterior ou igual à final.'); return; }
      setPage(1); setFilters({ ...draftFilters });
@@ -114,7 +121,7 @@ export function StockFulfillments() {
      <div className="space-y-1"><Label htmlFor="pickup-start">Desde (Luanda)</Label><Input id="pickup-start" type="date" value={draftFilters.startDate} onChange={e => setDraftFilters({ ...draftFilters, startDate: e.target.value })} /></div>
      <div className="space-y-1"><Label htmlFor="pickup-end">Até, inclusive (Luanda)</Label><Input id="pickup-end" type="date" value={draftFilters.endDate} onChange={e => setDraftFilters({ ...draftFilters, endDate: e.target.value })} /></div>
      <div className="flex items-end gap-2"><Button type="submit">Aplicar filtros</Button><Button type="button" variant="outline" onClick={() => { const defaults = todayFilters(); setDraftFilters(defaults); setFilters(defaults); setPage(1); }}>Repor hoje</Button></div>
-   </ActionForm>
+   </ActionForm>}
    <p className="text-sm text-muted-foreground">{total} levantamento(s) nos filtros aplicados. Datas na hora de Luanda. A exportação inclui todas as páginas filtradas, uma linha por produto, sem códigos de confirmação.</p>
    {error ? <p role="alert">Não foi possível carregar. Tente atualizar ou rever os filtros.</p> : !items.length && !loading ? <p>Sem levantamentos encontrados.</p> : items.map(p => <article key={p.id} className="rounded-xl border p-5 space-y-3">
      <div className="flex flex-wrap justify-between gap-2"><h3 className="font-semibold">{location(p)} · Pedido {p.orderId.slice(0, 8)}</h3><span className={p.status === 'pendente' ? 'text-amber-600' : 'text-muted-foreground'}>{p.status === 'pendente' ? 'Reservado — aguarda levantamento' : p.status === 'entregue' ? 'Entregue pelo economato' : 'Cancelado — reserva libertada'}</span></div>

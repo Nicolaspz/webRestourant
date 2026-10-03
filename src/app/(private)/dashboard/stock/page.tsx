@@ -5,7 +5,7 @@ import { setupAPIClient } from "@/services/api";
 import { AuthContext } from "@/contexts/AuthContext";
 import { StockTable } from "@/components/dashboard/stock/StockTable"; 
 import { PageContainer } from "@/components/dashboard/stock/PageContainer"; 
-import { PageHeader } from "@/components/dashboard/stock/PageHeader"; 
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 
 // Interface baseada nas que você forneceu
 interface StockProduct {
@@ -86,9 +86,9 @@ export default function StockPage() {
 
   return (
     <PageContainer>
-      <PageHeader
+      <DashboardPageHeader
         title="Stock"
-        description="Gerencie o stock dos seus produtos"
+        description="Consulte quantidades disponíveis, reservas e preços dos produtos."
       />
       
       <StockTable products={products} isLoading={isLoading} />

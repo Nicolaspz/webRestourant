@@ -4,6 +4,19 @@ import { parseCookies } from 'nookies';
 import { API_BASE_URL } from '../../config'; 
 import { readCache } from './readCache';
 
+const CONNECTION_ERROR_MESSAGE = 'Sem conexão à internet. Verifique a sua rede e tente novamente.';
+const CONNECTION_ERROR_PATTERN = /can't reach database server|unable to reach database|database server.*(unreachable|unavailable)|\bP1001\b|\bECONNREFUSED\b|\bENOTFOUND\b|\bEHOSTUNREACH\b|\bETIMEDOUT\b|network error|err_network|err_internet_disconnected/i;
+
+export function getConnectionErrorMessage(error: any): string | undefined {
+  const responseMessage = error?.response?.data?.error || error?.response?.data?.message;
+  const message = typeof responseMessage === 'string' ? responseMessage : error?.message;
+  const hasNoResponse = !error?.response;
+  const networkCode = ['ERR_NETWORK', 'ERR_INTERNET_DISCONNECTED', 'ECONNABORTED', 'ETIMEDOUT'].includes(error?.code);
+  return CONNECTION_ERROR_PATTERN.test(String(message || '')) || (hasNoResponse && networkCode)
+    ? CONNECTION_ERROR_MESSAGE
+    : undefined;
+}
+
 let browserClient: AxiosInstance | null = null;
 
 const createAPIClient = (ctx?: any) => {
@@ -26,6 +39,14 @@ const createAPIClient = (ctx?: any) => {
     return response;
   }, error => {
     if ([401, 403].includes(error.response?.status)) readCache.clear();
+    const connectionMessage = getConnectionErrorMessage(error);
+    if (connectionMessage) {
+      error.message = connectionMessage;
+      if (error.response?.data && typeof error.response.data === 'object') {
+        error.response.data.error = connectionMessage;
+        error.response.data.message = connectionMessage;
+      }
+    }
     return Promise.reject(error);
   });
 

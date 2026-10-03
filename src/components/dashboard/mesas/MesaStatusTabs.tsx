@@ -10,6 +10,7 @@ import { Mesa } from "@/types/product";
 import MesaCard from "./MesaCard";
 import QRCodePrinter from "./QRCodePDFGenerator";
 import { Button } from "@/components/ui/button";
+import { MesaTransferDialog } from './MesaTransferDialog';
 
 interface MesaStatusTabsProps {
   actions?: React.ReactNode;
@@ -24,6 +25,7 @@ interface MesaStatusTabsProps {
   onFactMesa: (mesaId: string) => void;
   onEliminarMesa: (mesaId: string) => void;
   onGerarQRCode?: (mesaId: string, mesaNumber: number) => Promise<void>;
+  onTransferComplete: () => void;
 }
 
 const MesaStatusTabs = ({
@@ -38,7 +40,8 @@ const MesaStatusTabs = ({
   onFecharMesa,
   onEliminarMesa,
   onFactMesa,
-  onGerarQRCode
+  onGerarQRCode,
+  onTransferComplete
 }: MesaStatusTabsProps) => {
  const {can}=useAccess();
   return (
@@ -81,6 +84,8 @@ const MesaStatusTabs = ({
               onFecharMesa={onFecharMesa}
               onEliminarMesa={onEliminarMesa}
               onFactMesa={onFactMesa}
+              mesas={mesas}
+              onTransferComplete={onTransferComplete}
             />
 
           ))}
@@ -186,6 +191,7 @@ const MesaStatusTabs = ({
                       </Button>
                     </>
                   )}
+                  {can('transfers.create') && <MesaTransferDialog mesa={mesa} mesas={mesas} onComplete={onTransferComplete} />}
                 </CardFooter>
               </Card>
             );

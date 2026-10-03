@@ -53,7 +53,7 @@ export function StockRequestDialog({ open, onOpenChange, destinationId = '', onS
       setSaving(true);
       await economatoService.createPedido({ areaOrigemId: source === 'general' ? null : source, areaDestinoId: destination, observacoes: notes,
         itens: entries.map(([productId, quantity]) => ({ productId, quantity })) }, user.organizationId, user.id);
-      toast.success('Solicitação confirmada. O seu código está na tab Pedidos; aguarde a aprovação do economato.');
+      toast.success('Solicitação confirmada. O seu código está na secção Reposição de áreas; aguarde a aprovação do economato.');
       onOpenChange(false); onSuccess?.(); window.dispatchEvent(new Event('economato-updated'));
     } catch (e: any) {
       const requestId = e.response?.data?.requestId;
@@ -62,7 +62,7 @@ export function StockRequestDialog({ open, onOpenChange, destinationId = '', onS
     finally { setSaving(false); }
   };
   return <Dialog open={open} onOpenChange={value => { if (!saving) onOpenChange(value); }}><DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
-    <DialogHeader><DialogTitle>{review ? 'Conferir solicitação' : 'Solicitar stock'}</DialogTitle><DialogDescription>Escolha a origem e quem recebe. O stock só muda após aprovação e confirmação da entrega.</DialogDescription></DialogHeader>
+    <DialogHeader><DialogTitle>{review ? 'Conferir reposição' : 'Solicitar reposição'}</DialogTitle><DialogDescription>Transfira produtos do stock geral ou de outra área para uma área de serviço. O stock só muda após aprovação e confirmação da entrega.</DialogDescription></DialogHeader>
     <fieldset disabled={saving} className={review ? "hidden" : "space-y-4"}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2"><Label htmlFor="stock-source">Origem</Label><select id="stock-source" className="h-11 w-full rounded-md border bg-background px-3" value={source} onChange={e => setSource(e.target.value)}><option value="general">Stock Geral</option>{areas.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}</select></div>
@@ -79,7 +79,7 @@ export function StockRequestDialog({ open, onOpenChange, destinationId = '', onS
         return <li key={id} className="flex justify-between gap-4 py-2"><span>{product?.name}</span><strong>{quantity} {product?.unit || 'un'}</strong></li>;
       })}</ul>
       {notes && <p>{notes}</p>}
-      <p className="text-sm text-muted-foreground">Ao confirmar, o pedido e o código de levantamento são criados. Só o solicitante vê o código. O economato aprova e regista a entrega.</p>
+      <p className="text-sm text-muted-foreground">Ao confirmar, o pedido e o código de confirmação da entrega são criados. Só o solicitante vê o código. O economato aprova e regista a saída e a entrada na área de destino.</p>
       <Button variant="outline" disabled={saving} onClick={() => setReview(false)}>Editar lista</Button>
     </div>}
     <DialogFooter><Button variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>Cancelar</Button><Button disabled={saving || loading || !!error || !Object.keys(quantities).length} onClick={submit}>{saving ? 'A enviar…' : review ? 'Confirmar e gerar código' : 'Conferir lista'}</Button></DialogFooter>

@@ -90,7 +90,7 @@ export function buildReceiptPdf(dados: DadosSessao, payment?: PaymentInfo, forma
   const date = paid ? dados.fechadaEm || dados.abertaEm : new Date();
   if (date) text((paid?'Data: ':'Consulta: ')+new Date(date).toLocaleString('pt-PT'));
   if (dados.abertaEm) text('Abertura: '+new Date(dados.abertaEm).toLocaleString('pt-PT'));
-  text('Doc: '+(paid ? dados.agtDocumentNo || dados.numero || dados.codigoAbertura : dados.codigoAbertura));
+  if (paid) text('Doc: '+(dados.agtDocumentNo || dados.numero || dados.codigoAbertura));
   const waiter = dados.abertoPorNome || dados.pedidos?.find(p=>p.atendidoPor)?.atendidoPor;
   if (waiter) text('Atendido por: '+waiter);
   if (paid || dados.clienteNome || dados.clienteNif) {
