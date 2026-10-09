@@ -367,7 +367,7 @@ export function CaixaControl() {
                                 />
                             </div>}
 
-                            {isMyCaixaOpen && <div className="space-y-3">{['dinheiro','multicaixa','transferencia','cartao','outro'].map(metodo => <div key={metodo} className="space-y-1"><Label htmlFor={`declared-${metodo}`} className="capitalize">{formatMetodoPagamento(metodo)} (Kz)</Label><Input id={`declared-${metodo}`} type="text" inputMode="decimal" value={declaredTotals[metodo] || ''} onChange={event => setDeclaredTotals(current => ({...current,[metodo]:formatKzDraft(event.target.value)}))} onBlur={() => { const value = parseKzInput(declaredTotals[metodo] || ''); if (Number.isFinite(value)) setDeclaredTotals(current => ({...current,[metodo]:formatKz(value)})); }} placeholder="0,00" /></div>)}</div>}
+                            {isMyCaixaOpen && <div className="space-y-3">{['dinheiro','transferencia','cartao','outro'].map(metodo => <div key={metodo} className="space-y-1"><Label htmlFor={`declared-${metodo}`} className="capitalize">{formatMetodoPagamento(metodo)} (Kz)</Label><Input id={`declared-${metodo}`} type="text" inputMode="decimal" value={declaredTotals[metodo] || ''} onChange={event => setDeclaredTotals(current => ({...current,[metodo]:formatKzDraft(event.target.value)}))} onBlur={() => { const value = parseKzInput(declaredTotals[metodo] || ''); if (Number.isFinite(value)) setDeclaredTotals(current => ({...current,[metodo]:formatKz(value)})); }} placeholder="0,00" /></div>)}</div>}
                         </div>
 
                         <div className="p-4 border-t dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-end gap-2">

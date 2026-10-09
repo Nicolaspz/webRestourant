@@ -24,6 +24,8 @@ type PosProduct = {
   PrecoVenda?: Array<{ preco_venda: number | string }>;
 };
 type CartLine = { product: PosProduct; quantity: number };
+type MesaOrderItem = { id: string; amount: number; canceled?: boolean; prepared: boolean; status?: 'pendente' | 'em_preparacao' | 'pronto'; deliveredAt?: string | null; Product?: { name: string } };
+type MesaOrder = { id: string; name?: string | null; draft: boolean; items: MesaOrderItem[] };
 
 const money = new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const amountOf = (product: PosProduct) => Number(product.PrecoVenda?.[0]?.preco_venda ?? 0);
@@ -62,10 +64,21 @@ export function CashierPOS({
   const [carts, setCarts] = useState<Record<string, CartLine[]>>({});
   const [busy, setBusy] = useState(false);
   const [emptyMesaToClose, setEmptyMesaToClose] = useState<Mesa | null>(null);
+  const [mesaOrders, setMesaOrders] = useState<MesaOrder[]>([]);
   const requestKey = useRef<string | null>(null);
   const { socket } = useSocket();
-  const api = setupAPIClient();
+  const api = useMemo(() => setupAPIClient(), []);
   const isWaiter = mode === 'waiter';
+
+  const loadMesaOrders = useCallback(async (mesaId: string) => {
+    if (!isWaiter || !mesaId) return;
+    try {
+      const { data } = await api.get('/pos/tables/orders', { params: { organizationId, mesaId } });
+      setMesaOrders(data || []);
+    } catch {
+      setMesaOrders([]);
+    }
+  }, [api, isWaiter, organizationId]);
 
   const loadProducts = useCallback(async (force = false) => {
     if (!organizationId) return;
@@ -97,11 +110,11 @@ export function CashierPOS({
     const refresh = (event: { organizationId?: string }) => {
       if (event.organizationId !== organizationId) return;
       clearTimeout(timer);
-      timer = setTimeout(() => { void onRefreshMesas(); }, 250);
+      timer = setTimeout(() => { void onRefreshMesas(); if (isWaiter && productEntryOpen && selectedMesaId) void loadMesaOrders(selectedMesaId); }, 250);
     };
     socket.on('orders_refresh', refresh);
     return () => { clearTimeout(timer); socket.off('orders_refresh', refresh); };
-  }, [socket, organizationId, onRefreshMesas]);
+  }, [socket, organizationId, onRefreshMesas, isWaiter, productEntryOpen, selectedMesaId, loadMesaOrders]);
 
   const selectedMesa = mesas.find(mesa => mesa.id === selectedMesaId);
   const cart = selectedMesa ? carts[selectedMesa.id] || [] : [];
@@ -147,6 +160,7 @@ export function CashierPOS({
   const beginProductEntry = async (mesa: Mesa) => {
     if (!caixaAberto || busy) return;
     setSelectedMesaId(mesa.id);
+    if (isWaiter) void loadMesaOrders(mesa.id);
     setCategory('Todas');
     setProductSearch('');
     setProductEntryOpen(true);
@@ -183,6 +197,7 @@ export function CashierPOS({
       setCarts(current => ({ ...current, [selectedMesa.id]: [] }));
       requestKey.current = null;
       toast.success(`Pedido enviado para a Mesa ${selectedMesa.number}.`);
+      if (isWaiter) void loadMesaOrders(selectedMesa.id);
       setTableTab('ocupadas');
       setProductEntryOpen(false);
       await onRefreshMesas();
@@ -238,7 +253,7 @@ export function CashierPOS({
           </div>
           <div className="flex items-center gap-2">
             <div className="relative w-full sm:w-64"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={mesaSearch} onChange={event => setMesaSearch(event.target.value)} placeholder="Pesquisar mesa" className="pl-9" /></div>
-            <Button type="button" variant="outline" disabled={loadingMesas || productsRefreshing} onClick={() => { void onRefreshMesas(); void loadProducts(true); }} aria-label="Atualizar mesas e produtos"><Loader2 className={`h-4 w-4 ${(loadingMesas || productsRefreshing) ? 'animate-spin' : 'hidden'}`} />{!(loadingMesas || productsRefreshing) && 'Atualizar'}</Button>
+            <Button type="button" variant="outline" disabled={loadingMesas || productsRefreshing} onClick={() => { void onRefreshMesas(); void loadProducts(true); if (isWaiter && selectedMesaId) void loadMesaOrders(selectedMesaId); }} aria-label="Atualizar mesas e produtos"><Loader2 className={`h-4 w-4 ${(loadingMesas || productsRefreshing) ? 'animate-spin' : 'hidden'}`} />{!(loadingMesas || productsRefreshing) && 'Atualizar'}</Button>
           </div>
         </div>
         <div role="tablist" aria-label="Estado das mesas" className="mb-4 inline-flex rounded-xl bg-muted p-1">
@@ -270,7 +285,12 @@ export function CashierPOS({
           </section>
 
           <aside className="flex min-w-0 flex-col rounded-2xl border bg-background shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100dvh-7rem)]">
-            <div className="border-b p-4"><h2 className="font-semibold">Pedido da Mesa {selectedMesa.number}</h2><p className="text-xs text-muted-foreground">{cart.reduce((sum, line) => sum + line.quantity, 0)} artigo(s)</p></div>
+            <div className="border-b p-4"><h2 className="font-semibold">Pedido da Mesa {selectedMesa.number}</h2><p className="text-xs text-muted-foreground">{cart.reduce((sum, line) => sum + line.quantity, 0)} artigo(s) no novo pedido</p></div>
+            {isWaiter && <div className="border-b p-4"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-semibold">Pedidos enviados</h3><Button type="button" variant="ghost" size="sm" onClick={() => void loadMesaOrders(selectedMesa.id)}>Atualizar</Button></div><div className="max-h-40 space-y-2 overflow-y-auto">{mesaOrders.flatMap(order => order.items.filter(item => !item.canceled).map(item => {
+              const status = item.deliveredAt ? 'Entregue' : item.status === 'em_preparacao' ? 'Em preparação' : item.prepared || item.status === 'pronto' ? 'Pronto' : order.draft ? 'Por enviar' : 'Pendente';
+              const color = status === 'Entregue' ? 'bg-sky-100 text-sky-800' : status === 'Pronto' ? 'bg-emerald-100 text-emerald-800' : status === 'Em preparação' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700';
+              return <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-sm"><span className="min-w-0 truncate">{item.amount}× {item.Product?.name || 'Produto'}</span><Badge className={`shrink-0 ${color}`}>{status}</Badge></div>;
+            }))}{mesaOrders.every(order => order.items.every(item => item.canceled)) && <p className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">Ainda não há pedidos enviados.</p>}</div></div>}
             <div className="min-h-0 flex-1 overflow-y-auto p-4">{cart.length ? <div className="space-y-2">{cart.map(line => <div key={line.product.id} className="flex items-center gap-2 rounded-lg border p-2"><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{line.product.name}</p><p className="text-xs text-muted-foreground">{money.format(amountOf(line.product) * line.quantity)} Kz</p></div><Button type="button" variant="outline" size="icon" className="h-8 w-8" disabled={busy} onClick={() => adjustQuantity(line.product.id, -1)} aria-label={`Diminuir ${line.product.name}`}><Minus className="h-3 w-3" /></Button><span className="w-6 text-center text-sm">{line.quantity}</span><Button type="button" variant="outline" size="icon" className="h-8 w-8" disabled={busy} onClick={() => adjustQuantity(line.product.id, 1)} aria-label={`Aumentar ${line.product.name}`}><Plus className="h-3 w-3" /></Button></div>)}</div> : <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">Selecione os produtos para montar o pedido.</p>}</div>
             <div className="border-t bg-muted/30 p-4"><div className="mb-3 flex items-center justify-between"><span className="font-semibold">Total</span><strong className="text-lg">{money.format(cartTotal)} Kz</strong></div><Button type="button" className="w-full" disabled={!caixaAberto || !cart.length || busy} onClick={sendOrder}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}{busy ? 'A enviar…' : 'Enviar pedido'}</Button></div>
           </aside>

@@ -28,8 +28,18 @@ export function AccessProvider({children}:{children:ReactNode}) {
  activeScope.current = scope;
  const load=useCallback(async(force=false)=>{
   if(!user?.id){setAccess(null);setLoading(false);return;}
-  try{const response=await cachedGet<Access>('/access',{},60000,force);if(activeScope.current===scope)setAccess(response.data);}
-  catch{if(activeScope.current===scope)setAccess(null);}
+  try{
+   const response=await cachedGet<Access>('/access',{},60000,force);
+   if(activeScope.current===scope)setAccess(response.data);
+  }
+  catch(error:any){
+   if(activeScope.current===scope){
+    const status=error?.response?.status;
+    // Falhas transitórias de rede/servidor não devem remover permissões
+    // que já foram validadas nesta sessão. Uma recusa explícita invalida-as.
+    if(status===401||status===403)setAccess(null);
+   }
+  }
   finally{if(activeScope.current===scope)setLoading(false);}
  },[scope,user?.id]);
  const refresh=useCallback(()=>load(true),[load]);
@@ -48,9 +58,12 @@ export function AccessProvider({children}:{children:ReactNode}) {
  return <Context.Provider value={{access,loading,can,canScreen,refresh}}>{children}</Context.Provider>;
 }
 export function AccessGate({children}:{children:ReactNode}) {
- const path=usePathname();const {loading,access,canScreen}=useAccess();
+ const path=usePathname();const {loading,access,canScreen,refresh}=useAccess();
  if(loading) return <p role="status" className="p-6">A validar permissões…</p>;
- if(!access) return <p role="alert" className="p-6">Não foi possível validar o acesso. Atualize a página ou inicie sessão novamente.</p>;
+ if(!access) return <section role="alert" className="m-6 rounded-xl border bg-card p-6 text-card-foreground">
+  <p>Não foi possível validar o acesso neste momento.</p>
+  <button type="button" onClick={()=>void refresh()} className="mt-3 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">Tentar novamente</button>
+ </section>;
  if(!canScreen(path)) return <section className="p-6"><h1>Acesso negado</h1></section>;
  return <>{children}</>;
 }

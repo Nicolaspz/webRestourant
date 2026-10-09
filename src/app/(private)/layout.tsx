@@ -34,15 +34,10 @@ function PrivateContent({children}:{children:React.ReactNode}) {
   const pathname = usePathname()
   const router = useRouter()
   const { isAuthenticated, isInitializing, user } = useContext(AuthContext)
-  const isCashier = user?.role?.toUpperCase() === 'CAIXA'
 
   useEffect(() => {
     if (!isInitializing && !isAuthenticated) router.replace('/login')
   }, [isAuthenticated, isInitializing, router])
-
-  useEffect(() => {
-    if (!isInitializing && isAuthenticated && isCashier && pathname !== '/dashboard/caixa') router.replace('/dashboard/caixa')
-  }, [isAuthenticated, isInitializing, isCashier, pathname, router])
 
   useEffect(() => {
     setSidebarOpen(false)
@@ -88,13 +83,13 @@ function PrivateContent({children}:{children:React.ReactNode}) {
       <a href="#conteudo-principal" className="admin-skip-link">Saltar para o conteúdo</a>
       <div className="admin-shell flex h-dvh overflow-hidden bg-background">
         {/* Sidebar Desktop */}
-        {!isCashier && <div id="desktop-sidebar" className={sidebarCollapsed ? "hidden" : "hidden lg:flex shrink-0"}>
+        <div id="desktop-sidebar" className={sidebarCollapsed ? "hidden" : "hidden lg:flex shrink-0"}>
           <Sidebar />
-        </div>}
+        </div>
 
         {/* Sidebar Mobile Overlay */}
         <AnimatePresence>
-          {sidebarOpen && !isCashier && (
+          {sidebarOpen && (
             <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true" aria-label="Menu principal">
               {/* Overlay */}
               <motion.div
@@ -124,8 +119,8 @@ function PrivateContent({children}:{children:React.ReactNode}) {
 
         {/* Main content */}
         <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
-          <Header toggleSidebar={() => setSidebarOpen(true)} toggleDesktopSidebar={toggleDesktopSidebar} sidebarCollapsed={sidebarCollapsed} isCashier={isCashier} />
-          <main id="conteudo-principal" tabIndex={-1} className={`admin-content flex-1 overflow-y-auto bg-background ${isCashier ? 'p-0' : 'p-4 md:p-6 xl:p-8'}`}>
+          <Header toggleSidebar={() => setSidebarOpen(true)} toggleDesktopSidebar={toggleDesktopSidebar} sidebarCollapsed={sidebarCollapsed} />
+          <main id="conteudo-principal" tabIndex={-1} className={`admin-content flex-1 overflow-y-auto bg-background ${user?.role?.toUpperCase() === 'CAIXA' ? 'p-0' : 'p-4 md:p-6 xl:p-8'}`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}

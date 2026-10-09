@@ -63,6 +63,8 @@ export interface Product {
   categoryId: string;
   organizationId: string;
   defaultAreaId?: string; // ← Já tem
+  preparationAreaId?: string;
+  preparationArea?: { id: string; nome: string };
   defaultArea?: { // ← Adicione esta propriedade
     id: string;
     nome: string;
@@ -101,6 +103,7 @@ export interface ProductFormData {
   cost?: number;
   existingBanner?: string;
   defaultAreaId: string;
+  preparationAreaId: string;
   taxPercentage: number;
   taxExemptionCode: string;
 }

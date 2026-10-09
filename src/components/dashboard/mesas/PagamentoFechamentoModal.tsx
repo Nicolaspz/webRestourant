@@ -54,7 +54,6 @@ export function PagamentoFechamentoModal({
   const metodosPagamento = [
     { value: 'dinheiro', label: 'Dinheiro' },
     { value: 'cartao', label: 'Cartão Débito' },
-    { value: 'multicaixa', label: 'Multicaixa' },
     { value: 'transferencia', label: 'Transferência' },
   ];
 

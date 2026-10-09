@@ -19,6 +19,9 @@ export const ordersService = {
   togglePrepared(itemId: string, prepared: boolean, organizationId: string, areaId?: string) {
     return api.put(areaId ? `/area-orders/${encodeURIComponent(areaId)}/items/${itemId}` : `/items/${itemId}/toggle-prepared`, { prepared }, { params: { organizationId } });
   },
+  updateItemStatus(itemId: string, status: 'pendente' | 'em_preparacao' | 'pronto' | 'entregue', organizationId: string, areaId?: string) {
+    return api.put(areaId ? `/area-orders/${encodeURIComponent(areaId)}/items/${itemId}` : `/items/${itemId}/toggle-prepared`, { status }, { params: { organizationId } });
+  },
   finishMany(orderIds: string[], organizationId: string) {
     return api.put('/orders/finish-many', { orderIds, organizationId });
   },

@@ -171,7 +171,7 @@ export default function PosReceipt({ isOpen, onClose, data, onConfirmPayment }: 
             <h4 className="text-lg font-semibold mb-4">PAGAMENTO</h4>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-              {['dinheiro', 'multicaixa', 'cartao', 'transferencia'].map((method) => (
+              {['dinheiro', 'cartao', 'transferencia'].map((method) => (
                 <ActionButton
                   key={method}
                   onClick={() => setSelectedPayment(method)}

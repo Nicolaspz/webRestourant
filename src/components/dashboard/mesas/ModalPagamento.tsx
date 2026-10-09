@@ -3,12 +3,11 @@ import {ActionButton} from '@/components/ui/action-feedback';
 
 
 import { GpayReferencePanel } from './GpayReferencePanel';
-import {BillingNoticeCheckout} from '@/components/BillingNoticeCheckout';
 import {useAccess} from '@/contexts/AccessContext';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Banknote, CreditCard, Smartphone, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft, X, Building2, User, Minus, Send, Copy, MessageCircle, ExternalLink } from 'lucide-react';
+import { Banknote, CreditCard, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft, X, Building2, User, Minus, Send, Copy, MessageCircle, ExternalLink } from 'lucide-react';
 import { setupAPIClient } from '@/services/api';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,7 +30,6 @@ interface ModalPagamentoProps {
 const METODOS: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
     { value: 'dinheiro', label: 'Dinheiro', icon: <Banknote className="h-5 w-5" /> },
     { value: 'cartao', label: 'Cartão', icon: <CreditCard className="h-5 w-5" /> },
-    { value: 'multicaixa', label: 'Multicaixa', icon: <Smartphone className="h-5 w-5" /> },
     { value: 'transferencia', label: 'Transferência', icon: <ArrowLeftRight className="h-5 w-5" /> },
 ];
 
@@ -45,7 +43,6 @@ export default function ModalPagamento({
     onSuccess,
 }: ModalPagamentoProps) {
     const [referencePending, setReferencePending] = useState(false);
-    const [billingNoticeOpen,setBillingNoticeOpen] = useState(false);
     const {can}=useAccess();
     const [step, setStep] = useState<1 | 2>(1);
     const [conta, setConta] = useState<AccountPreview | null>(null);
@@ -148,9 +145,12 @@ export default function ModalPagamento({
             // Preserva os dados digitados mesmo se uma versão antiga da API não os
             // devolver no payload do fecho; o PDF nunca volta a "Consumidor Final".
             const invoiceReady = await onSuccess({ ...result, isEmpresa: body.isEmpresa, clienteNome: body.clienteNome, clienteNif: body.clienteNif });
-            toast.success(invoiceReady
-                ? `Mesa ${mesaNumber} paga e fatura fiscal gerada com sucesso!`
-                : `Mesa ${mesaNumber} paga com sucesso!`);
+            const fiscalReady = ['VALID', 'VALID_PENALTY', 'SUCCESS', 'COMPLETED', 'PROCESSED_SUCCESS'].includes(String(result.fiscalStatus || '').toUpperCase());
+            toast.success(result.fiscalStatus && !fiscalReady
+                ? `Mesa ${mesaNumber} paga. Comprovativo provisório entregue; fatura fiscal pendente.`
+                : invoiceReady
+                    ? `Mesa ${mesaNumber} paga e fatura fiscal gerada com sucesso!`
+                    : `Mesa ${mesaNumber} paga com sucesso!`);
             onClose();
         } catch (error: any) {
             toast.error(error?.response?.data?.error || 'Erro ao processar pagamento');
@@ -498,8 +498,7 @@ export default function ModalPagamento({
                 </div>
 
                 {/* Footer Custom */}
-                {billingNoticeOpen && <BillingNoticeCheckout tableNumber={mesaNumber} sessionId={conta?.sessaoId||conta?.sessionId||''} onClose={()=>setBillingNoticeOpen(false)} onComplete={()=>{setBillingNoticeOpen(false);onClose();window.dispatchEvent(new Event('billing-notice-created'));}}/>}
-                {step===1 && can('invoices.submit') && <div className="px-6 pt-3"><Button className="w-full" variant="outline" disabled={loadingPreview||!conta||temItensPendentes||referencePending} onClick={()=>setBillingNoticeOpen(true)}>Concluir com aviso de cobrança (pagar depois)</Button></div>}
+                {/* Aviso de cobrança temporariamente desativado no fecho da mesa. */}
                 <div className="p-6 border-t bg-muted/30 flex gap-3">
                     {step === 1 ? (
                         <>

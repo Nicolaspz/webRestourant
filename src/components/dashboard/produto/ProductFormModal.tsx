@@ -58,6 +58,7 @@ export function ProductFormModal({
     price: 0,
     existingBanner: '',
     defaultAreaId: '',
+    preparationAreaId: '',
     taxPercentage: 14,
     taxExemptionCode: '',
   });
@@ -72,8 +73,8 @@ export function ProductFormModal({
     ? `${category.parent.name} › ${category.name}`
     : category.name;
 
-  const fetchAreas = async () => {
-    if (!organizationId) return;
+  const fetchAreas = async (): Promise<Area[]> => {
+    if (!organizationId) return [];
     try {
       setIsLoadingAreas(true);
       const data = await economatoService.getAreas(organizationId);
@@ -82,9 +83,11 @@ export function ProductFormModal({
         quantidade: data.length,
         áreas: data.map(a => ({ id: a.id, nome: a.nome }))
       });
+      return data;
     } catch (error) {
       console.error("❌ Erro ao carregar áreas:", error);
       toast.error("Erro ao carregar áreas");
+      return [];
     } finally {
       setIsLoadingAreas(false);
     }
@@ -99,7 +102,8 @@ export function ProductFormModal({
       console.log("   InitialData:", initialData);
 
       setIsDataReady(false);
-      await fetchAreas();
+      const loadedAreas = await fetchAreas();
+      const kitchenAreaId = loadedAreas.find(area => area.nome.trim().toLocaleLowerCase('pt') === 'cozinha')?.id || '';
 
       if (mode === 'edit' && initialData) {
         console.log("🎯 SETANDO FORM PARA EDIÇÃO");
@@ -134,6 +138,7 @@ export function ProductFormModal({
           price: initialData.PrecoVenda?.[0]?.preco_venda || 0,
           existingBanner: initialData.banner || '',
           defaultAreaId: areaId,
+          preparationAreaId: initialData.preparationAreaId || initialData.preparationArea?.id || kitchenAreaId,
           taxPercentage: Number(initialData.taxPercentage ?? 14),
           taxExemptionCode: initialData.taxExemptionCode || '',
         });
@@ -161,6 +166,7 @@ export function ProductFormModal({
           price: 0,
           existingBanner: '',
           defaultAreaId: '',
+          preparationAreaId: kitchenAreaId,
           taxPercentage: 14,
           taxExemptionCode: '',
         });
@@ -195,6 +201,10 @@ export function ProductFormModal({
       toast.error("Área de Consumo é obrigatório para produtos não derivados");
       return;
     }
+    if (!formData.preparationAreaId && formData.productKind === 'RECIPE_PRODUCT') {
+      toast.error('Selecione a área onde este prato será preparado');
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -220,6 +230,9 @@ export function ProductFormModal({
 
       if (formData.defaultAreaId && formData.defaultAreaId.trim() !== '') {
         formPayload.append('defaultAreaId', formData.defaultAreaId);
+      }
+      if (formData.productKind === 'RECIPE_PRODUCT' && formData.preparationAreaId) {
+        formPayload.append('preparationAreaId', formData.preparationAreaId);
       }
 
       formPayload.append('organizationId', organizationId);
@@ -293,6 +306,9 @@ export function ProductFormModal({
         isDerived: value === 'RECIPE_PRODUCT',
         categoryId: '',
         defaultAreaId: value === 'RECIPE_PRODUCT' ? '' : prev.defaultAreaId,
+        preparationAreaId: value === 'RECIPE_PRODUCT'
+          ? (prev.preparationAreaId || areas.find(area => area.nome.trim().toLocaleLowerCase('pt') === 'cozinha')?.id || '')
+          : '',
       }));
       return;
     }
@@ -567,6 +583,39 @@ export function ProductFormModal({
 
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Defina a área padrão onde este produto será armazenado
+              </p>
+            </div>
+          )}
+
+          {formData.productKind === 'RECIPE_PRODUCT' && (
+            <div className="space-y-2">
+              <Label htmlFor="preparationAreaId" className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <Utensils className="w-4 h-4" />
+                Área de preparação *
+              </Label>
+              {isLoadingAreas ? (
+                <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Carregando áreas...</span>
+                </div>
+              ) : (
+                <Select
+                  value={formData.preparationAreaId}
+                  onValueChange={(value) => handleInputChange('preparationAreaId', value)}
+                  disabled={!isDataReady || isSubmitting}
+                >
+                  <SelectTrigger id="preparationAreaId" className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
+                    <SelectValue placeholder="Selecione a área de preparação">
+                      {areas.find(area => area.id === formData.preparationAreaId)?.nome || 'Selecione a área de preparação'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                    {areas.map(area => <SelectItem key={area.id} value={area.id}>{area.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Os pedidos deste prato serão encaminhados para esta área. A ficha técnica continua a controlar o stock dos ingredientes.
               </p>
             </div>
           )}

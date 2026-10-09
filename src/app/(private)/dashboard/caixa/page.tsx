@@ -17,8 +17,8 @@ import { CreditCard, X } from 'lucide-react';
 import { usePosSettings } from '@/hooks/usePosSettings';
 import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
 import { CashierPOS } from '@/components/dashboard/caixa/CashierPOS';
+import FaturaList from '@/components/dashboard/caixa/FaturaList';
 
-const FaturaList = dynamic(() => import('@/components/dashboard/caixa/FaturaList'));
 const Estatisticas = dynamic(() => import('@/components/dashboard/caixa/Estatisticas'));
 const ModalPagamento = dynamic(() => import('@/components/dashboard/mesas/ModalPagamento'), { ssr: false });
 
@@ -35,6 +35,7 @@ type CacheEntry<T> = { data: T; updatedAt: number };
 
 const Caixa = () => {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
+  const [faturasError, setFaturasError] = useState<string | null>(null);
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [loading, setLoading] = useState(false);
   const [caixaAbertoParaAtender, setCaixaAbertoParaAtender] = useState(false);
@@ -71,6 +72,7 @@ const Caixa = () => {
   const fetchMesas = async (silent = false) => {
     if (!user?.organizationId) return;
     if (!silent) setLoading(true);
+    setFaturasError(null);
     try {
       if (isCashier) {
         const cashStatus = await apiClient.get('/caixa/current', { params: { organizationId: user.organizationId } });
@@ -120,13 +122,16 @@ const Caixa = () => {
       });
 
       setFaturas(response.data || []);
+      setFaturasError(null);
       const cacheKey = `${formatDate(date)}:${status || 'todas'}`;
       faturasCache.current[cacheKey] = { data: response.data || [], updatedAt: Date.now() };
     } catch (error: any) {
       console.error('❌ Erro:', error.response?.data);
       if (!silent) {
         setFaturas([]);
-        toast.error(error.response?.data?.error || 'Não foi possível carregar as faturas.');
+        const message = error.response?.data?.error || 'Não foi possível carregar as faturas.';
+        setFaturasError(message);
+        toast.error(message);
       }
     } finally {
       if (!silent) setLoading(false);
@@ -416,6 +421,7 @@ const Caixa = () => {
             ) : (
               <FaturaList
                 faturas={faturas}
+                error={faturasError}
                 loading={loading}
                 onPagamentoSuccess={handlePagamentoSuccess}
                 onPreConta={fatura => imprimirPreConta(`/factid/${fatura.id}`)}

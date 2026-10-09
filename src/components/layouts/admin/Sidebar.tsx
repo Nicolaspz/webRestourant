@@ -33,7 +33,6 @@ import {
   GlassWater,
   Calculator,
   ClipboardList,
-  DollarSign,
   TrendingUp,
   UserCog
 } from "lucide-react"
@@ -58,7 +57,7 @@ const menuStructure: MenuItem[] = [
   ]},
   {icon:Utensils,label:'Atendimento',roles:[],subItems:[
     {label:'Gestão de Pedidos',href:'/dashboard/pedidos',icon:Package,roles:[]},
-    {label:'Menu',href:'/dashboard/mesa',icon:Table2,roles:[]},
+    {label:'Mesas',href:'/dashboard/mesa',icon:Table2,roles:[]},
     {label:'Painel da Cozinha',href:'/dashboard/cozinha',icon:ChefHat,roles:[]},
     {label:'Painel do Bar',href:'/dashboard/bar',icon:GlassWater,roles:[]},
     {label:'Pedidos por área',href:'/dashboard/areas',icon:ClipboardList,roles:[]},
@@ -83,7 +82,7 @@ const menuStructure: MenuItem[] = [
   {icon:Calculator,label:'Contabilidade',roles:[],subItems:[
     {label:'Gestão de Caixa',href:'/dashboard/caixa',icon:Calculator,roles:[]},
     {label:'Proformas',href:'/dashboard/proformas',icon:ClipboardList,roles:[]},
-    {label:'Avisos de cobrança',href:'/dashboard/cobrancas',icon:DollarSign,roles:[]},
+    // Avisos de cobrança temporariamente ocultos do menu.
     {label:'Clientes',href:'/dashboard/clientes',icon:Users,roles:[]},
     {label:'Painel financeiro',href:'/dashboard/advanced',icon:TrendingUp,roles:[]},
   ]},

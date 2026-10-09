@@ -486,8 +486,8 @@ export function PedidosTable() {
 
         {/* Sheet Processar (Aprovar/Rejeitar) */}
         <Sheet open={isProcessSheetOpen} onOpenChange={setIsProcessSheetOpen}>
-          <SheetContent>
-            <SheetHeader>
+          <SheetContent className="max-h-[100dvh] overflow-hidden">
+            <SheetHeader className="shrink-0">
               <SheetTitle>
                 {processStatus === 'aprovado' ? 'Aprovar Pedido' : 'Rejeitar Pedido'}
               </SheetTitle>
@@ -497,7 +497,7 @@ export function PedidosTable() {
                   : "Rejeitar irá cancelar a solicitação."}
               </SheetDescription>
             </SheetHeader>
-            <div className="py-6 space-y-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
               <div className="bg-muted p-4 rounded-md text-sm">
                 <p><strong>De:</strong> {selectedPedido?.areaOrigem?.nome || "Stock Geral"}</p>
                 <p><strong>Para:</strong> {selectedPedido?.areaDestino.nome}</p>
@@ -521,7 +521,7 @@ export function PedidosTable() {
                 />
               </div>
             </div>
-            <SheetFooter>
+            <SheetFooter className="shrink-0 border-t bg-background">
               <Button
                 disabled={isSubmitting}
                 variant={processStatus === 'aprovado' ? 'default' : 'destructive'}

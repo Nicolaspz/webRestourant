@@ -45,6 +45,9 @@ interface DadosSessao {
   observacoes?: string;
   agtQRCode?: string;
   agtDocumentNo?: string;
+  fiscalPending?: boolean;
+  provisionalReference?: string;
+  fiscalMessage?: string;
   organization?: OrganizationInfo;
 }
 
@@ -84,13 +87,15 @@ export function buildReceiptPdf(dados: DadosSessao, payment?: PaymentInfo, forma
     if (org.address) text(org.address, {center:true});
   }
   rule();
-  text(paid ? 'RECIBO DE PAGAMENTO' : 'PRÉ-CONTA', {bold:true,center:true,size:thermal?12:16});
+  text(paid ? (dados.fiscalPending ? 'COMPROVATIVO PROVISÓRIO DE PAGAMENTO' : 'RECIBO DE PAGAMENTO') : 'PRÉ-CONTA', {bold:true,center:true,size:thermal?12:16});
   if (!paid) text('POR PAGAR - NÃO SERVE DE FATURA', {bold:true,center:true});
+  if (paid && dados.fiscalPending) text('SEM VALOR FISCAL - AGUARDA SUBMISSÃO/VALIDAÇÃO AGT', {bold:true,center:true});
   text('Mesa: '+dados.mesaNumero, {bold:true});
   const date = paid ? dados.fechadaEm || dados.abertaEm : new Date();
   if (date) text((paid?'Data: ':'Consulta: ')+new Date(date).toLocaleString('pt-PT'));
   if (dados.abertaEm) text('Abertura: '+new Date(dados.abertaEm).toLocaleString('pt-PT'));
-  if (paid) text('Doc: '+(dados.agtDocumentNo || dados.numero || dados.codigoAbertura));
+  if (paid && dados.fiscalPending) text('Referência provisória: '+(dados.provisionalReference || dados.codigoAbertura));
+  else if (paid) text('Doc: '+(dados.agtDocumentNo || dados.numero || dados.codigoAbertura));
   const waiter = dados.abertoPorNome || dados.pedidos?.find(p=>p.atendidoPor)?.atendidoPor;
   if (waiter) text('Atendido por: '+waiter);
   if (paid || dados.clienteNome || dados.clienteNif) {
@@ -130,6 +135,9 @@ export function buildReceiptPdf(dados: DadosSessao, payment?: PaymentInfo, forma
   text(paid?'STATUS: PAGO':'AGUARDA PAGAMENTO',{bold:true,center:true});
   if (paid && dados.agtDocumentNo) {
     text(org?.softwareValidationNumber ? 'Processado por CipherPath Fiscal Engine n.º '+org.softwareValidationNumber : 'Processado por CipherPath Fiscal Engine',{center:true,size:thermal?8:10});
+  }
+  if (paid && dados.fiscalPending) {
+    text('O pagamento foi registado. Este comprovativo não é uma fatura fiscal. O mesmo documento será enviado nas tentativas de sincronização; se continuar pendente, consulte o Caixa.', {center:true,size:thermal?8:10});
   }
   if (paid && dados.agtQRCode) { const qr=thermal?26:32;space(qr+5);try{doc.addImage(dados.agtQRCode,'PNG',width/2-qr/2,y,qr,qr);y+=qr+4;}catch{ text('QR fiscal indisponível. Consulte a fatura no Caixa.',{center:true}); } }
   if (paid && dados.agtDocumentNo && !dados.agtQRCode) text('QR fiscal em processamento. Consulte a fatura no Caixa.',{center:true});

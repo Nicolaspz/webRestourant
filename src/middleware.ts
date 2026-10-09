@@ -54,7 +54,14 @@ export function middleware(request: NextRequest) {
 
   // 🔄 Se já estiver logado e tentar ir para login
   if (isAuthRoute && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    const destination = userRole === 'CAIXA' ? '/dashboard/caixa' : '/dashboard'
+    return NextResponse.redirect(new URL(destination, request.url))
+  }
+
+  // O início do painel do Caixa é sempre a tela do caixa.
+  // As outras rotas continuam navegáveis conforme as permissões do role.
+  if (pathname === '/dashboard' && userRole === 'CAIXA') {
+    return NextResponse.redirect(new URL('/dashboard/caixa', request.url))
   }
 
   // Fine-grained access is loaded from the backend; role cookies are not authoritative.

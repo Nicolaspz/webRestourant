@@ -46,7 +46,6 @@ const PagamentoModal = ({ fatura, onClose, onSuccess }: PagamentoModalProps) => 
   const metodosPagamento = [
     { value: 'dinheiro', label: 'Dinheiro' },
     { value: 'cartao', label: 'Cartão Débito' },
-    { value: 'multicaixa', label: 'Multicaixa' },
     { value: 'transferencia', label: 'Transferência' },
     { value: 'outro', label: 'Outro' }
   ];

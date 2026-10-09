@@ -46,6 +46,7 @@ export default function ImportProductsPage() {
     const [status, setStatus] = useState("");
     const [createdList, setCreatedList] = useState<string[]>([]);
     const [errorsList, setErrorsList] = useState<string[]>([]);
+    const [warningsList, setWarningsList] = useState<string[]>([]);
 
     // Refs ou states para os arquivos
     const [excelFile, setExcelFile] = useState<File | null>(null);
@@ -124,15 +125,11 @@ export default function ImportProductsPage() {
             toast.error("Por favor, selecione o arquivo Excel.");
             return;
         }
-        if (!imageFiles || imageFiles.length === 0) {
-            toast.error("Por favor, selecione as imagens.");
-            return;
-        }
-
         setIsSubmitting(true);
         setStatus("Enviando dados para o servidor...");
         setCreatedList([]);
         setErrorsList([]);
+        setWarningsList([]);
 
         try {
             const formData = new FormData();
@@ -143,9 +140,9 @@ export default function ImportProductsPage() {
             if (defaultArea) formData.append("defaultArea", defaultArea);
             if (defaultUnit) formData.append("defaultUnit", defaultUnit);
 
-            Array.from(imageFiles).forEach((img) => {
-                formData.append("images", img);
-            });
+            if (imageFiles?.length) {
+                Array.from(imageFiles).forEach((img) => formData.append("images", img));
+            }
 
             const response = await api.post("/import-products", formData, {
                 params: { organizationId: user.organizationId },
@@ -157,6 +154,9 @@ export default function ImportProductsPage() {
 
             if (response.data.errors && response.data.errors.length > 0) {
                 setErrorsList(response.data.errors);
+            }
+            if (response.data.warnings && response.data.warnings.length > 0) {
+                setWarningsList(response.data.warnings);
             }
 
             if (response.data.created && response.data.created.length > 0) {
@@ -208,7 +208,7 @@ export default function ImportProductsPage() {
                             <UploadCloud className="w-5 h-5 text-indigo-600" />
                             Upload de Arquivos
                         </CardTitle>
-                        <CardDescription>Selecione a planilha com os dados e as imagens em lote.</CardDescription>
+                        <CardDescription>Selecione a planilha. As imagens em lote são opcionais.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ActionForm onSubmit={handleSubmit} className="space-y-6">
@@ -275,13 +275,13 @@ export default function ImportProductsPage() {
                                     onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
                                     className="cursor-pointer file:bg-indigo-50 file:text-indigo-700 file:border-0 file:rounded-md hover:file:bg-indigo-100"
                                 />
-                                <p className="text-xs text-slate-500">As colunas padrão são: nome, descricao, preco, categoria, area_padrao, imagem, unidade.</p>
+                                <p className="text-xs text-slate-500">As colunas padrão são: nome, descricao, preco, categoria, area_padrao, imagem (opcional), unidade.</p>
                             </div>
 
                             <div className="p-4 rounded-xl border-2 border-dashed bg-slate-50 transition-colors hover:bg-slate-100 flex flex-col gap-2">
                                 <label className="flex gap-2 items-center font-semibold text-slate-800 cursor-pointer">
                                     <ImageIcon className="w-5 h-5 text-rose-500" />
-                                    Imagens (Envio Múltiplo)
+                                    Imagens (Opcional)
                                 </label>
                                 <Input
                                     type="file"
@@ -290,12 +290,12 @@ export default function ImportProductsPage() {
                                     onChange={(e) => setImageFiles(e.target.files)}
                                     className="cursor-pointer file:bg-indigo-50 file:text-indigo-700 file:border-0 file:rounded-md hover:file:bg-indigo-100"
                                 />
-                                <p className="text-xs text-slate-500">Selecione até 20 imagens. O sistema buscará o nome correto automaticamente.</p>
+                                <p className="text-xs text-slate-500">Se enviar imagens, o sistema tentará associá-las pelo nome indicado na coluna imagem. Sem imagem, os produtos serão importados normalmente.</p>
                             </div>
 
                             <Button
                                 type="submit"
-                                disabled={isSubmitting || !excelFile || !imageFiles}
+                                disabled={isSubmitting || !excelFile}
                                 className="w-full bg-indigo-600 hover:bg-indigo-700 h-12 text-lg font-medium shadow-md transition-all active:scale-[0.98]"
                             >
                                 {isSubmitting ? (
@@ -349,7 +349,19 @@ export default function ImportProductsPage() {
                             </div>
                         )}
 
-                        {!createdList.length && !errorsList.length && (
+                        {warningsList.length > 0 && (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm animate-in slide-in-from-bottom-2">
+                                <div className="flex items-center gap-2 mb-2 text-amber-800 font-semibold">
+                                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                                    <h3>Avisos ({warningsList.length})</h3>
+                                </div>
+                                <ul className="list-disc pl-5 text-sm text-amber-800 space-y-1 max-h-40 overflow-y-auto">
+                                    {warningsList.map((warning, i) => <li key={i}>{warning}</li>)}
+                                </ul>
+                            </div>
+                        )}
+
+                        {!createdList.length && !errorsList.length && !warningsList.length && (
                             <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-dashed rounded-xl grayscale opacity-60">
                                 <ListPlus className="w-12 h-12 text-slate-400 mb-3" />
                                 <p className="text-slate-500 font-medium">Os resultados aparecerão aqui</p>

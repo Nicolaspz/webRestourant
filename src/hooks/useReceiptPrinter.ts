@@ -19,12 +19,29 @@ const blobToDataUrl = (blob: Blob) => new Promise<string>((resolve, reject) => {
 export async function waitForFiscalDocument(receipt: any) {
   if (!receipt.faturaId || receipt.agtQRCode || !receipt.fiscalStatus) return receipt;
 
-  for (let attempt = 0; attempt < 15; attempt += 1) {
+  const provisional = (status?: string, message?: string) => ({
+    ...receipt,
+    fiscalStatus: status || receipt.fiscalStatus,
+    fiscalPending: true,
+    provisionalReference: `PROV-${String(receipt.faturaId).slice(0, 8).toUpperCase()}`,
+    fiscalMessage: message,
+  });
+  let requestedSync = false;
+
+  // Espera alguns segundos pela resposta rápida. Se o provedor estiver
+  // indisponível, o cliente recebe um comprovativo provisório sem bloquear o caixa.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     if (attempt > 0) await new Promise(resolve => setTimeout(resolve, 2_000));
-    const { data: invoice } = await api.get(`/faturas/${receipt.faturaId}`);
+    let invoice: any;
+    try {
+      ({ data: invoice } = await api.get(`/faturas/${receipt.faturaId}`));
+    } catch {
+      return provisional(receipt.fiscalStatus, 'Não foi possível confirmar a resposta fiscal. O pagamento foi registado e a fatura será sincronizada pelo sistema.');
+    }
     let submission = invoice.fiscalSubmission;
 
-    if (submission?.requestId && ['RECEIVED', 'SENT_TO_AGT', 'PROCESSING'].includes(submission.status)) {
+    if (!requestedSync && submission?.requestId && ['RECEIVED', 'SENT_TO_AGT', 'PROCESSING'].includes(submission.status)) {
+      requestedSync = true;
       try {
         const response = await api.post(`/faturas/${receipt.faturaId}/fiscal/sync`);
         submission = response.data;
@@ -34,7 +51,7 @@ export async function waitForFiscalDocument(receipt: any) {
     }
 
     if (FINAL_FAILURES.has(submission?.status)) {
-      throw new Error(submission?.message || 'A submissão fiscal foi rejeitada');
+      return provisional(submission.status, submission.message || 'A submissão fiscal ainda não foi aceite.');
     }
 
     const documentNo = submission?.documentNo || invoice.numero;
@@ -52,13 +69,11 @@ export async function waitForFiscalDocument(receipt: any) {
       }
     }
   }
-  throw new Error('O pagamento foi concluído, mas o QR fiscal ainda está em processamento. Imprima a fatura pelo Caixa quando o estado estiver aceite.');
+  return provisional(undefined, 'A submissão fiscal continua pendente. O documento será atualizado quando o provedor responder.');
 }
 
 export function useReceiptPrinter(settings: PosSettings) {
   const printPaidReceipt = useCallback(async (receipt: any, payment: PaymentInfo, force = false) => {
-    if (!force && !settings.autoPrint) return false;
-
     let fiscalReceipt = receipt;
     try {
       fiscalReceipt = await waitForFiscalDocument(receipt);
@@ -66,6 +81,10 @@ export function useReceiptPrinter(settings: PosSettings) {
       toast.warning(error.message);
       return false;
     }
+    // A preferência de impressão automática continua a valer para faturas
+    // fiscais prontas. Se a submissão falhar, imprime-se o comprovativo provisório
+    // necessário para entregar ao cliente.
+    if (!force && !settings.autoPrint && !fiscalReceipt.fiscalPending) return false;
 
     const printableReceipt = settings.printLogo === false && fiscalReceipt.organization
       ? { ...fiscalReceipt, organization: { ...fiscalReceipt.organization, imageLogo: null } }
@@ -76,6 +95,9 @@ export function useReceiptPrinter(settings: PosSettings) {
     try {
     for (let copy = 0; copy < settings.copies; copy += 1) {
       await gerarPDFReciboPago(printableReceipt, payment, format, true);
+    }
+    if (fiscalReceipt.fiscalPending) {
+      toast.warning('Pagamento registado. Foi impresso um comprovativo provisório; o sistema tentará submeter a fatura. Se continuar pendente, reenvie pelo Caixa.');
     }
     return true;
     } catch (error: any) { toast.warning(error.message || "Não foi possível abrir a impressão. Reimprima pelo Caixa."); return false; }

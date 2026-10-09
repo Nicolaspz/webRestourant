@@ -38,7 +38,7 @@ export default function TakeawayPaymentModal({
     onSuccess
 }: TakeawayPaymentModalProps) {
     const idempotencyKey = useRef(crypto.randomUUID());
-    const [metodoPagamento, setMetodoPagamento] = useState('multicaixa');
+    const [metodoPagamento, setMetodoPagamento] = useState('dinheiro');
     const [valorPago, setValorPago] = useState(0);
     const [trocoPara, setTrocoPara] = useState('');
     const [loading, setLoading] = useState(false);
@@ -69,7 +69,6 @@ export default function TakeawayPaymentModal({
     }, [totalGeral, isOpen]);
 
     const metodosPagamento = [
-        { value: 'multicaixa', label: 'Multicaixa', icon: <Landmark className="w-4 h-4" /> },
         { value: 'dinheiro', label: 'Dinheiro', icon: <Banknote className="w-4 h-4" /> },
         { value: 'transferencia', label: 'Transferência', icon: <Landmark className="w-4 h-4" /> },
         { value: 'cartao', label: 'Cartão Débito', icon: <CreditCard className="w-4 h-4" /> },

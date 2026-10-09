@@ -82,25 +82,27 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
     return () => { clearInterval(timer); window.removeEventListener('focus', recover); };
   }, [organizationId, refresh]);
 
-  const togglePrepared = useCallback(async (itemId: string, prepared: boolean) => {
+  const updateItemStatus = useCallback(async (itemId: string, status: 'pendente' | 'em_preparacao' | 'pronto' | 'entregue') => {
     if (!organizationId) return;
     if (preparing.current) {
       toast.info('Aguarde a atualização do item anterior antes de marcar outro.', { toastId: 'preparing-item' });
       return;
     }
-    if (prepared && orders.some(order => order.items.some(item => item.id === itemId && (item.awaitingStockPickup ?? order.awaitingStockPickup)))) {
+    if ((status === 'pronto' || status === 'entregue') && orders.some(order => order.items.some(item => item.id === itemId && (item.awaitingStockPickup ?? order.awaitingStockPickup)))) {
       toast.warning('Aguarda entrega pelo economato. A marcação será ativada após a confirmação.');
       return;
     }
+    const previousItem = orders.flatMap(order => order.items).find(item => item.id === itemId);
     preparing.current = true;
     setPendingItems(current => new Set(current).add(itemId));
-    setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared } : item) })));
+    const prepared = status === 'pronto' || status === 'entregue';
+    setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, status, prepared, deliveredAt: status === 'entregue' ? new Date().toISOString() : null } : item) })));
     suppressSocketUntil.current = Date.now() + 900;
     try {
       const itemAreaId = orders.flatMap(order=>order.items).find(item=>item.id===itemId)?.areaId;
-      await ordersService.togglePrepared(itemId, prepared, organizationId, area.startsWith('area:') ? itemAreaId || area.slice(5) : undefined);
+      await ordersService.updateItemStatus(itemId, status, organizationId, area.startsWith('area:') ? itemAreaId || area.slice(5) : undefined);
     } catch (error: any) {
-      setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? { ...item, prepared: !prepared } : item) })));
+      if (previousItem) setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? previousItem : item) })));
       toast.error('Não foi possível atualizar o item. Aguarde um momento, confirme o estado do pedido e tente novamente.');
       void refresh(true);
     } finally {
@@ -140,5 +142,5 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
     if (area === 'all') return true;
     return order.pendingStockAreas?.some(name => name?.trim().toLocaleLowerCase() === (area === 'bar' ? 'bar' : 'cozinha')) ?? false;
   });
-  return { groupedOrders, hasPendingStockPickup, loading, pendingItems, pendingTables, refresh, togglePrepared, finishOrders };
+  return { groupedOrders, hasPendingStockPickup, loading, pendingItems, pendingTables, refresh, updateItemStatus, finishOrders };
 }

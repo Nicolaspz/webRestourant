@@ -46,7 +46,7 @@ export default function OrdersPage() {
         </Link>}
         <OrdersGrid orders={orders.groupedOrders} loading={orders.loading} expandedOrderId={expandedOrderId}
           pendingItems={orders.pendingItems} pendingTables={orders.pendingTables} onToggleExpand={toggleExpand}
-          canPrepare={can("orders.prepare")} canFinish={can("orders.finish")} onManage={can("orders.update") ? openManager : undefined} onTogglePrepared={orders.togglePrepared} onFinish={orders.finishOrders} />
+          canPrepare={can("orders.prepare")} canFinish={can("orders.finish")} onManage={can("orders.update") ? openManager : undefined} onUpdateStatus={orders.updateItemStatus} onFinish={orders.finishOrders} />
 
         {managingOrderId && <OrderManagerModal isOpen onClose={closeManager} orderId={managingOrderId} onOrderUpdated={orders.refresh} />}
       </div>

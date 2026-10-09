@@ -5,6 +5,8 @@ export type OrderItem = {
   amount: number;
   notes?: string | null;
   prepared: boolean;
+  status?: 'pendente' | 'em_preparacao' | 'pronto' | 'entregue';
+  deliveredAt?: string | null;
   awaitingStockPickup?: boolean;
   canceled?: boolean;
   Product: { id: string; name: string; categoryId: string; Category?: { name: string } };

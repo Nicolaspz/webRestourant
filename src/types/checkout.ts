@@ -1,4 +1,4 @@
-export type PaymentMethod = 'dinheiro' | 'cartao' | 'multicaixa' | 'transferencia';
+export type PaymentMethod = 'dinheiro' | 'cartao' | 'transferencia';
 export type CustomerType = 'final' | 'singular' | 'empresa';
 export type SplitPayment = { metodo: PaymentMethod; valor: number };
 

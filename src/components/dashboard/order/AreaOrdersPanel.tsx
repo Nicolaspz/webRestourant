@@ -55,5 +55,5 @@ export function AreaOrdersPanel({areaId,configurationOnly=false}:{areaId:string;
  </section> : null;
  return <section className="space-y-4"><div className="flex items-center justify-between gap-3"><h1 className="text-2xl font-bold">{title}</h1><Button variant="outline" onClick={()=>{setVersion(v=>v+1);}}>Atualizar</Button></div>
  {restricted&&<p role="status">Algumas áreas do grupo não estão autorizadas para o seu perfil. Peça ao administrador para rever o acesso.</p>}
- {ready&&<OrdersGrid orders={queue.groupedOrders} loading={queue.loading} expandedOrderId={expanded} pendingItems={queue.pendingItems} pendingTables={queue.pendingTables} onToggleExpand={id=>setExpanded(expanded===id?null:id)} onTogglePrepared={queue.togglePrepared} onFinish={queue.finishOrders} canPrepare={can('areaOrders.prepare')} canFinish={can('areaOrders.prepare')}/>}</section>;
+ {ready&&<OrdersGrid orders={queue.groupedOrders} loading={queue.loading} expandedOrderId={expanded} pendingItems={queue.pendingItems} pendingTables={queue.pendingTables} onToggleExpand={id=>setExpanded(expanded===id?null:id)} onUpdateStatus={queue.updateItemStatus} onFinish={queue.finishOrders} canPrepare={can('areaOrders.prepare')} canFinish={can('areaOrders.prepare')}/>}</section>;
 }

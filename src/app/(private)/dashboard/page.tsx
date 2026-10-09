@@ -11,11 +11,9 @@ import {
 } from "lucide-react";
 import { AuthContext } from "@/contexts/AuthContext";
 import { setupAPIClient } from "@/services/api";
-import dayjs from "dayjs";
 
 // Componentes reutilizáveis
 import { MetricCard } from "@/components/dashboard/MetricCard";
-import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 import { DateRangeFilter, dateRangePreset } from "@/components/DateRangeFilter";
 import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
@@ -202,12 +200,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header com seletor de tempo */}
-      <DashboardPageHeader
-        title="Resumo do negócio"
-        description={`Vendas de ${dayjs(dateRange.startDate).format('DD/MM/YYYY')} a ${dayjs(dateRange.endDate).format('DD/MM/YYYY')}`}
-        actions={<DateRangeFilter value={dateRange} onChange={setDateRange} disabled={isLoading} />}
-      />
+      <div className="flex justify-end">
+        <DateRangeFilter value={dateRange} onChange={setDateRange} disabled={isLoading} />
+      </div>
 
       {/* Conteúdo principal */}
       {isLoading ? (
