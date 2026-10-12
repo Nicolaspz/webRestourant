@@ -8,7 +8,8 @@ import { AuthContext } from '@/contexts/AuthContext';
 import { api } from '@/services/apiClients';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'react-toastify';
 
@@ -26,9 +27,11 @@ export function StockFulfillments() {
  const [items, setItems] = useState<Pickup[]>([]);
  const [error, setError] = useState(false);
  const [loading, setLoading] = useState(false);
+ const [blockingLoading, setBlockingLoading] = useState(false);
  const [saving, setSaving] = useState(false);
  const [confirmError, setConfirmError] = useState('');
  const [selected, setSelected] = useState<Pickup | null>(null);
+ const [detailsPickup, setDetailsPickup] = useState<Pickup | null>(null);
  const [checked, setChecked] = useState(false);
  const [draftCode, setDraftCode] = useState('');
  const [lookupCode, setLookupCode] = useState('');
@@ -39,10 +42,10 @@ export function StockFulfillments() {
  const requestVersion = useRef(0);
  const manager = can('pickups.deliver');
  const canReadCodes = can('pickups.codes.read');
- const refresh = useCallback(async () => {
-   if (!user?.organizationId || (!canReadCodes && !showAll && !/^\d{6}$/.test(lookupCode))) { setItems([]); setLoading(false); return; }
+ const refresh = useCallback(async (blocking = true) => {
+   if (!user?.organizationId || (!canReadCodes && !showAll && !/^\d{6}$/.test(lookupCode))) { setItems([]); setLoading(false); setBlockingLoading(false); return; }
    const version = ++requestVersion.current;
-   setLoading(true); setError(false);
+   setLoading(true); setBlockingLoading(blocking); setError(false);
    try {
      const params = showAll ? { page } : canReadCodes ? { status: 'pendente', page } : { status: 'pendente', search: lookupCode, page: 1 };
      const { data } = await api.get('/economato/levantamentos', { params });
@@ -51,12 +54,12 @@ export function StockFulfillments() {
      setTotal(data.total);
      setPageSize(data.pageSize);
    } catch { if (version === requestVersion.current) setError(true); }
-   finally { if (version === requestVersion.current) setLoading(false); }
+   finally { if (version === requestVersion.current) { setLoading(false); setBlockingLoading(false); } }
  }, [user?.organizationId, lookupCode, showAll, page, canReadCodes]);
  useEffect(() => {
    if (!canReadCodes && !showAll && !/^\d{6}$/.test(lookupCode)) { setItems([]); setLoading(false); return; }
    void refresh();
-   const update = () => { if (!document.hidden) void refresh(); };
+   const update = () => { if (!document.hidden) void refresh(false); };
    const timer = window.setInterval(update, 30000);
    window.addEventListener('focus', update); window.addEventListener('economato-updated', update);
    const onOrders = (event: { organizationId?: string }) => { if (event.organizationId === user?.organizationId) update(); };
@@ -70,6 +73,7 @@ export function StockFulfillments() {
    try {
      await api.post(`/economato/levantamentos/${selected.id}/confirmar`, { code: lookupCode, items: selected.lines.map(l => ({ id: l.id, quantity: l.quantity })) });
      setSelected(null); setLookupCode(''); setDraftCode('');
+     await refresh(false);
      window.dispatchEvent(new Event('economato-updated'));
      toast.success('Entrega registada. O atendimento do pedido pode continuar.');
    } catch (e: any) {
@@ -84,36 +88,43 @@ export function StockFulfillments() {
    <h2 className="text-xl font-semibold">Levantamento de produtos</h2>
    <p className="text-muted-foreground">Pesquise um código para registar uma entrega ou consulte o histórico completo de levantamentos.</p>
    <div className="flex flex-wrap gap-2">
-     {!canReadCodes && <Button type="button" variant={!showAll ? 'default' : 'outline'} onClick={() => { setShowAll(false); setItems([]); setError(false); setPage(1); setLookupCode(''); setDraftCode(''); }}>Pesquisar por código</Button>}
-     {canReadCodes && <Button type="button" variant={!showAll ? 'default' : 'outline'} onClick={() => { setShowAll(false); setItems([]); setError(false); setPage(1); }}>Pendentes da minha área</Button>}
-     <Button type="button" variant={showAll ? 'default' : 'outline'} onClick={() => { setShowAll(true); setItems([]); setError(false); setLookupCode(''); setPage(1); }}>Ver todos os levantamentos</Button>
+     {!canReadCodes && <Button type="button" variant={!showAll ? 'default' : 'outline'} onClick={() => { setBlockingLoading(false); setShowAll(false); setItems([]); setError(false); setPage(1); setLookupCode(''); setDraftCode(''); }}>Pesquisar por código</Button>}
+     {canReadCodes && <Button type="button" variant={!showAll ? 'default' : 'outline'} onClick={() => { setBlockingLoading(true); setShowAll(false); setItems([]); setError(false); setPage(1); }}>Pendentes da minha área</Button>}
+     <Button type="button" variant={showAll ? 'default' : 'outline'} onClick={() => { setBlockingLoading(true); setShowAll(true); setItems([]); setError(false); setLookupCode(''); setPage(1); }}>Ver todos os levantamentos</Button>
    </div>
    {!canReadCodes && !showAll && <ActionForm className="flex max-w-xl flex-col gap-2 sm:flex-row" onSubmit={e => {
      e.preventDefault();
      if (!/^\d{6}$/.test(draftCode)) { toast.error('Introduza o código de levantamento de seis dígitos.'); return; }
      setItems([]); setError(false);
-     if (lookupCode === draftCode) void refresh(); else setLookupCode(draftCode);
+     if (lookupCode === draftCode) void refresh(true); else { setBlockingLoading(true); setLookupCode(draftCode); }
    }}>
      <Input aria-label="Código de levantamento" inputMode="numeric" autoComplete="one-time-code" placeholder="Código de levantamento" value={draftCode} onChange={e => { const value = e.target.value.replace(/\D/g, '').slice(0, 6); setDraftCode(value); if (value !== lookupCode) { setLookupCode(''); setItems([]); } }} className="font-mono tracking-widest" />
      <Button type="submit" disabled={loading || draftCode.length !== 6}>{loading ? 'A pesquisar…' : 'Pesquisar código'}</Button>
    </ActionForm>}
-   {(showAll || canReadCodes) && <div className="flex items-center justify-between gap-3"><p className="text-sm text-muted-foreground">{total} levantamento(s) {showAll ? 'registado(s)' : 'pendente(s) na(s) sua(s) área(s)'}.</p><Button type="button" variant="outline" onClick={() => void refresh()} disabled={loading}>{loading ? 'A carregar…' : 'Atualizar lista'}</Button></div>}
+   {(showAll || canReadCodes) && <div className="flex items-center justify-between gap-3"><p className="text-sm text-muted-foreground">{total} levantamento(s) {showAll ? 'registado(s)' : 'pendente(s) na(s) sua(s) área(s)'}.</p><Button type="button" variant="outline" onClick={() => void refresh(true)} disabled={loading}>{loading ? 'A carregar…' : 'Atualizar lista'}</Button></div>}
    {error ? <p role="alert" className="text-destructive">{showAll ? 'Não foi possível carregar o histórico.' : 'Não foi possível pesquisar o código. Tente novamente.'}</p> : null}
    {!showAll && lookupCode && !loading && !error && !items.length && <p role="status" className="rounded-lg border border-dashed p-5 text-muted-foreground">Nenhum levantamento pendente encontrado para este código.</p>}
-   {items.map(p => <article key={p.id} className="max-w-2xl space-y-3 rounded-xl border bg-card p-5">
-     <div className="flex flex-wrap justify-between gap-2"><h3 className="font-semibold">{p.lines[0]?.consumptionAreaName || 'Stock geral'} · {location(p)} · Pedido {p.orderId.slice(0, 8)}</h3><span className={p.status === 'pendente' ? 'text-amber-600' : 'text-muted-foreground'}>{p.status === 'pendente' ? 'Reservado — aguarda levantamento' : p.status === 'entregue' ? 'Entregue pelo economato' : 'Cancelado — reserva libertada'}</span></div>
-     <p className="text-sm text-muted-foreground">Levantamento {p.id} · {formatDate(p.createdAt)} · {p.lines.length} produto(s) agrupados</p>
-     <p className="text-sm">Pedido criado por: <strong>{p.order.User?.name || 'Cliente / não registado'}</strong></p>
-     <p className="text-sm">Solicitado por: <strong>{p.requestedByName || 'Pedido de cliente'}</strong></p>
+   {items.map(p => <article key={p.id} className="flex max-w-3xl flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-4">
+     <div className="min-w-0 space-y-1"><h3 className="truncate font-semibold">{p.lines[0]?.consumptionAreaName || 'Stock geral'} · {location(p)} · Pedido {p.orderId.slice(0, 8)}</h3>
+       <p className="text-sm text-muted-foreground">{formatDate(p.createdAt)} · {p.lines.length} produto(s) · Solicitado por {p.requestedByName || 'Pedido de cliente'}</p>
+       <span className={`text-sm ${p.status === 'pendente' ? 'text-amber-600' : 'text-muted-foreground'}`}>{p.status === 'pendente' ? 'Reservado — aguarda levantamento' : p.status === 'entregue' ? 'Entregue pelo economato' : 'Cancelado — reserva libertada'}</span>
+     </div>
      {canReadCodes && p.status === 'pendente' && p.code && <p className="rounded-md bg-primary/5 p-3 text-sm">Código para apresentar ao Economato: <strong className="ml-2 font-mono text-lg tracking-widest">{p.code}</strong></p>}
-     <ul className="divide-y">{p.lines.map(l => <li key={l.id} className="flex justify-between gap-4 py-2"><span>{l.productName}<small className="block text-muted-foreground">{l.consumptionAreaName || 'Atendimento'}{l.releasedQuantity > 0 ? ` · Cancelado: ${l.releasedQuantity} ${l.unit}` : ''}</small></span><strong>{l.quantity} {l.unit}</strong></li>)}</ul>
-     {p.status === 'pendente' && <div className="flex flex-wrap items-center gap-3">
-       {manager && <Button disabled={!p.requestedById || saving} onClick={() => { setSelected(p); setChecked(false); setConfirmError(''); }}>Conferir e entregar</Button>}
-     </div>}
-     {p.status === 'entregue' && <p className="rounded bg-muted p-3 text-sm">Entregue por <strong>{p.deliveredByName}</strong> a <strong>{p.receivedByName}</strong> em {p.deliveredAt && formatDate(p.deliveredAt)}. Saída já registada; não faça outra baixa.</p>}
+     <div className="flex flex-wrap items-center gap-2">
+       <Button type="button" variant="outline" size="sm" onClick={() => setDetailsPickup(p)}><FileText className="mr-2 h-4 w-4" />Detalhes</Button>
+       {p.status === 'pendente' && manager && <>
+         <Button disabled={!p.requestedById || saving} size="sm" onClick={() => { setSelected(p); setChecked(false); setConfirmError(''); }}>Conferir e entregar</Button>
+       </>}
+     </div>
    </article>)}
    {(showAll || canReadCodes) && !loading && !error && items.length === 0 && <p className="rounded-lg border border-dashed p-5 text-muted-foreground">{showAll ? 'Ainda não há levantamentos registados.' : 'Não há levantamentos pendentes nas suas áreas.'}</p>}
    {(showAll || canReadCodes) && <div className="flex items-center justify-between gap-3"><Button variant="outline" disabled={loading || page <= 1} onClick={() => setPage(value => value - 1)}>Anterior</Button><span>Página {page} de {Math.max(1, Math.ceil(total / pageSize))}</span><Button variant="outline" disabled={loading || page * pageSize >= total} onClick={() => setPage(value => value + 1)}>Seguinte</Button></div>}
+   {(blockingLoading || saving) && <CenterScreenLoader />}
+   <Dialog open={!!detailsPickup} onOpenChange={open => { if (!open) setDetailsPickup(null); }}><DialogContent className="max-h-[85dvh] max-w-lg overflow-y-auto">
+     <DialogHeader><DialogTitle>Detalhes do levantamento</DialogTitle><DialogDescription>{detailsPickup && `${location(detailsPickup)} · Pedido ${detailsPickup.orderId.slice(0, 8)} · ${formatDate(detailsPickup.createdAt)}`}</DialogDescription></DialogHeader>
+     {detailsPickup && <div className="space-y-4"><div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/50 p-3 text-sm"><p>Área: <strong>{detailsPickup.lines[0]?.consumptionAreaName || 'Stock geral'}</strong></p><p>Estado: <strong>{detailsPickup.status === 'pendente' ? 'Pendente' : detailsPickup.status === 'entregue' ? 'Entregue' : 'Cancelado'}</strong></p><p>Pedido criado por: <strong>{detailsPickup.order.User?.name || 'Cliente / não registado'}</strong></p><p>Solicitado por: <strong>{detailsPickup.requestedByName || 'Pedido de cliente'}</strong></p></div><ul className="divide-y">{detailsPickup.lines.map(line => <li key={line.id} className="flex justify-between gap-4 py-3 text-sm"><span>{line.productName}<small className="block text-muted-foreground">{line.consumptionAreaName || 'Atendimento'}{line.releasedQuantity > 0 ? ` · Cancelado: ${line.releasedQuantity} ${line.unit}` : ''}</small></span><strong>{line.quantity} {line.unit}</strong></li>)}</ul>{detailsPickup.status === 'entregue' && <p className="rounded-lg bg-muted p-3 text-sm">Entregue por <strong>{detailsPickup.deliveredByName}</strong> a <strong>{detailsPickup.receivedByName}</strong>{detailsPickup.deliveredAt && ` em ${formatDate(detailsPickup.deliveredAt)}`}. Saída já registada; não faça outra baixa.</p>}</div>}
+     <DialogFooter><Button variant="outline" onClick={() => setDetailsPickup(null)}>Fechar</Button></DialogFooter>
+   </DialogContent></Dialog>
    <Dialog open={!!selected} onOpenChange={open => { if (!open && !saving) setSelected(null); }}><DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
      <DialogHeader><DialogTitle>Conferir entrega do economato</DialogTitle><DialogDescription>{selected && location(selected)} · Pedido {selected?.orderId.slice(0, 8)}. Entregue os produtos a {selected?.requestedByName}.</DialogDescription></DialogHeader>
      <ul>{selected?.lines.filter(l => l.quantity > 0).map(l => <li className="flex justify-between gap-3 py-2" key={l.id}><span>{l.productName}</span><strong>{l.quantity} {l.unit}</strong></li>)}</ul>

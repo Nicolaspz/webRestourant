@@ -66,14 +66,10 @@ const menuStructure: MenuItem[] = [
     {label:'Produtos/Pratos',href:'/dashboard/products',icon:Package,roles:[]},
     {label:'Gestão de Categorias',href:'/dashboard/category',icon:ClipboardList,roles:[]},
     {label:'Ingredientes',href:'/dashboard/igredient',icon:Carrot,roles:[]},
-    {label:'Stock',href:'/dashboard/stock',icon:Warehouse,roles:[]},
   ]},
   {icon:Archive,label:'Economato',roles:[],subItems:[
-    {label:'Levantamentos de pedidos',href:'/dashboard/economato',icon:ClipboardList,roles:[]},
-    {label:'Stock por área',href:'/dashboard/economato/stock',icon:Warehouse,roles:[]},
-    {label:'Reposição de áreas',href:'/dashboard/economato/pedidos',icon:Package,roles:[]},
-    {label:'Quebras e consumos',href:'/dashboard/economato/consumo',icon:ClipboardList,roles:[]},
-    {label:'Áreas',href:'/dashboard/economato/areas',icon:Utensils,roles:[]},
+    {label:'Stock',href:'/dashboard/stock',icon:Warehouse,roles:[]},
+    {label:'Central do Economato',href:'/dashboard/economato',icon:Archive,roles:[]},
   ]},
   {icon:ShoppingCart,label:'Compras e fornecedores',roles:[],subItems:[
     {label:'Compras',href:'/dashboard/compra',icon:ShoppingCart,roles:[]},
@@ -164,7 +160,7 @@ export default function Sidebar({ closeSidebar }: { closeSidebar?: () => void })
             <ActionButton type="button" className="admin-nav-heading" onClick={() => toggleMenu(item.label)} aria-expanded={open} aria-controls={id}>
               {item.label}<ChevronDown size={14} className={cn("transition-transform", !open && "-rotate-90")} />
             </ActionButton>
-            <div id={id} hidden={!open} className="space-y-1">
+            <div id={id} hidden={!open} className="admin-nav-children space-y-1">
               {children.map(child => {
                 const Icon = child.icon || item.icon;
                 const active = pathname === child.href || (child.href !== '/dashboard' && pathname.startsWith(child.href + '/') && !filteredMenu.some(section => section.subItems?.some(other => other.href.length > child.href.length && (pathname === other.href || pathname.startsWith(other.href + '/')))));

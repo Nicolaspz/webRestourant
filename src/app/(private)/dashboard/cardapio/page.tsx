@@ -10,11 +10,11 @@ import { api } from '@/services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Armchair, ArrowRight, RefreshCw, Search, Utensils } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 type Table = { tableAreaId?: string | null; areaName?: string | null; id: string; number: number; capacidade?: number; status: 'livre' | 'ocupada' | 'reservada' };
 const statusLabel = { livre: 'Livre', ocupada: 'Em atendimento', reservada: 'Reservada' } as const;
@@ -39,7 +39,7 @@ export default function TableSelectionPage() {
   const [savingArea, setSavingArea] = useState<string|null>(null);
 
   const loadTables = async () => {
-    if (!user?.organizationId) return;
+    if (!user?.organizationId) { setLoading(false); setError('Não foi possível identificar a organização.'); return; }
     setLoading(true); setError('');
     try {
       const { data } = await api.get('/mesas', { params: { organizationId: user.organizationId } });
@@ -93,6 +93,8 @@ export default function TableSelectionPage() {
     router.push(`/dashboard/cardapio/${user.organizationId}/${table.number}`);
   };
 
+  if (loading) return <CenterScreenLoader />;
+
   return <section className="mx-auto max-w-7xl space-y-6">
     <header className="flex flex-col gap-4 rounded-3xl border bg-card p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -105,8 +107,7 @@ export default function TableSelectionPage() {
 
     {can('tables.update') && <details className="rounded-xl border p-4"><summary className="cursor-pointer font-semibold">Organizar mesas por área</summary><p className="my-3 text-sm text-muted-foreground">Selecione uma área das mesas cadastrada. Para cadastrar áreas e criar mesas, aceda às configurações; crie as mesas na gestão de mesas.</p><a className="text-primary underline" href="/dashboard/settings">Gerir áreas das mesas</a><div className="mt-3 grid gap-3 sm:grid-cols-2">{tables.map(table=><div key={table.id} className="flex items-center gap-2"><label htmlFor={`area-${table.id}`} className="shrink-0">Mesa {table.number}</label><select id={`area-${table.id}`} className="min-w-0 flex-1 rounded-md border bg-background p-2" value={areaDrafts[table.id] ?? table.tableAreaId ?? ''} onChange={e=>setAreaDrafts({...areaDrafts,[table.id]:e.target.value})}><option value="">Selecione a área</option>{tableAreas.map(area=><option key={area.id} value={area.id}>{area.name}</option>)}</select><Button disabled={savingArea!==null || !(areaDrafts[table.id] ?? table.tableAreaId)} onClick={()=>saveArea(table)}>Guardar</Button></div>)}</div></details>}
     {!loading && !error && <Tabs value={activeArea} onValueChange={setActiveArea}><div className="overflow-x-auto pb-2"><TabsList aria-label="Áreas das mesas" className="h-auto w-max justify-start gap-1">{areaTabs.map(area=><TabsTrigger key={area.id} value={area.id}>{area.name} ({tables.filter(table=>(table.tableAreaId || '__unassigned')===area.id).length})</TabsTrigger>)}<TabsTrigger value="__all">Todas as mesas ({tables.length})</TabsTrigger></TabsList></div></Tabs>}
-    {loading ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}</div>
-      : error ? <Card className="border-destructive/30"><CardContent className="flex flex-col items-center gap-4 p-10 text-center"><p className="font-medium text-destructive">{error}</p><Button variant="outline" onClick={loadTables}><RefreshCw className="mr-2 h-4 w-4" />Tentar novamente</Button></CardContent></Card>
+    {error ? <Card className="border-destructive/30"><CardContent className="flex flex-col items-center gap-4 p-10 text-center"><p className="font-medium text-destructive">{error}</p><Button variant="outline" onClick={loadTables}><RefreshCw className="mr-2 h-4 w-4" />Tentar novamente</Button></CardContent></Card>
       : filteredTables.length === 0 ? <Card><CardContent className="p-12 text-center text-muted-foreground">Nenhuma mesa encontrada.</CardContent></Card>
       : <div className="space-y-6">{groups.map(group=><section key={group.name}><h2 className="mb-3 text-xl font-semibold">{group.name} <span className="text-sm font-normal text-muted-foreground">({group.tables.length} mesas)</span></h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{group.tables.map(table => <ActionButton key={table.id} type="button" onClick={() => openMenu(table)} disabled={opening !== null} className="group rounded-2xl text-left outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"><Card className="h-full border-2 transition-all duration-200 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-lg"><CardContent className="flex h-44 flex-col justify-between p-5"><div className="flex items-start justify-between"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Armchair className="h-6 w-6" /></div><Badge variant="outline" className={statusStyle[table.status] || statusStyle.livre}>{statusLabel[table.status] || table.status}</Badge></div><div className="flex items-end justify-between"><div><p className="text-2xl font-black">Mesa {table.number}</p><p className="text-sm text-muted-foreground">{table.capacidade || '—'} lugares</p></div><span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:translate-x-1">{opening === table.number ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}</span></div></CardContent></Card></ActionButton>)}</div></section>)}</div>}
   </section>;

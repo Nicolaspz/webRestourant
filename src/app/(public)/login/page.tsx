@@ -37,7 +37,12 @@ export default function LoginPage() {
     try {
       await signIn({ credential, password });
     } catch (err) {
-      console.error("Erro ao logar:", err);
+      const error = err as any;
+      console.error("Falha ao iniciar sessão:", {
+        status: error.response?.status,
+        code: error.response?.data?.code,
+        cause: error.response?.data?.diagnostic || error.code || error.message,
+      });
       setLoading(false);
     }
   }

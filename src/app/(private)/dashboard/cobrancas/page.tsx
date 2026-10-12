@@ -9,6 +9,7 @@ import {useSocket} from '@/contexts/SocketContext';
 import {AuthContext} from '@/contexts/AuthContext';
 import {usePosSettings} from '@/hooks/usePosSettings';
 import {buildBillingNoticePdf,printBillingNotice} from '@/utils/printBillingNotice';
+import {CenterScreenLoader} from '@/components/ui/center-screen-loader';
 type Fiscal={documentNo?:string;status:string;requestId?:string;message?:string};
 type Notice={id:string;customerName:string;customerTaxId?:string;total:string;status:string;documentNo?:string;requestId?:string;message?:string;createdAt:string;paidAt?:string;receiptFatura?:{id:string;metodoPagamento:string;fiscalSubmission?:Fiscal};session:{mesa:{number:number}};payload:{taxRegistrationNumber:string;lines:{productDescription:string;quantity:number;creditAmount:number;taxes:{taxContribution:number}[]}[]}};
 const money=(v:number|string)=>Number(v).toLocaleString('pt-AO',{minimumFractionDigits:2,maximumFractionDigits:2})+' Kz';
@@ -52,9 +53,10 @@ export default function BillingNotices(){
  async function pay(){if(!selected||!confirmed||lock.current)return;lock.current=true;setBusy(true);try{await api.post(`/billing-notices/${selected.id}/pay`,{method,amount:Number(selected.total),confirmed:true});setSelected(null);setConfirmed(false);await load();toast.success('Pagamento registado. Recibo AR enfileirado para emissão.');}catch(e:any){toast.error(e.response?.data?.error||'Não foi possível confirmar. Atualize antes de tentar novamente.');}finally{lock.current=false;setBusy(false);}}
  async function pdf(n:Notice,receipt=false){if(lock.current)return;lock.current=true;setBusy(true);try{await printBillingNotice(n.id,receipt,settings);}catch(e:any){toast.warning(e.message||'Não foi possível imprimir.');}finally{lock.current=false;setBusy(false);}}
  const visible=rows.filter(n=>(status==='all'||(status==='paid'?!!n.paidAt:!n.paidAt))&&(!start||day(n.createdAt)>=start)&&(!end||day(n.createdAt)<=end)&&`${n.customerName} ${n.customerTaxId||''} ${n.documentNo||''} ${n.receiptFatura?.fiscalSubmission?.documentNo||''} ${n.session.mesa.number}`.toLowerCase().includes(search.toLowerCase()));
+ if(loading)return <CenterScreenLoader />;
  return <section className="space-y-5"><h1 className="text-2xl font-bold">Avisos de cobrança</h1>
  <div className="flex flex-wrap gap-3"><Input className="sm:max-w-sm" aria-label="Pesquisar cobranças" placeholder="Cliente, NIF, número ou mesa" value={search} onChange={e=>setSearch(e.target.value)}/><select aria-label="Estado do pagamento" className="rounded border bg-background px-3" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">Todos</option><option value="pending">Por pagar</option><option value="paid">Pagos</option></select><label>De<Input type="date" value={start} onChange={e=>setStart(e.target.value)}/></label><label>Até<Input type="date" value={end} onChange={e=>setEnd(e.target.value)}/></label><Button disabled={busy||loading} variant="outline" onClick={load}>Atualizar lista</Button></div>
- {loading?<p>A carregar…</p>:!visible.length?<p>Nenhum aviso encontrado.</p>:<div className="space-y-3">{visible.map(n=><article key={n.id} className="rounded-xl border p-4 space-y-3">
+ {!visible.length?<p>Nenhum aviso encontrado.</p>:<div className="space-y-3">{visible.map(n=><article key={n.id} className="rounded-xl border p-4 space-y-3">
  <div className="flex flex-wrap items-center gap-4"><div className="min-w-0 flex-1"><p className="font-medium">{n.customerName}</p><p className="text-sm text-muted-foreground">{n.documentNo||'Aviso de cobrança'}</p></div><p className="font-semibold">{money(n.total)}</p><time className="text-sm text-muted-foreground" dateTime={n.createdAt}>{new Date(n.createdAt).toLocaleDateString('pt-PT')}</time></div>
  <div className="flex flex-wrap gap-2">
  <Button variant="outline" disabled={busy||openingId!==null} aria-busy={openingId===n.id} onClick={()=>visualize(n)}>{openingId===n.id?'A abrir…':'Abrir documento'}</Button>

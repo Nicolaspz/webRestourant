@@ -42,7 +42,6 @@ import {
   UserPlus,
   Search,
   Filter,
-  Loader2,
   Phone,
   Mail
 } from "lucide-react";
@@ -52,6 +51,7 @@ import { useAccess } from '@/contexts/AccessContext';
 import { UserFormModal } from "./UserFormModal";
 import { AuthContext } from "@/contexts/AuthContext";
 import { DeleteDialog } from "./userConfirmModal";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 export interface User {
   id: string;
@@ -251,15 +251,7 @@ export function UsersTable({ organizationId }: UsersTableProps) {
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
+  if (isLoading) return <CenterScreenLoader />;
 
   return (
     <div className="space-y-4">

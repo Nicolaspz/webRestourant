@@ -1,12 +1,5 @@
-"use client"
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
-import { Loader2 } from "lucide-react"
-
-export default function Loading() {
-  return (
-    <div className="flex h-[80vh] items-center justify-center">
-      <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-      <span className="ml-3 text-lg text-gray-600">Carregando...</span>
-    </div>
-  )
+export default function ProductsLoading() {
+  return <CenterScreenLoader title="A carregar…" description="" />;
 }

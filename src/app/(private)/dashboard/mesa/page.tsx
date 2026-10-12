@@ -20,6 +20,7 @@ import { Mesa } from '@/types/product';
 import { parseCookies } from 'nookies';
 import { usePosSettings } from '@/hooks/usePosSettings';
 import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 
 export default function GerenciamentoMesasPage() {
@@ -248,18 +249,7 @@ export default function GerenciamentoMesasPage() {
   const mesasOcupadas = mesas.filter(m => m.status === 'ocupada');
   const mesasReservadas = mesas.filter(m => m.status === 'reservada');
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando mesas...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <CenterScreenLoader />;
 
   if (user?.role === 'GARCON') {
     return <CashierPOS

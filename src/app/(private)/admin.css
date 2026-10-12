@@ -44,6 +44,8 @@ body:has(.admin-shell) {
 .admin-brand-logo { width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: white; overflow: hidden; display: grid; place-items: center; }
 .admin-navigation { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 12px; scrollbar-color: #46566f transparent; }
 .admin-nav-section { margin-top: 22px; }
+.admin-nav-children { position: relative; margin-left: 2px; padding-left: 8px; }
+.admin-nav-children::before { position: absolute; top: 2px; bottom: 2px; left: 0; width: 1px; content: ""; background: rgb(148 163 184 / 28%); pointer-events: none; }
 .admin-nav-heading { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; margin-bottom: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #9caec5; cursor: pointer; }
 .admin-nav-link { display: flex; align-items: center; gap: 12px; min-height: 42px; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #bccbdd; transition: background .16s, color .16s; }
 .admin-nav-link svg { flex-shrink: 0; opacity: .85; }

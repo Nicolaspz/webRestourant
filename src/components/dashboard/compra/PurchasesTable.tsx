@@ -24,6 +24,7 @@ import { AuthContext } from "@/contexts/AuthContext";
 import { CreatePurchaseModal } from "./CreatePurchaseModal";
 import { PurchaseProductsModal } from "./PurchaseProductsModal";
 import { AddToStockButton } from "./AddToStockButton";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 import {
   Select,
   SelectContent,
@@ -134,13 +135,7 @@ export default function PurchasesTable({ refreshKey }: PurchasesTableProps) {
     setShowProductsModal(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-20">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  if (isLoading) return <CenterScreenLoader />;
 
   return (
     <div className="space-y-4">

@@ -64,6 +64,7 @@ import { toast } from 'react-toastify';
 import { AuthContext } from "@/contexts/AuthContext";
 import { economatoService, Area, PedidoArea } from "@/services/economato";
 import { api } from "@/services/apiClients";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 export function PedidosTable() {
  const {can}=useAccess();
@@ -93,7 +94,8 @@ export function PedidosTable() {
 
   // Fetch Pedidos
   const fetchPedidos = async (silent = false) => {
-    if (!isMounted || !user?.organizationId) return;
+    if (!isMounted) return;
+    if (!user?.organizationId) { setIsLoading(false); return; }
     try {
       if (!silent) setIsLoading(true);
       const params: any = {};
@@ -121,7 +123,7 @@ export function PedidosTable() {
     return () => { window.removeEventListener('focus', refresh); window.removeEventListener('economato-updated', refresh); };
   }, [isMounted, statusFilter, user?.organizationId]);
 
-  if (!isMounted) return null;
+  if (!isMounted || isLoading) return <CenterScreenLoader />;
 
   // Handlers
   const openCreateDialog = () => setIsCreateDialogOpen(true);
@@ -145,7 +147,7 @@ export function PedidosTable() {
 
 
       toast.success(processStatus === 'aprovado'
-        ? "Reposição aprovada. Peça ao solicitante o código para confirmar a entrega."
+        ? "Entrada aprovada. Peça ao solicitante o código para confirmar a entrega."
         : "Pedido rejeitado.");
 
       setIsProcessSheetOpen(false);
@@ -267,6 +269,7 @@ export function PedidosTable() {
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
@@ -291,7 +294,7 @@ export function PedidosTable() {
 
             <Button disabled={!can("transfers.create")} onClick={openCreateDialog}>
               <Plus className="w-4 h-4 mr-2" />
-              Solicitar reposição
+              Solicitar entrada de stock
             </Button>
           </div>
         </div>
@@ -331,13 +334,7 @@ export function PedidosTable() {
                       <span className="mx-2 text-muted-foreground">➔</span>
                       <span className="font-medium text-green-700">{pedido.areaDestino.nome}</span>
                     </TableCell>
-                    <TableCell>
-                      {pedido.itens.map(item => (
-                        <div key={item.id} className="text-sm">
-                          {item.quantity} {item.product?.unit || 'un'} - <strong>{item.product?.name}</strong>
-                        </div>
-                      ))}
-                    </TableCell>
+                    <TableCell><span className="text-sm text-muted-foreground">{pedido.itens.length} produto(s)</span></TableCell>
                     <TableCell>{getStatusBadge(pedido.status)}</TableCell>
                     <TableCell>
                       {['pendente', 'aprovado'].includes(pedido.status) && pedido.confirmationCode ? (
@@ -364,7 +361,7 @@ export function PedidosTable() {
                           }}
                         >
                           <FileText className="w-3 h-3 mr-2" />
-                          Itens
+                          Detalhes
                         </Button>
 
                         {pedido.status === 'pendente' && can('transfers.update') && (
@@ -414,7 +411,7 @@ export function PedidosTable() {
             <DialogHeader>
               <DialogTitle>Detalhes da Requisição</DialogTitle>
               <DialogDescription>
-                Informações completas da reposição de stock.
+                Informações completas da entrada de stock na área.
               </DialogDescription>
             </DialogHeader>
 
@@ -536,7 +533,7 @@ export function PedidosTable() {
         <Dialog open={isConfirmSheetOpen} onOpenChange={value => { if (!isSubmitting) setIsConfirmSheetOpen(value); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Confirmar entrega da reposição</DialogTitle>
+              <DialogTitle>Confirmar entrada de stock na área</DialogTitle>
               <DialogDescription>Peça o código ao solicitante e confira os produtos entregues. Ao confirmar, o stock é transferido e o pedido fica recebido.</DialogDescription>
             </DialogHeader>
             <ActionForm onSubmit={e => { e.preventDefault(); return handleConfirmReceipt(); }} className="space-y-5">
@@ -556,5 +553,7 @@ export function PedidosTable() {
 
       </CardContent>
     </Card>
+    {isSubmitting && <CenterScreenLoader />}
+    </>
   );
 }

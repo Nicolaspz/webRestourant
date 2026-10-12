@@ -37,6 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Eye, Search, X, Package } from "lucide-react";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 // Usando as interfaces que você forneceu
 interface PrecoVenda {
@@ -108,18 +109,7 @@ export function StockTable({ products, isLoading }: StockTableProps) {
     return currentPrice ? `${currentPrice.preco_venda} Kz` : "Preço não definido";
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex justify-center items-center py-20">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-muted-foreground">A carregar stock...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  if (isLoading) return <CenterScreenLoader />;
 
   return (
     <>

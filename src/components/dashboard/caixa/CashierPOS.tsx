@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ProductImage } from '@/components/ProductImage';
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 import { toast } from 'react-toastify';
 import { Armchair, ArrowLeft, CreditCard, Loader2, Minus, Plus, Printer, Search, Send, X } from 'lucide-react';
 
@@ -81,7 +82,7 @@ export function CashierPOS({
   }, [api, isWaiter, organizationId]);
 
   const loadProducts = useCallback(async (force = false) => {
-    if (!organizationId) return;
+    if (!organizationId) { setProductsLoading(false); return; }
     if (force) setProductsRefreshing(true);
     else setProductsLoading(true);
     try {
@@ -241,7 +242,7 @@ export function CashierPOS({
     } finally { setBusy(false); }
   };
 
-  return <><div className="min-h-full bg-muted/20 p-3 sm:p-5 lg:p-6">
+  return <>{(loadingMesas || productsLoading) && <CenterScreenLoader />}<div className="min-h-full bg-muted/20 p-3 sm:p-5 lg:p-6">
     <div className="mx-auto flex max-w-[1800px] flex-col gap-4">
       {!isWaiter && !caixaAberto && <Card><CardContent className="p-4 text-sm text-muted-foreground">Abra o caixa no cabeçalho para começar a atender.</CardContent></Card>}
 

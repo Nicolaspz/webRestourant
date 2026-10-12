@@ -42,7 +42,6 @@ import {
   Plus,
   Search,
   Filter,
-  Loader2,
   Utensils,
   Image,
   DollarSign,
@@ -58,6 +57,7 @@ import { api } from "@/services/apiClients";
 import { cachedGet } from '@/services/api';
 import { toast } from 'react-toastify';
 import { ProductFormModal } from "./ProductFormModal";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 import { RecipeModal } from "./RecipeModal";
 import { AuthContext } from "@/contexts/AuthContext";
 import { Product, Category } from "@/types/product";
@@ -270,15 +270,7 @@ export function ProductsTable({ organizationId }: ProductsTableProps) {
     return isDerived ? "default" : "secondary";
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
+  if (isLoading) return <CenterScreenLoader />;
 
   return (
     <div className="space-y-4">

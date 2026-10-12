@@ -14,6 +14,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 interface Cliente {
     id: string;
@@ -76,6 +77,8 @@ export default function TakeawayClientesList({ organizationId }: { organizationI
         link.click();
         document.body.removeChild(link);
     };
+
+    if (loading) return <CenterScreenLoader />;
 
     return (
         <div className="space-y-4">

@@ -43,6 +43,7 @@ import { setupAPIClient } from "@/services/api";
 import { AuthContext } from "@/contexts/AuthContext";
 import { CategoryFormModal } from "./CategoryFormModal";
 import { toast } from "react-toastify";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 interface Category {
     id: string;
@@ -153,6 +154,8 @@ export function CategoryTable() {
     const goToLastPage = () => goToPage(totalPages);
     const goToPreviousPage = () => goToPage(currentPage - 1);
     const goToNextPage = () => goToPage(currentPage + 1);
+
+    if (isLoading) return <CenterScreenLoader />;
 
     return (
         <div className="space-y-4">

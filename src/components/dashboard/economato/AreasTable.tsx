@@ -41,12 +41,13 @@ import {
 import { toast } from 'react-toastify';
 import { AuthContext } from "@/contexts/AuthContext";
 import { economatoService, Area } from "@/services/economato";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 export function AreasTable() {
   const { can, access } = useAccess();
   const { user } = useContext(AuthContext);
   const [areas, setAreas] = useState<Area[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Sheet State
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -55,7 +56,7 @@ export function AreasTable() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchAreas = async () => {
-    if (!user?.organizationId) return;
+    if (!user?.organizationId) { setIsLoading(false); return; }
     try {
       setIsLoading(true);
       const data = await economatoService.getAreas(user.organizationId);
@@ -120,6 +121,8 @@ export function AreasTable() {
       toast.error("Erro ao excluir área");
     }
   };
+
+  if (isLoading) return <CenterScreenLoader />;
 
   return (
     <Card>

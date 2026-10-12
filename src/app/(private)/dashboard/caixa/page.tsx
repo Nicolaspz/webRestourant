@@ -18,6 +18,7 @@ import { usePosSettings } from '@/hooks/usePosSettings';
 import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
 import { CashierPOS } from '@/components/dashboard/caixa/CashierPOS';
 import FaturaList from '@/components/dashboard/caixa/FaturaList';
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 const Estatisticas = dynamic(() => import('@/components/dashboard/caixa/Estatisticas'));
 const ModalPagamento = dynamic(() => import('@/components/dashboard/mesas/ModalPagamento'), { ssr: false });
@@ -37,7 +38,7 @@ const Caixa = () => {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [faturasError, setFaturasError] = useState<string | null>(null);
   const [mesas, setMesas] = useState<Mesa[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [caixaAbertoParaAtender, setCaixaAbertoParaAtender] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState('abertas');
@@ -209,12 +210,12 @@ const Caixa = () => {
       const currentStatus = statusMap[activeTab as keyof typeof statusMap];
       if (activeTab === 'abertas') {
         const cached = mesasCache.current;
-        if (cached) setMesas(cached.data);
+        if (cached) { setMesas(cached.data); setLoading(false); }
         if (!cached || Date.now() - cached.updatedAt >= CACHE_TTL) fetchMesas(Boolean(cached));
       } else {
         const cacheKey = `${formatDate(selectedDate)}:${currentStatus || 'todas'}`;
         const cached = faturasCache.current[cacheKey];
-        if (cached) setFaturas(cached.data);
+        if (cached) { setFaturas(cached.data); setLoading(false); }
         if (!cached || Date.now() - cached.updatedAt >= CACHE_TTL) {
           fetchFaturas(selectedDate, currentStatus, Boolean(cached));
         }
@@ -465,6 +466,7 @@ const Caixa = () => {
           ))}
         </div>
       )}
+      {loading && user?.organizationId && <CenterScreenLoader />}
     </div>
   );
 };

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import TakeawayPaymentModal from './TakeawayPaymentModal';
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 interface TakeawayItem {
     id: string;
@@ -234,6 +235,8 @@ export default function TakeawayGestao({ organizationId }: { organizationId: str
             <p>{label}</p>
         </div>
     );
+
+    if (loading) return <CenterScreenLoader />;
 
     return (
         <div className="h-full flex flex-col">

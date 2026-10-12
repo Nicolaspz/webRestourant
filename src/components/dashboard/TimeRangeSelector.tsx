@@ -9,6 +9,7 @@ const timeRanges = [
   { value: "today", label: "Hoje" },
   { value: "week", label: "Esta Semana" },
   { value: "month", label: "Este Mês" },
+  { value: "last30", label: "Últimos 30 dias" },
 ];
 
 export function TimeRangeSelector({ value, onChange }: TimeRangeSelectorProps) {

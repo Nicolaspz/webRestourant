@@ -3,6 +3,7 @@ import {createContext,useContext,useEffect,useState,useCallback,useRef,ReactNode
 import {usePathname} from 'next/navigation';
 import {AuthContext} from './AuthContext';
 import {cachedGet} from '@/services/api';
+import {CenterScreenLoader} from '@/components/ui/center-screen-loader';
 type Access={role:string;permissions:string[];allAreas:boolean;areaIds:string[]};
 export const screenPermissions:Record<string,string>={
  '/dashboard/clientes':'invoices.read',
@@ -52,6 +53,7 @@ export function AccessProvider({children}:{children:ReactNode}) {
  },[load]);
  const can=(key:string)=>!!access&&(access.role==='SUPER ADMIN'||(key!=='super'&&access.permissions.includes(key)));
  const canScreen=(path:string)=>{
+  if(path==='/dashboard/economato')return ['pickups.read','stock.read','transfers.read','consumption.read','areas.read'].some(can);
   const route=Object.keys(screenPermissions).sort((a,b)=>b.length-a.length).find(route=>path===route||(route!=='/dashboard'&&path.startsWith(route+'/')));
   return !!route&&can(screenPermissions[route]);
  };
@@ -59,7 +61,7 @@ export function AccessProvider({children}:{children:ReactNode}) {
 }
 export function AccessGate({children}:{children:ReactNode}) {
  const path=usePathname();const {loading,access,canScreen,refresh}=useAccess();
- if(loading) return <p role="status" className="p-6">A validar permissões…</p>;
+ if(loading) return <CenterScreenLoader />;
  if(!access) return <section role="alert" className="m-6 rounded-xl border bg-card p-6 text-card-foreground">
   <p>Não foi possível validar o acesso neste momento.</p>
   <button type="button" onClick={()=>void refresh()} className="mt-3 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">Tentar novamente</button>

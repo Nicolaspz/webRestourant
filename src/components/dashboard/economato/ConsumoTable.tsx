@@ -53,6 +53,7 @@ import { toast } from 'react-toastify';
 import { AuthContext } from "@/contexts/AuthContext";
 import { economatoService, Area, ConsumoInterno } from "@/services/economato";
 import { api } from "@/services/apiClients";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 export function ConsumoTable() {
   const { user } = useContext(AuthContext);
@@ -62,7 +63,7 @@ export function ConsumoTable() {
   const [stockLoading, setStockLoading] = useState(false);
   const [stockError, setStockError] = useState(false);
   const [stockRetry, setStockRetry] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [areaFilter, setAreaFilter] = useState<string>('all');
 
   // Sheet State
@@ -121,7 +122,7 @@ export function ConsumoTable() {
 
   // Carregar Consumos
   const fetchConsumos = async () => {
-    if (!user?.organizationId) return;
+    if (!user?.organizationId) { setIsLoading(false); return; }
     try {
       setIsLoading(true);
       const params: any = {};
@@ -179,6 +180,8 @@ export function ConsumoTable() {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) return <CenterScreenLoader />;
 
   return (
     <div className="space-y-6">

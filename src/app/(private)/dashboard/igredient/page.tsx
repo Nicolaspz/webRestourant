@@ -1,5 +1,6 @@
 'use client';
 import { API_BASE_URL, getMediaUrl } from "../../../../../config";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 import { useState, useEffect, useContext } from "react";
 import {
   Table,
@@ -381,15 +382,7 @@ export default function IngredientsPage() {
     return isDerived ? "Derivado" : "Simples";
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
+  if (isLoading) return <CenterScreenLoader />;
 
   return (
     <div className="space-y-4">

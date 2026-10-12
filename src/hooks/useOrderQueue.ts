@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { getConnectionErrorMessage } from '@/services/api';
 import { useSocket } from '@/contexts/SocketContext';
 import { ordersService } from '@/services/orders';
 import type { GroupedOrder, Order, OrderItem } from '@/types/orders';
@@ -103,7 +104,12 @@ export function useOrderQueue(organizationId?: string, area: OrderQueueArea = 'a
       await ordersService.updateItemStatus(itemId, status, organizationId, area.startsWith('area:') ? itemAreaId || area.slice(5) : undefined);
     } catch (error: any) {
       if (previousItem) setOrders(current => current.map(order => ({ ...order, items: order.items.map(item => item.id === itemId ? previousItem : item) })));
-      toast.error('Não foi possível atualizar o item. Aguarde um momento, confirme o estado do pedido e tente novamente.');
+      const serverMessage = error.response?.data?.error || error.response?.data?.message;
+      const message = getConnectionErrorMessage(error) || serverMessage ||
+        (error.response?.status === 409
+          ? 'O pedido foi alterado por outro utilizador. Atualize a lista e tente novamente.'
+          : 'Não foi possível atualizar o item. Aguarde um momento, confirme o estado do pedido e tente novamente.');
+      toast.error(message);
       void refresh(true);
     } finally {
       preparing.current = false;

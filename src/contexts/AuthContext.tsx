@@ -246,12 +246,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       window.location.replace(destination);
 
     } catch (err: any) {
-      const errorMessage =
-        getConnectionErrorMessage(err) ||
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        err.message ||
-        "Erro inesperado, tente novamente.";
+      const databaseUnavailable = err.response?.data?.code === 'DATABASE_UNAVAILABLE';
+      const errorMessage = databaseUnavailable
+        ? 'Falha ao iniciar sessão. Tente novamente dentro de alguns minutos.'
+        : getConnectionErrorMessage(err) ||
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          err.message ||
+          "Erro inesperado, tente novamente.";
       toast.error(errorMessage);
       throw err;
     }

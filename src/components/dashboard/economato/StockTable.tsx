@@ -59,6 +59,7 @@ import { toast } from 'react-toastify';
 import { AuthContext } from "@/contexts/AuthContext";
 import { economatoService, Area, EconomatoItem } from "@/services/economato";
 import { api } from "@/services/apiClients";
+import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 export function StockTable() {
  const {can}=useAccess();
@@ -68,7 +69,7 @@ export function StockTable() {
   const [selectedAreaId, setSelectedAreaId] = useState<string>("");
   const [stockItems, setStockItems] = useState<EconomatoItem[]>([]);
   const [filterType, setFilterType] = useState<'all' | 'product' | 'ingredient'>('all');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
 
   // Sheet State
@@ -85,11 +86,12 @@ export function StockTable() {
   // Load Areas
   useEffect(() => {
     async function loadAreas() {
-      if (!user?.organizationId) return;
+      if (!user?.organizationId) { setIsLoading(false); return; }
       try {
         const data = await economatoService.getAreas(user.organizationId);
         setAreas(data);
         if (data.length > 0) setSelectedAreaId(data[0].id);
+        else setIsLoading(false);
 
         // Load general products (for filtering)
         const prodResponse = await api.get('/produts', {
@@ -98,6 +100,7 @@ export function StockTable() {
         setProducts(prodResponse.data);
       } catch (error) {
         console.error("Erro ao carregar áreas:", error);
+        setIsLoading(false);
       }
     }
     loadAreas();
@@ -194,6 +197,8 @@ export function StockTable() {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) return <CenterScreenLoader />;
 
   return (
     <Card>
