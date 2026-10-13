@@ -119,9 +119,9 @@ const MesaStatusTabs = ({
                 </p>
               </CardContent>
 
-              <CardFooter className="flex justify-between">
+              <CardFooter className="flex justify-between gap-2">
                 <Badge variant="secondary">LIVRE</Badge>
-
+                {can('invoices.print') && <Button variant="outline" size="sm" onClick={() => onFactMesa(mesa.id)}>Ver último consumo</Button>}
 
               </CardFooter>
             </Card>
@@ -143,7 +143,7 @@ const MesaStatusTabs = ({
                   </div>
                   {sessionAtiva && (
                     <CardDescription>
-                      Aberta às: {new Date(sessionAtiva.abertaEm).toLocaleTimeString()}
+                      Aberta por: {sessionAtiva.User?.name || 'Utilizador não identificado'} · Aberta às: {new Date(sessionAtiva.abertaEm).toLocaleTimeString()}
                     </CardDescription>
                   )}
                 </CardHeader>

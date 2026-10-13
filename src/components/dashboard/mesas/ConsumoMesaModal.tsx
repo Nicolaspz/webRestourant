@@ -46,6 +46,7 @@ export function ConsumoMesaModal({ isOpen, onClose, dadosSessao, onImprimir }: C
                   <p className="font-medium">
                     {new Date(dadosSessao.abertaEm).toLocaleString('pt-PT')}
                   </p>
+                  {dadosSessao.abertoPorNome && <p className="text-sm text-muted-foreground">Aberta por: {dadosSessao.abertoPorNome}</p>}
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Fecho</p>
@@ -63,9 +64,10 @@ export function ConsumoMesaModal({ isOpen, onClose, dadosSessao, onImprimir }: C
               <div key={idx} className="border rounded-lg p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-semibold">{pedido.nomePedido}</h3>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(pedido.criadoEm).toLocaleTimeString('pt-PT')}
-                  </span>
+                  <div className="text-right text-sm text-muted-foreground">
+                    {pedido.atendidoPor && <p>Adicionado por: {pedido.atendidoPor}</p>}
+                    <p>{new Date(pedido.criadoEm).toLocaleTimeString('pt-PT')}</p>
+                  </div>
                 </div>
 
                 <table className="w-full">

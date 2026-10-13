@@ -106,10 +106,13 @@ export function buildReceiptPdf(dados: DadosSessao, payment?: PaymentInfo, forma
     text('NIF: '+(!customerNif || customerNif === '999999999' ? 'N/A' : customerNif));
   }
   rule();
-  const items = dados.pedidos.flatMap(p=>p.items);
+  const items = dados.pedidos.flatMap(p=>p.items.map(item=>({
+    ...item,
+    pedidoLabel: `${p.nomePedido || 'Pedido'} · Adicionado por: ${p.atendidoPor || 'Utilizador não identificado'}`,
+  })));
   autoTable(doc, {
     startY:y, head:[['Produto / Quantidade','Subtotal']],
-    body:items.map(item=>[item.produto+'\n'+item.quantidade+' x '+money(item.precoUnitario),money(item.subtotal)]),
+    body:items.map(item=>[item.pedidoLabel+'\n'+item.produto+'\n'+item.quantidade+' x '+money(item.precoUnitario),money(item.subtotal)]),
     margin:{top:thermal?7:18,left:margin,right:margin,bottom:12},
     showHead:'everyPage', rowPageBreak:'avoid', theme:'plain',
     styles:{fontSize:font,cellPadding:thermal?1.5:3,overflow:'linebreak',textColor:0,lineColor:180,lineWidth:{bottom:0.1}},

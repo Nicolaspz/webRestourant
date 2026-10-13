@@ -225,6 +225,7 @@ export interface Session {
   id: string;
   status: boolean;
   abertaEm: string;
+  User?: { name?: string | null } | null;
   Order?: Order[];
 }
 
