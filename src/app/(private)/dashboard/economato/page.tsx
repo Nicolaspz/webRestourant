@@ -20,7 +20,9 @@ type TabKey = keyof typeof tabPermissions;
 
 export default function EconomatoPage() {
   const { can, access } = useAccess();
-  const tabs = useMemo(() => (Object.keys(tabPermissions) as TabKey[]).filter(key => can(tabPermissions[key])), [access]);
+  const tabs = useMemo(() => (Object.keys(tabPermissions) as TabKey[]).filter(key =>
+    key === 'reposicao' ? can('transfers.read') || can('stock.entries.create') : can(tabPermissions[key])
+  ), [access]);
   const fallbackTab = tabs[0] || '';
   const [activeTab, setActiveTab] = useState('');
   const selectedTab = tabs.includes(activeTab as TabKey) ? activeTab : fallbackTab;

@@ -1,5 +1,5 @@
 'use client';
-import { API_BASE_URL, getMediaUrl } from "../../../../../config";
+import { getMediaUrl } from "../../../../../config";
 import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 import { useState, useEffect, useContext } from "react";
 import {
@@ -52,6 +52,7 @@ import { IngredientFormModal } from "@/components/dashboard/igredient/Ingredient
 import { RecipeModal } from "@/components/dashboard/produto/RecipeModal";
 import { DeleteDialog } from "@/components/dashboard/user/userConfirmModal";
 import { Category, Ingredient, Product } from "@/types/product";
+import { getConnectionErrorMessage } from "@/services/api";
 
 export default function IngredientsPage() {
   const { user } = useContext(AuthContext);
@@ -71,6 +72,7 @@ export default function IngredientsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
   const [selectedRecipeIngredient, setSelectedRecipeIngredient] = useState<Product | null>(null);
+  const ingredientCategoryId = categories.find(category => category.name.trim().toLocaleLowerCase('pt') === 'ingredientes')?.id || '';
 
   // Buscar ingredientes e categorias
   const fetchData = async () => {
@@ -136,20 +138,13 @@ export default function IngredientsPage() {
     try {
       setIsSubmitting(true);
 
-      const formPayload = new FormData();
-      // Tentar encontrar a categoria "Ingredientes" pelo nome
-      const ingredientCategory = categories.find(c =>
-        c.name.toLowerCase() === 'ingredientes' ||
-        c.name.toLowerCase() === 'ingrediente'
-      );
-
-      const categoryId = ingredientCategory ? ingredientCategory.id : null;
-
-      if (!categoryId) {
-        toast.error("Categoria 'Ingredientes' não encontrada. Verifique as categorias cadastradas.");
-        setIsSubmitting(false);
+      const categoryId = String(ingredientData.categoryId || '').trim();
+      if (!categoryId || !categories.some(category => category.id === categoryId)) {
+        toast.error('A categoria “Ingredientes” não foi encontrada. Crie essa categoria em Gestão de Categorias antes de cadastrar ingredientes.');
         return;
       }
+
+      const formPayload = new FormData();
 
       formPayload.append('name', ingredientData.name);
       formPayload.append('description', ingredientData.description);
@@ -160,70 +155,9 @@ export default function IngredientsPage() {
       formPayload.append('isIgredient', 'true');
       formPayload.append('defaultAreaId', ingredientData.defaultAreaId || '');
 
-      // Verifica se há arquivo
-
       if (ingredientData.file) {
         formPayload.append('file', ingredientData.file);
-        console.log('📸 Usando imagem fornecida');
-      } else {
-        // Usa imagem padrão de public/images
-        try {
-          // URL para a imagem em public/images
-          const defaultImageUrl = '/images/igrediente.png'; // ou .png, .svg
-
-          const response = await fetch(defaultImageUrl);
-          if (!response.ok) {
-            throw new Error(`Falha ao carregar imagem: ${response.status}`);
-          }
-
-          const blob = await response.blob();
-          const defaultFile = new File([blob], 'default-ingredient.jpg', {
-            type: blob.type || 'image/jpeg',
-            lastModified: Date.now()
-          });
-
-          formPayload.append('file', defaultFile);
-          console.log('🖼️ Usando imagem padrão de public/images');
-
-        } catch (error) {
-          console.error('❌ Erro ao carregar imagem padrão:', error);
-
-          // Fallback 1: Tenta imagem SVG como fallback
-          try {
-            const svgString = `<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100%" height="100%" fill="#f3f4f6"/>
-            <text x="50%" y="45%" text-anchor="middle" font-family="Arial" font-size="24" fill="#6b7280">🥘</text>
-            <text x="50%" y="60%" text-anchor="middle" font-family="Arial" font-size="18" fill="#6b7280">Ingrediente</text>
-          </svg>`;
-
-            const blob = new Blob([svgString], { type: 'image/svg+xml' });
-            const defaultFile = new File([blob], 'default-ingredient.svg', {
-              type: 'image/svg+xml',
-              lastModified: Date.now()
-            });
-
-            formPayload.append('file', defaultFile);
-            console.log('🖼️ Usando imagem SVG de fallback');
-
-          } catch (svgError) {
-            console.error('❌ Erro ao criar SVG de fallback:', svgError);
-
-            // Fallback 2: Envia sem arquivo e deixa o backend tratar
-            console.log('⚠️ Enviando sem arquivo - backend usará padrão');
-          }
-        }
       }
-
-      // Debug: Mostrar conteúdo do FormData
-      console.log('📝 Dados do FormData:');
-      for (let [key, value] of formPayload.entries()) {
-        if (value instanceof File) {
-          console.log(`${key}: File - ${value.name} (${value.size} bytes, ${value.type})`);
-        } else {
-          console.log(`${key}:`, value);
-        }
-      }
-
 
       await apiClient.post('/produts', formPayload, {
         headers: {
@@ -237,7 +171,7 @@ export default function IngredientsPage() {
       setIsFormModalOpen(false);
     } catch (error: any) {
       console.error("❌ Erro ao criar ingrediente:", error);
-      toast.error(error.response?.data?.message || "Erro ao criar ingrediente");
+      toast.error(getConnectionErrorMessage(error) || error.response?.data?.error || error.response?.data?.message || "Erro ao criar ingrediente");
     } finally {
       setIsSubmitting(false);
     }
@@ -250,20 +184,13 @@ export default function IngredientsPage() {
     try {
       setIsSubmitting(true);
 
-      const formPayload = new FormData();
-      // Tentar encontrar a categoria "Ingredientes" pelo nome
-      const ingredientCategory = categories.find(c =>
-        c.name.toLowerCase() === 'ingredientes' ||
-        c.name.toLowerCase() === 'ingrediente'
-      );
-
-      const categoryId = ingredientCategory ? ingredientCategory.id : null;
-
-      if (!categoryId) {
-        toast.error("Categoria 'Ingredientes' não encontrada. Verifique as categorias cadastradas.");
-        setIsSubmitting(false);
+      const categoryId = String(ingredientData.categoryId || '').trim();
+      if (!categoryId || !categories.some(category => category.id === categoryId)) {
+        toast.error('A categoria “Ingredientes” não foi encontrada. Crie essa categoria em Gestão de Categorias antes de cadastrar ingredientes.');
         return;
       }
+
+      const formPayload = new FormData();
 
       formPayload.append('name', ingredientData.name);
       formPayload.append('description', ingredientData.description);
@@ -282,21 +209,6 @@ export default function IngredientsPage() {
         // Mantém a imagem existente
         console.log('💾 Mantendo imagem existente');
         // Não adiciona 'file', o backend manterá a atual
-      } else {
-        // Se não tem imagem existente, usa padrão
-        try {
-          const defaultImageUrl = '/images/igrediente.png';
-          const response = await fetch(defaultImageUrl);
-          const blob = await response.blob();
-          const defaultFile = new File([blob], 'default-ingredient.jpg', {
-            type: 'image/jpeg',
-            lastModified: Date.now()
-          });
-          formPayload.append('file', defaultFile);
-          console.log('🖼️ Usando imagem padrão para edição');
-        } catch (error) {
-          console.error('❌ Erro ao carregar imagem padrão:', error);
-        }
       }
 
       //console.log('✏️ Editando ingrediente...');
@@ -318,7 +230,7 @@ export default function IngredientsPage() {
       setSelectedIngredient(null);
     } catch (error: any) {
       console.error("❌ Erro ao editar ingrediente:", error);
-      toast.error(error.response?.data?.error || error.response?.data?.message || "Erro ao editar ingrediente");
+      toast.error(getConnectionErrorMessage(error) || error.response?.data?.error || error.response?.data?.message || "Erro ao editar ingrediente");
     } finally {
       setIsSubmitting(false);
     }
@@ -540,7 +452,7 @@ export default function IngredientsPage() {
         isSubmitting={isSubmitting}
         mode={modalMode}
         initialData={selectedIngredient}
-        categories={categories}
+        ingredientCategoryId={ingredientCategoryId}
         organizationId={user?.organizationId || ''}
       />
 

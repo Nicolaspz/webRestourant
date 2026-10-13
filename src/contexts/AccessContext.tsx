@@ -53,7 +53,7 @@ export function AccessProvider({children}:{children:ReactNode}) {
  },[load]);
  const can=(key:string)=>!!access&&(access.role==='SUPER ADMIN'||(key!=='super'&&access.permissions.includes(key)));
  const canScreen=(path:string)=>{
-  if(path==='/dashboard/economato')return ['pickups.read','stock.read','transfers.read','consumption.read','areas.read'].some(can);
+  if(path==='/dashboard/economato')return ['pickups.read','stock.read','transfers.read','stock.entries.create','consumption.read','areas.read'].some(can);
   const route=Object.keys(screenPermissions).sort((a,b)=>b.length-a.length).find(route=>path===route||(route!=='/dashboard'&&path.startsWith(route+'/')));
   return !!route&&can(screenPermissions[route]);
  };

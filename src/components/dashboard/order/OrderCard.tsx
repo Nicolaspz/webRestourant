@@ -31,6 +31,7 @@ type Props = {
 export const OrderCard = memo(function OrderCard({ canPrepare = true, canFinish = true, order, expanded, pendingItems, finishing, onToggleExpand, onManage, onUpdateStatus, onFinish }: Props) {
   const allPrepared = order.allPrepared ?? (order.items.length > 0 && order.items.every(item => item.prepared || item.canceled));
   const allDelivered = order.items.length > 0 && order.items.every(item => item.deliveredAt || item.canceled);
+  const readyToDeliver = order.items.length > 0 && order.items.every(item => item.prepared || item.canceled) && !allDelivered;
   const visibleItems = expanded ? order.items : order.items.slice(0, 3);
 
   return (
@@ -78,6 +79,8 @@ export const OrderCard = memo(function OrderCard({ canPrepare = true, canFinish 
           </div>;
         })}
         {!expanded && order.items.length > 3 && <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => onToggleExpand(order.id)}>Ver mais {order.items.length - 3} itens</Button>}
+        {readyToDeliver && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">Todos os itens estão prontos. Marque-os como <strong>Entregue</strong> para concluir o pedido.</p>}
+        {allDelivered && !canFinish && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">Todos os itens foram entregues, mas o seu perfil não pode concluir o pedido. Peça ao administrador para ativar <strong>Pedidos — concluir atendimento</strong> no role.</p>}
         {canFinish && allDelivered && <Button className="mt-3 w-full bg-sky-700 hover:bg-sky-800" disabled={finishing || order.awaitingStockPickup} onClick={() => onFinish(order)}>
           {finishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}Fechar pedidos entregues
         </Button>}

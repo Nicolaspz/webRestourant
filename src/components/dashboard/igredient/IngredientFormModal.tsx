@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Image, Loader2, Warehouse, X } from "lucide-react";
 import { useState, useEffect, useContext } from "react";
-import { Category, Ingredient } from "@/types/product";
+import { Ingredient } from "@/types/product";
 import { API_BASE_URL, getMediaUrl } from "../../../../config";
 import { Area, economatoService } from "@/services/economato";
 import { AuthContext } from "@/contexts/AuthContext";
@@ -27,7 +27,7 @@ interface IngredientFormModalProps {
   isSubmitting: boolean;
   mode: 'create' | 'edit';
   initialData?: Ingredient | null;
-  categories: Category[];
+  ingredientCategoryId: string;
   organizationId: string;
 }
 
@@ -38,7 +38,7 @@ export function IngredientFormModal({
   isSubmitting,
   mode,
   initialData,
-  categories,
+  ingredientCategoryId,
   organizationId
 }: IngredientFormModalProps) {
   const [formData, setFormData] = useState({
@@ -89,7 +89,7 @@ export function IngredientFormModal({
           description: initialData.description || '',
           unit: initialData.unit,
           isDerived: initialData.isDerived,
-          categoryId: initialData.categoryId || '',
+          categoryId: ingredientCategoryId,
           isIgredient: true,
           file: null,
           existingBanner: initialData.banner || '',
@@ -103,7 +103,7 @@ export function IngredientFormModal({
           unit: 'un',
           isDerived: false,
           isIgredient: true,
-          categoryId: '',
+          categoryId: ingredientCategoryId,
           file: null,
           previewImage: '',
           defaultAreaId: '',
@@ -115,11 +115,15 @@ export function IngredientFormModal({
     };
 
     initializeForm();
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, ingredientCategoryId]);
 
   const handleSubmit = (e: React.FormEvent) => {
 
     e.preventDefault();
+    if (!formData.categoryId) {
+      toast.error('A categoria interna “Ingredientes” não está disponível. Crie-a em Gestão de Categorias e tente novamente.');
+      return;
+    }
     // Preparar dados para envio
     const submitData = {
       name: formData.name,
@@ -225,35 +229,6 @@ export function IngredientFormModal({
                   className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-md p-2 w-full resize-y"
                   disabled={isSubmitting}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="categoryId" className="text-gray-900 dark:text-white">
-                  Categoria *
-                </Label>
-                <Select
-                  value={formData.categoryId}
-                  onValueChange={(value: string) => handleInputChange('categoryId', value)}
-                  disabled={!isDataReady || isSubmitting}
-                  required
-                >
-                  <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
-                    <SelectValue placeholder="Selecione uma categoria">
-                      {formData.categoryId && categories.find(cat => cat.id === formData.categoryId)?.name}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
-                    {categories.map(category => (
-                      <SelectItem
-                        key={category.id}
-                        value={category.id}
-                        className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">

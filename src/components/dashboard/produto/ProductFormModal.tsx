@@ -68,7 +68,11 @@ export function ProductFormModal({
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
-  const availableCategories = categories.filter(category => category.kind === 'MENU' || !category.kind);
+  const availableCategories = categories.filter(category =>
+    category.name.trim().toLocaleLowerCase('pt') !== 'ingredientes' &&
+    category.parent?.name.trim().toLocaleLowerCase('pt') !== 'ingredientes' &&
+    (category.kind === 'MENU' || !category.kind)
+  );
   const categoryLabel = (category: Category) => category.parent
     ? `${category.parent.name} › ${category.name}`
     : category.name;

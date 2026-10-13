@@ -67,7 +67,7 @@ import { api } from "@/services/apiClients";
 import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 
 export function PedidosTable() {
- const {can}=useAccess();
+ const {can, access}=useAccess();
   const { user } = useContext(AuthContext);
   const [pedidos, setPedidos] = useState<PedidoArea[]>([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -95,6 +95,7 @@ export function PedidosTable() {
   // Fetch Pedidos
   const fetchPedidos = async (silent = false) => {
     if (!isMounted) return;
+    if (!can('transfers.read')) { setIsLoading(false); return; }
     if (!user?.organizationId) { setIsLoading(false); return; }
     try {
       if (!silent) setIsLoading(true);
@@ -112,22 +113,35 @@ export function PedidosTable() {
   };
 
   useEffect(() => {
+    if (!can('transfers.read')) return;
     fetchPedidos();
-  }, [isMounted, statusFilter, user?.organizationId]);
+  }, [isMounted, statusFilter, user?.organizationId, access]);
 
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || !can('transfers.read')) return;
     const refresh = () => { void fetchPedidos(true); };
     window.addEventListener('focus', refresh);
     window.addEventListener('economato-updated', refresh);
     return () => { window.removeEventListener('focus', refresh); window.removeEventListener('economato-updated', refresh); };
-  }, [isMounted, statusFilter, user?.organizationId]);
+  }, [isMounted, statusFilter, user?.organizationId, access]);
+
+  const openCreateDialog = () => setIsCreateDialogOpen(true);
+  if (can('stock.entries.create') && !can('transfers.read')) return <>
+    <Card>
+      <CardHeader>
+        <CardTitle>Entrada de stock na área</CardTitle>
+        <CardDescription>Solicite produtos para a sua área. O stock geral e as listas de pedidos não ficam acessíveis neste perfil.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button onClick={openCreateDialog}><Plus className="mr-2 h-4 w-4" />Solicitar entrada de stock</Button>
+      </CardContent>
+    </Card>
+    <StockRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
+  </>;
 
   if (!isMounted || isLoading) return <CenterScreenLoader />;
 
   // Handlers
-  const openCreateDialog = () => setIsCreateDialogOpen(true);
-
   const handleProcessPedido = async () => {
 
     if (!user?.organizationId || !user?.id || !selectedPedido || !processStatus) return;
@@ -292,7 +306,7 @@ export function PedidosTable() {
               </SelectContent>
             </Select>
 
-            <Button disabled={!can("transfers.create")} onClick={openCreateDialog}>
+            <Button disabled={!can('stock.entries.create') && !can("transfers.create")} onClick={openCreateDialog}>
               <Plus className="w-4 h-4 mr-2" />
               Solicitar entrada de stock
             </Button>
