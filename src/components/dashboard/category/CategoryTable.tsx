@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { setupAPIClient } from "@/services/api";
 import { AuthContext } from "@/contexts/AuthContext";
+import { useAccess } from "@/contexts/AccessContext";
 import { CategoryFormModal } from "./CategoryFormModal";
 import { toast } from "react-toastify";
 import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
@@ -59,6 +60,7 @@ interface Category {
 
 export function CategoryTable() {
     const { user } = useContext(AuthContext);
+    const { can } = useAccess();
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -70,6 +72,9 @@ export function CategoryTable() {
     // Paginação
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const canCreate = can('categories.create');
+    const canUpdate = can('categories.update');
+    const canDelete = can('categories.delete');
 
     useEffect(() => {
         if (user?.organizationId) {
@@ -193,8 +198,14 @@ export function CategoryTable() {
                     </Select>
                 </div>
 
-                <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto transition-colors"><Plus className="w-4 h-4 mr-2" />Nova Categoria Principal</Button>
+                {canCreate && <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto transition-colors"><Plus className="w-4 h-4 mr-2" />Nova Categoria Principal</Button>}
             </div>
+
+            {!canCreate && !canUpdate && !canDelete && (
+                <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                    O seu perfil pode consultar categorias, mas não tem permissão para as criar ou alterar. Peça ao administrador para ativar <strong>Categorias — Criar</strong> no seu role.
+                </p>
+            )}
 
             {/* Resumo */}
             {!isLoading && (
@@ -246,6 +257,7 @@ export function CategoryTable() {
                                     <TableCell><span className={`rounded-full px-2 py-1 text-xs font-semibold ${category.parentId ? 'bg-violet-500/10 text-violet-600' : 'bg-blue-500/10 text-blue-600'}`}>{category.parentId ? 'Subcategoria' : 'Principal'}</span></TableCell>
                                     <TableCell className="text-muted-foreground">{category.parent?.name || '—'}</TableCell>
                                     <TableCell className="text-right py-4">
+                                        {(canUpdate || canDelete || (canCreate && !category.parentId)) && <>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700">
@@ -254,23 +266,24 @@ export function CategoryTable() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="bg-white dark:bg-[#1a1b1e] border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
                                                 <DropdownMenuLabel className="text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Operações</DropdownMenuLabel>
-                                                <DropdownMenuItem
+                                                {canUpdate && <DropdownMenuItem
                                                     onClick={() => handleEdit(category)}
                                                     className="focus:bg-gray-100 dark:focus:bg-gray-700 cursor-pointer"
                                                 >
                                                     <Edit2 className="mr-2 h-4 w-4 text-blue-500 dark:text-blue-400" />
                                                     Editar Categoria
-                                                </DropdownMenuItem>
-                                                {!category.parentId && <DropdownMenuItem onClick={() => handleCreateSubcategory(category)} className="focus:bg-gray-100 dark:focus:bg-gray-700 cursor-pointer"><CornerDownRight className="mr-2 h-4 w-4 text-violet-500" />Adicionar Subcategoria</DropdownMenuItem>}
-                                                <DropdownMenuItem
+                                                </DropdownMenuItem>}
+                                                {canCreate && !category.parentId && <DropdownMenuItem onClick={() => handleCreateSubcategory(category)} className="focus:bg-gray-100 dark:focus:bg-gray-700 cursor-pointer"><CornerDownRight className="mr-2 h-4 w-4 text-violet-500" />Adicionar Subcategoria</DropdownMenuItem>}
+                                                {canDelete && <DropdownMenuItem
                                                     onClick={() => handleDelete(category.id)}
                                                     className="focus:bg-red-100 dark:focus:bg-red-900/50 text-red-600 dark:text-red-400 cursor-pointer"
                                                 >
                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                     Eliminar Permanentemente
-                                                </DropdownMenuItem>
+                                                </DropdownMenuItem>}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
+                                        </>}
                                     </TableCell>
                                 </TableRow>
                             ))

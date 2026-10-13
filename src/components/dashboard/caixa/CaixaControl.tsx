@@ -346,7 +346,7 @@ export function CaixaControl() {
                             </h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
                                 {isMyCaixaOpen
-                                ? 'Conte o dinheiro e registe os totais recebidos por cada método. O sistema não mostrará as vendas antes da declaração.'
+                                ? 'Registe as vendas recebidas por cada método neste turno. Em Dinheiro, informe apenas as vendas, sem incluir o fundo inicial. O sistema não mostrará as vendas antes da declaração.'
                                     : 'Informe o fundo de maneio inicial para iniciar o fluxo de faturação desta sessão.'}
                             </p>
                         </div>
@@ -448,7 +448,7 @@ export function CaixaControl() {
                                         <div className="space-y-1">{Object.entries(closureReport.declaradosPorMetodo || {}).map(([metodo, valor]: [string, any]) => <div className="flex justify-between text-sm" key={metodo}><span className="capitalize">Declarado · {formatMetodoPagamento(metodo)}</span><span className="font-bold">{formatKz(Number(valor))} Kz</span></div>)}</div>
                                         <div className="space-y-1 border-t pt-2">{Object.entries(closureReport.diferencasPorMetodo || {}).map(([metodo, valor]: [string, any]) => <div className="flex justify-between text-sm" key={metodo}><span className="capitalize">Diferença · {formatMetodoPagamento(metodo)}</span><span className="font-bold">{formatKz(Number(valor))} Kz</span></div>)}</div>
 
-                                        <div className={`flex justify-between items-center p-3 rounded-lg border-2 ${closureReport.diferenca === 0 ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400' : closureReport.diferenca > 0 ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400' : 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'}`}>
+                                        <div className={`flex justify-between items-center p-3 rounded-lg border-2 ${closureReport.statusFinal === '🆗 CERTO' ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400' : closureReport.statusFinal.includes('DIVERGÊNCIA') ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300' : closureReport.diferenca > 0 ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400' : 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'}`}>
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] font-bold uppercase">Situação</span>
                                                 <span className="font-bold text-lg">{closureReport.statusFinal}</span>
