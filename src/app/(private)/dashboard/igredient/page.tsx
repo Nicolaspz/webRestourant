@@ -153,6 +153,7 @@ export default function IngredientsPage() {
       formPayload.append('organizationId', user?.organizationId || '');
       formPayload.append('isDerived', 'false');
       formPayload.append('isIgredient', 'true');
+      formPayload.append('isFish', String(ingredientData.isFish === true));
       formPayload.append('defaultAreaId', ingredientData.defaultAreaId || '');
 
       if (ingredientData.file) {
@@ -199,6 +200,7 @@ export default function IngredientsPage() {
       formPayload.append('organizationId', user?.organizationId || '');
       formPayload.append('isDerived', 'false');
       formPayload.append('isIgredient', 'true');
+      formPayload.append('isFish', String(ingredientData.isFish === true));
       formPayload.append('defaultAreaId', ingredientData.defaultAreaId || '');
 
       // Para edição: se não tem nova imagem, mantém a atual

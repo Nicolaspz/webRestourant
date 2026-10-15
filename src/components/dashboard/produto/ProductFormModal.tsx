@@ -14,12 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Utensils, Image, X, Warehouse } from "lucide-react";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { Product, Category, ProductFormData } from "@/types/product";
 import { api } from "@/services/apiClients";
 import { toast } from 'react-toastify';
 import { Area, economatoService } from '@/services/economato';
-import { AuthContext } from '@/contexts/AuthContext';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -63,7 +62,6 @@ export function ProductFormModal({
     taxExemptionCode: '',
   });
 
-  const { user } = useContext(AuthContext);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
@@ -260,15 +258,11 @@ export function ProductFormModal({
       }
 
       if (mode === 'edit' && initialData) {
-        // Para edição, vamos enviar existingBanner como query parameter
-        const url = `/produt?id=${initialData.id}&existingBanner=${encodeURIComponent(formData.existingBanner || '')}`;
+        const url = `/produt?id=${encodeURIComponent(initialData.id)}`;
 
         await api.put(url, formPayload, {
-          params: {
-            organizationId: user?.organizationId // Adiciona o organizationId do usuário
-          },
+          params: { organizationId },
           headers: {
-            'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${userToken}`
           }
         });
@@ -282,7 +276,6 @@ export function ProductFormModal({
         }*/
         await api.post('/produts', formPayload, {
           headers: {
-            'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${userToken}`
           }
         });

@@ -69,7 +69,7 @@ export const OrderCard = memo(function OrderCard({ canPrepare = true, canFinish 
             entregue: { label: 'Entregue', next: null, action: 'Entregue', icon: <PackageCheck className="h-4 w-4" />, style: 'border-sky-300 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200' },
           }[status];
           return <div key={item.id} className={`flex min-h-12 flex-wrap items-center gap-3 rounded-xl border px-3 py-2 ${item.canceled ? 'bg-destructive/5 opacity-60' : state.style}`}>
-            <div className="min-w-0 flex-1"><p className={`truncate text-sm font-medium ${item.canceled ? 'line-through' : ''}`}>{item.amount}× {item.Product.name}</p>{item.notes && <p className="text-sm font-semibold text-amber-700 whitespace-pre-wrap break-words">Observação: {item.notes}</p>}{item.canceled && <p className="text-xs text-destructive">Cancelado</p>}</div>
+            <div className="min-w-0 flex-1"><p className={`truncate text-sm font-medium ${item.canceled ? 'line-through' : ''}`}>{item.amount}× {item.Product.name}{item.selectedIngredient ? ` — ${item.selectedIngredient.name}` : ''}</p>{item.notes && <p className="text-sm font-semibold text-amber-700 whitespace-pre-wrap break-words">Observação: {item.notes}</p>}{item.canceled && <p className="text-xs text-destructive">Cancelado</p>}</div>
             {item.areaName && <Badge variant="outline">{item.areaName}</Badge>}
             {!item.canceled && !blocked && <Badge className={status === 'pendente' ? 'bg-slate-600' : status === 'em_preparacao' ? 'bg-amber-600' : status === 'pronto' ? 'bg-emerald-600' : 'bg-sky-700'}>{state.label}</Badge>}
             {blocked && !item.canceled && <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">Aguarda economato</span>}

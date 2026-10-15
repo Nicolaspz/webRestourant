@@ -47,6 +47,7 @@ export function IngredientFormModal({
     unit: 'un',
     isDerived: false,
     isIgredient: true,
+    isFish: false,
     categoryId: '',
     file: null as File | null,
     previewImage: '',
@@ -91,6 +92,7 @@ export function IngredientFormModal({
           isDerived: initialData.isDerived,
           categoryId: ingredientCategoryId,
           isIgredient: true,
+          isFish: initialData.isFish ?? false,
           file: null,
           existingBanner: initialData.banner || '',
           defaultAreaId: initialData.defaultAreaId || '',
@@ -103,6 +105,7 @@ export function IngredientFormModal({
           unit: 'un',
           isDerived: false,
           isIgredient: true,
+          isFish: false,
           categoryId: ingredientCategoryId,
           file: null,
           previewImage: '',
@@ -131,6 +134,7 @@ export function IngredientFormModal({
       unit: formData.unit,
       isDerived: false,
       isIgredient: true,
+      isFish: formData.isFish,
       categoryId: formData.categoryId,
       organizationId: organizationId,
       file: formData.file,
@@ -269,6 +273,10 @@ export function IngredientFormModal({
                   </SelectContent>
                 </Select>
               </div>
+              <label className="flex items-center gap-2 rounded-md border p-3 text-sm">
+                <input type="checkbox" checked={formData.isFish} onChange={e => handleInputChange('isFish', e.target.checked)} disabled={isSubmitting} />
+                Este ingrediente é um tipo de peixe
+              </label>
             </div>
 
             <div className="space-y-4">

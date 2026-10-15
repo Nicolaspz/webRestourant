@@ -23,9 +23,10 @@ export interface PrecoVenda {
 export interface RecipeItem {
   id: string;
   name: string;
-  quantity: number;
+  quantity: number | string;
   unit: string;
   impactaPreco: boolean;
+  isSelectable?: boolean;
   ingredient: {
     id: string;
     name: string;
@@ -47,6 +48,7 @@ export interface Product {
   isDerived: boolean;
   allowAsIngredient: boolean;
   isIgredient: boolean;
+  isFish?: boolean;
   isFeatured: boolean;
   isNew: boolean;
   productKind?: 'INGREDIENT' | 'SIMPLE_PRODUCT' | 'RECIPE_PRODUCT';
@@ -116,6 +118,7 @@ export interface Ingredient {
   is_fractional: boolean;
   isDerived: boolean;
   isIgredient: boolean;
+  isFish?: boolean;
   categoryId: string;
   organizationId: string;
   category?: Category; // Adicione esta linha

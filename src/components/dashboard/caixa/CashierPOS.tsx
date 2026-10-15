@@ -6,9 +6,11 @@ import { useSocket } from '@/contexts/SocketContext';
 import { Mesa } from '@/types/product';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProductImage } from '@/components/ProductImage';
 import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
 import { toast } from 'react-toastify';
@@ -21,11 +23,16 @@ type PosProduct = {
   banner?: string | null;
   isIgredient: boolean;
   isDerived?: boolean;
+  is_fractional?: boolean;
+  unit?: string;
+  recipeItems?: Array<{ quantity: number }>;
+  fishOptions?: Array<{ id: string; name: string; unit: string; is_fractional: boolean; availableQuantity: number }>;
   Category?: { id: string; name: string } | null;
   PrecoVenda?: Array<{ preco_venda: number | string }>;
 };
-type CartLine = { product: PosProduct; quantity: number };
-type MesaOrderItem = { id: string; amount: number; canceled?: boolean; prepared: boolean; status?: 'pendente' | 'em_preparacao' | 'pronto'; deliveredAt?: string | null; Product?: { name: string } };
+type CartLine = { id: string; product: PosProduct; quantity: number; unitPrice?: number; selectedIngredientId?: string; selectedIngredientName?: string; selectedIngredientUnit?: string; selectedIngredientQuantity?: number };
+type MufeteEntry = { id: string; fishId: string; price: string };
+type MesaOrderItem = { id: string; amount: number; canceled?: boolean; prepared: boolean; status?: 'pendente' | 'em_preparacao' | 'pronto'; deliveredAt?: string | null; Product?: { name: string }; selectedIngredient?: { name: string; unit: string } | null };
 type MesaOrder = { id: string; name?: string | null; draft: boolean; items: MesaOrderItem[] };
 
 const money = new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -65,6 +72,8 @@ export function CashierPOS({
   const [carts, setCarts] = useState<Record<string, CartLine[]>>({});
   const [busy, setBusy] = useState(false);
   const [emptyMesaToClose, setEmptyMesaToClose] = useState<Mesa | null>(null);
+  const [productToConfigure, setProductToConfigure] = useState<PosProduct | null>(null);
+  const [mufeteEntries, setMufeteEntries] = useState<MufeteEntry[]>([]);
   const [mesaOrders, setMesaOrders] = useState<MesaOrder[]>([]);
   const requestKey = useRef<string | null>(null);
   const { socket } = useSocket();
@@ -137,23 +146,51 @@ export function CashierPOS({
   const waiterCanServe = (mesa: Mesa) => mesa.status === 'livre'
     || mesa.sessaoAtiva?.userId === userId
     || mesa.sessaoAtiva?.ownerRole === 'CAIXA';
-  const cartTotal = cart.reduce((total, line) => total + amountOf(line.product) * line.quantity, 0);
+  const cartTotal = cart.reduce((total, line) => total + (line.unitPrice ?? amountOf(line.product)) * line.quantity, 0);
 
   const addProduct = (product: PosProduct) => {
     if (!selectedMesa) { toast.info('Selecione uma mesa primeiro.'); return; }
+    if (product.recipeItems?.length) {
+      setProductToConfigure(product);
+      setMufeteEntries([{ id: crypto.randomUUID(), fishId: '', price: '' }]);
+      return;
+    }
     setCarts(current => {
       const currentCart = current[selectedMesa.id] || [];
-      const found = currentCart.find(line => line.product.id === product.id);
+      const found = currentCart.find(line => line.product.id === product.id && !line.selectedIngredientId);
       return { ...current, [selectedMesa.id]: found
-        ? currentCart.map(line => line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line)
-        : [...currentCart, { product, quantity: 1 }] };
+        ? currentCart.map(line => line.id === found.id ? { ...line, quantity: line.quantity + 1 } : line)
+        : [...currentCart, { id: crypto.randomUUID(), product, quantity: 1 }] };
     });
   };
 
-  const adjustQuantity = (productId: string, delta: number) => {
+  const addConfiguredDish = () => {
+    if (!selectedMesa || !productToConfigure) return;
+    if (!mufeteEntries.length) return;
+    const configured = mufeteEntries.map(entry => {
+      const fish = productToConfigure.fishOptions?.find(option => option.id === entry.fishId);
+      const stockQuantity = 1;
+      const price = Number(entry.price.replace(',', '.'));
+      return { fish, stockQuantity, price };
+    });
+    if (configured.some(({ fish, stockQuantity, price }) => !fish || !Number.isFinite(stockQuantity) || stockQuantity <= 0 || !Number.isFinite(price) || price <= 0)) {
+      toast.error('Para cada Mufete, selecione um peixe disponível no stock e informe o preço final.');
+      return;
+    }
+    setCarts(current => ({ ...current, [selectedMesa.id]: [...(current[selectedMesa.id] || []), ...configured.map(({ fish, stockQuantity, price }) => ({
+      id: crypto.randomUUID(), product: productToConfigure, quantity: 1, unitPrice: price,
+      selectedIngredientId: fish!.id, selectedIngredientName: fish!.name, selectedIngredientQuantity: stockQuantity,
+      selectedIngredientUnit: fish!.unit,
+    }))] }));
+    setProductToConfigure(null);
+  };
+
+  const updateMufeteEntry = (id: string, changes: Partial<MufeteEntry>) => setMufeteEntries(entries => entries.map(entry => entry.id === id ? { ...entry, ...changes } : entry));
+
+  const adjustQuantity = (lineId: string, delta: number) => {
     if (!selectedMesa) return;
     setCarts(current => {
-      const updated = (current[selectedMesa.id] || []).map(line => line.product.id === productId ? { ...line, quantity: line.quantity + delta } : line).filter(line => line.quantity > 0);
+      const updated = (current[selectedMesa.id] || []).map(line => line.id === lineId ? { ...line, quantity: line.quantity + delta } : line).filter(line => line.quantity > 0);
       return { ...current, [selectedMesa.id]: updated };
     });
   };
@@ -190,7 +227,7 @@ export function CashierPOS({
       await api.post('/orders/with-stock', {
         tableNumber: selectedMesa.number,
         organizationId,
-        items: cart.map(line => ({ productId: line.product.id, amount: line.quantity })),
+        items: cart.map(line => ({ productId: line.product.id, amount: line.quantity, ...(line.selectedIngredientId ? { selectedIngredientId: line.selectedIngredientId, selectedIngredientQuantity: line.selectedIngredientQuantity, unitPrice: line.unitPrice } : {}) })),
         customerName: `Caixa — Mesa ${selectedMesa.number}`,
         clientToken: getMesaToken(userId, selectedMesa.id),
         idempotencyKey,
@@ -281,7 +318,7 @@ export function CashierPOS({
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="text-lg font-semibold">Selecionar produtos</h2><p className="text-xs text-muted-foreground">Toque num produto para o adicionar ao pedido.</p></div><div className="relative w-full sm:max-w-sm"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input autoComplete="off" value={productSearch} onChange={event => setProductSearch(event.target.value)} placeholder="Pesquisar produto" className="pl-9" /></div></div>
             <div className="mb-4 flex gap-2 overflow-x-auto pb-1">{categories.map(option => <Button key={option} type="button" size="sm" variant={category === option ? 'default' : 'outline'} onClick={() => setCategory(option)} className="shrink-0">{option}</Button>)}</div>
             {productsLoading ? <div className="pos-product-grid">{Array.from({ length: 8 }, (_, index) => <div key={index} className="h-60 animate-pulse rounded-xl bg-muted" />)}</div>
-              : visibleProducts.length ? <div className="pos-product-grid">{visibleProducts.map(product => <button key={product.id} type="button" disabled={!caixaAberto || busy} onClick={() => addProduct(product)} className="group overflow-hidden rounded-xl border bg-card text-left transition-all hover:border-primary hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"><ProductImage banner={product.banner} name={product.name} className="aspect-[4/3] w-full bg-muted object-cover" /><span className="block p-2.5"><span className="block truncate text-[11px] text-muted-foreground">{product.Category?.name || 'Sem categoria'}</span><span className="mt-1 block line-clamp-2 min-h-9 text-sm font-semibold">{product.name}</span><span className="mt-1.5 flex items-center justify-between gap-2"><span className="text-sm font-bold text-primary">{money.format(amountOf(product))} Kz</span><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Plus className="h-4 w-4" /></span></span></span></button>)}</div>
+              : visibleProducts.length ? <div className="pos-product-grid">{visibleProducts.map(product => <button key={product.id} type="button" disabled={!caixaAberto || busy} onClick={() => addProduct(product)} className="group overflow-hidden rounded-xl border bg-card text-left transition-all hover:border-primary hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"><ProductImage banner={product.banner} name={product.name} className="aspect-[4/3] w-full bg-muted object-cover" /><span className="block p-2.5"><span className="block truncate text-[11px] text-muted-foreground">{product.Category?.name || 'Sem categoria'}</span><span className="mt-1 block line-clamp-2 min-h-9 text-sm font-semibold">{product.name}</span><span className="mt-1.5 flex items-center justify-between gap-2"><span className="text-sm font-bold text-primary">{product.recipeItems?.length ? 'Preço definido no pedido' : `${money.format(amountOf(product))} Kz`}</span><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Plus className="h-4 w-4" /></span></span></span></button>)}</div>
               : <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{productSearch ? 'Nenhum produto corresponde à pesquisa.' : 'Não há produtos disponíveis.'}</div>}
           </section>
 
@@ -290,9 +327,9 @@ export function CashierPOS({
             {isWaiter && <div className="border-b p-4"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-semibold">Pedidos enviados</h3><Button type="button" variant="ghost" size="sm" onClick={() => void loadMesaOrders(selectedMesa.id)}>Atualizar</Button></div><div className="max-h-40 space-y-2 overflow-y-auto">{mesaOrders.flatMap(order => order.items.filter(item => !item.canceled).map(item => {
               const status = item.deliveredAt ? 'Entregue' : item.status === 'em_preparacao' ? 'Em preparação' : item.prepared || item.status === 'pronto' ? 'Pronto' : order.draft ? 'Por enviar' : 'Pendente';
               const color = status === 'Entregue' ? 'bg-sky-100 text-sky-800' : status === 'Pronto' ? 'bg-emerald-100 text-emerald-800' : status === 'Em preparação' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700';
-              return <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-sm"><span className="min-w-0 truncate">{item.amount}× {item.Product?.name || 'Produto'}</span><Badge className={`shrink-0 ${color}`}>{status}</Badge></div>;
+              return <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-sm"><span className="min-w-0 truncate">{item.amount}× {item.Product?.name || 'Produto'}{item.selectedIngredient ? ` — ${item.selectedIngredient.name}` : ''}</span><Badge className={`shrink-0 ${color}`}>{status}</Badge></div>;
             }))}{mesaOrders.every(order => order.items.every(item => item.canceled)) && <p className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">Ainda não há pedidos enviados.</p>}</div></div>}
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">{cart.length ? <div className="space-y-2">{cart.map(line => <div key={line.product.id} className="flex items-center gap-2 rounded-lg border p-2"><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{line.product.name}</p><p className="text-xs text-muted-foreground">{money.format(amountOf(line.product) * line.quantity)} Kz</p></div><Button type="button" variant="outline" size="icon" className="h-8 w-8" disabled={busy} onClick={() => adjustQuantity(line.product.id, -1)} aria-label={`Diminuir ${line.product.name}`}><Minus className="h-3 w-3" /></Button><span className="w-6 text-center text-sm">{line.quantity}</span><Button type="button" variant="outline" size="icon" className="h-8 w-8" disabled={busy} onClick={() => adjustQuantity(line.product.id, 1)} aria-label={`Aumentar ${line.product.name}`}><Plus className="h-3 w-3" /></Button></div>)}</div> : <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">Selecione os produtos para montar o pedido.</p>}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">{cart.length ? <div className="space-y-2">{cart.map(line => <div key={line.id} className="flex items-center gap-2 rounded-lg border p-2"><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{line.product.name}{line.selectedIngredientName ? ` — ${line.selectedIngredientName}` : ''}</p><p className="text-xs text-muted-foreground">{money.format((line.unitPrice ?? amountOf(line.product)) * line.quantity)} Kz</p></div><Button type="button" variant="outline" size="icon" className="h-8 w-8" disabled={busy} onClick={() => adjustQuantity(line.id, -1)} aria-label={`Diminuir ${line.product.name}`}><Minus className="h-3 w-3" /></Button><span className="w-6 text-center text-sm">{line.quantity}</span><Button type="button" variant="outline" size="icon" className="h-8 w-8" disabled={busy} onClick={() => adjustQuantity(line.id, 1)} aria-label={`Aumentar ${line.product.name}`}><Plus className="h-3 w-3" /></Button></div>)}</div> : <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">Selecione os produtos para montar o pedido.</p>}</div>
             <div className="border-t bg-muted/30 p-4"><div className="mb-3 flex items-center justify-between"><span className="font-semibold">Total</span><strong className="text-lg">{money.format(cartTotal)} Kz</strong></div><Button type="button" className="w-full" disabled={!caixaAberto || !cart.length || busy} onClick={sendOrder}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}{busy ? 'A enviar…' : 'Enviar pedido'}</Button></div>
           </aside>
         </div>
@@ -310,6 +347,22 @@ export function CashierPOS({
         <Button type="button" variant="outline" disabled={busy} onClick={() => setEmptyMesaToClose(null)}>Voltar</Button>
         <Button type="button" disabled={busy} onClick={() => void confirmCloseEmptyMesa()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Fechar sem cobrar</Button>
       </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog open={!!productToConfigure} onOpenChange={open => { if (!open) setProductToConfigure(null); }}>
+    <DialogContent className="max-w-md">
+      <DialogHeader><DialogTitle>Configurar {productToConfigure?.name}</DialogTitle><DialogDescription>Para cada prato, selecione o peixe escolhido pelo cliente e informe o preço final correspondente.</DialogDescription></DialogHeader>
+      <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
+        {mufeteEntries.map((entry, index) => {
+          return <section key={entry.id} className="space-y-3 rounded-xl border p-3">
+            <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Mufete {index + 1}</h3>{mufeteEntries.length > 1 && <Button type="button" size="sm" variant="ghost" onClick={() => setMufeteEntries(entries => entries.filter(value => value.id !== entry.id))}>Remover</Button>}</div>
+            <div className="space-y-2"><Label>Peixe escolhido *</Label><Select value={entry.fishId} onValueChange={fishId => updateMufeteEntry(entry.id, { fishId })}><SelectTrigger><SelectValue placeholder="Selecione o peixe" /></SelectTrigger><SelectContent>{productToConfigure?.fishOptions?.map(fish => <SelectItem key={fish.id} value={fish.id}>{fish.name} · {money.format(fish.availableQuantity)} {fish.unit} disponível</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label>Preço final deste prato (Kz) *</Label><Input inputMode="decimal" type="number" min="0.01" step="0.01" value={entry.price} onChange={event => updateMufeteEntry(entry.id, { price: event.target.value })} placeholder="Preço combinado com o cliente" /></div>
+          </section>;
+        })}
+        <Button type="button" variant="outline" className="w-full" onClick={() => setMufeteEntries(entries => [...entries, { id: crypto.randomUUID(), fishId: '', price: '' }])}><Plus className="mr-2 h-4 w-4" />Adicionar outro Mufete</Button>
+      </div>
+      <DialogFooter><Button type="button" variant="outline" onClick={() => setProductToConfigure(null)}>Cancelar</Button><Button type="button" onClick={addConfiguredDish}>Adicionar {mufeteEntries.length} {mufeteEntries.length === 1 ? 'prato' : 'pratos'} ao pedido</Button></DialogFooter>
     </DialogContent>
   </Dialog></>;
 }

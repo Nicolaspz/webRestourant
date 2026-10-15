@@ -9,6 +9,7 @@ export type OrderItem = {
   deliveredAt?: string | null;
   awaitingStockPickup?: boolean;
   canceled?: boolean;
+  selectedIngredient?: { name: string } | null;
   Product: { id: string; name: string; categoryId: string; Category?: { name: string } };
 };
 

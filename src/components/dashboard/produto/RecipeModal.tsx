@@ -54,8 +54,9 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [selectedIngredient, setSelectedIngredient] = useState<string>("");
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState('');
   const [impactaPreco, setImpactaPreco] = useState<boolean>(true);
+  const [isSelectable, setIsSelectable] = useState(false);
 
   const fetchData = async () => {
     if (!product?.id || !token) return;
@@ -81,6 +82,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
         quantity: item.quantity,
         productId: item.productId,
         impactaPreco: item.impactaPreco,
+        isSelectable: item.isSelectable ?? false,
         ingredient: {
           id: item.ingredient.id,
           name: item.ingredient.name,
@@ -118,15 +120,16 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
 
   const resetForm = () => {
     setSelectedIngredient("");
-    setQuantity(1);
+    setQuantity('');
     setImpactaPreco(true);
+    setIsSelectable(false);
   };
 
   const calculateTotalCost = () => {
     return recipeItems.reduce((total, item) => {
-      if (item.impactaPreco) {
+      if (item.impactaPreco && !item.isSelectable) {
         const cost = item.ingredient.cost ?? item.ingredient.price ?? 0;
-        return total + (cost * item.quantity);
+        return total + (cost * (Number(item.quantity) || 0));
       }
       return total;
     }, 0);
@@ -134,14 +137,19 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
 
   const handleAddIngredient = async () => {
     if (!selectedIngredient || !product?.id) return;
+    if (!quantity.trim() || !Number.isFinite(Number(quantity)) || Number(quantity) <= 0) {
+      toast.error('Informe uma quantidade válida para o ingrediente.');
+      return;
+    }
 
     try {
       setIsSubmitting(true);
       await api.post("/recipe", {
         productId: product.id,
         ingredientId: selectedIngredient,
-        quantity: quantity,
-        impactaPreco: impactaPreco
+        quantity: Number(quantity),
+        impactaPreco,
+        isSelectable,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -159,6 +167,10 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   };
 
   const handleUpdateIngredient = async (item: RecipeItem) => {
+    if (!String(item.quantity).trim() || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0) {
+      toast.error('Informe uma quantidade válida para o ingrediente.');
+      return;
+    }
     
     try {
       setIsSubmitting(true);
@@ -167,7 +179,8 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
         productId: product.id,
         ingredientId: item.ingredient.id,
         quantity: Number(item.quantity), // Garantir que é número
-        impactaPreco: Boolean(item.impactaPreco)
+        impactaPreco: Boolean(item.impactaPreco),
+        isSelectable: Boolean(item.isSelectable)
       };
 
       //console.log("📤 Payload enviado:", payload);
@@ -215,6 +228,8 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       item.id === id ? {...item, impactaPreco: !item.impactaPreco} : item
     ));
   };
+
+  const toggleSelectable = (id: string) => setRecipeItems(items => items.map(item => item.id === id ? { ...item, isSelectable: !item.isSelectable } : item));
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -338,6 +353,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                             <TableHead className="text-right">Preço Unitário</TableHead>
                             <TableHead className="text-right">Quantidade</TableHead>
                             <TableHead className="text-center">Impacta Preço</TableHead>
+                            <TableHead className="text-center">Escolha no pedido</TableHead>
                             <TableHead className="text-right">Subtotal</TableHead>
                             {isEditing && <TableHead className="text-right">Ações</TableHead>}
                           </TableRow>
@@ -359,7 +375,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                       value={item.quantity}
                                       onChange={(e) => {
                                         const updatedItems = recipeItems.map(ri => 
-                                          ri.id === item.id ? {...ri, quantity: Number(e.target.value)} : ri
+                                          ri.id === item.id ? {...ri, quantity: e.target.value} : ri
                                         );
                                         setRecipeItems(updatedItems);
                                       }}
@@ -368,12 +384,12 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                       step="0.1"
                                     />
                                     <span className="text-sm text-muted-foreground">
-                                      {item.ingredient.isDerived ? (item.quantity === 1 ? 'unidade' : 'unidades') : item.ingredient.unit}
+                                      {item.ingredient.isDerived ? (Number(item.quantity) === 1 ? 'unidade' : 'unidades') : item.ingredient.unit}
                                     </span>
                                   </div>
                                 ) : (
                                   <span>
-                                    {item.quantity} {item.ingredient.isDerived ? (item.quantity === 1 ? 'unidade' : 'unidades') : item.ingredient.unit}
+                                    {item.quantity} {item.ingredient.isDerived ? (Number(item.quantity) === 1 ? 'unidade' : 'unidades') : item.ingredient.unit}
                                   </span>
                                 )}
                               </TableCell>
@@ -394,8 +410,11 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                   </Badge>
                                 )}
                               </TableCell>
+                              <TableCell className="text-center">
+                                {isEditing ? <div className="flex items-center justify-center gap-2"><Switch checked={Boolean(item.isSelectable)} onCheckedChange={() => toggleSelectable(item.id)} /><Badge variant={item.isSelectable ? "default" : "secondary"}>{item.isSelectable ? "Sim" : "Não"}</Badge></div> : <Badge variant={item.isSelectable ? "default" : "secondary"}>{item.isSelectable ? "Sim" : "Não"}</Badge>}
+                              </TableCell>
                               <TableCell className="text-right text-yellow-600 font-medium">
-                                {((item.ingredient.cost ?? item.ingredient.price ?? 0) * item.quantity).toFixed(2)} Kz
+                                {item.isSelectable ? 'Definido no pedido' : `${((item.ingredient.cost ?? item.ingredient.price ?? 0) * (Number(item.quantity) || 0)).toFixed(2)} Kz`}
                               </TableCell>
                               {isEditing && (
                                 <TableCell className="text-right">
@@ -455,11 +474,12 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                             <SelectValue placeholder="Selecione um ingrediente" />
                           </SelectTrigger>
                           <SelectContent>
-                            {allIngredients.map(ingredient => (
+                            {allIngredients.filter(ingredient => !isSelectable || ingredient.isFish === true).map(ingredient => (
                               <SelectItem key={ingredient.id} value={ingredient.id}>
                                 {ingredient.name} ({ingredient.isDerived ? 'unidade' : ingredient.unit}) - {ingredient.PrecoVenda?.[0]?.preco_venda?.toFixed(2) || '0.00'} Kz
                               </SelectItem>
                             ))}
+                            {isSelectable && !allIngredients.some(ingredient => ingredient.isFish === true) && <SelectItem value="__no_fish_options" disabled>Cadastre e marque ingredientes como peixe para selecioná-los.</SelectItem>}
                           </SelectContent>
                         </Select>
                       </div>
@@ -469,7 +489,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                         <Input
                           type="number"
                           value={quantity}
-                          onChange={(e) => setQuantity(Number(e.target.value))}
+                          onChange={(e) => setQuantity(e.target.value)}
                           min={allIngredients.find(item => item.id === selectedIngredient)?.isDerived ? '1' : '0.1'}
                           step={allIngredients.find(item => item.id === selectedIngredient)?.isDerived ? '1' : '0.1'}
                           placeholder="0.00"
@@ -488,6 +508,10 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                         checked={impactaPreco}
                         onCheckedChange={setImpactaPreco}
                       />
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border p-3">
+                      <div><Label htmlFor="isSelectable">Escolher peixe no pedido</Label><p className="text-xs text-muted-foreground">Ative para que este prato peça um peixe e um preço no POS. A lista do POS vem dos peixes cadastrados com stock.</p></div>
+                      <Switch id="isSelectable" checked={isSelectable} onCheckedChange={checked => { setIsSelectable(checked); if (checked) { setImpactaPreco(false); if (!allIngredients.find(item => item.id === selectedIngredient)?.isFish) setSelectedIngredient(''); } }} />
                     </div>
 
                     <div className="flex justify-end gap-3 mt-6">
