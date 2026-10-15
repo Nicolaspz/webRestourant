@@ -44,7 +44,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
   const addingRef = useRef(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
-    quantity: 1,
+    quantity: '',
     purchasePrice: 0,
     productTypeId: "1",
     marginPercentage: 20,
@@ -78,7 +78,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
     if (addingRef.current) return;
     setSelectedProduct(product);
     setFormData({
-      quantity: 1,
+      quantity: '',
       purchasePrice: product.currentPrice || 0,
       productTypeId: "1",
       marginPercentage: 20,
@@ -90,7 +90,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
     setShowModal(false);
     setSelectedProduct(null);
     setFormData({
-      quantity: 1,
+      quantity: '',
       purchasePrice: 0,
       productTypeId: "1",
       marginPercentage: 20,
@@ -103,6 +103,11 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
       toast.error('Selecione um produto e certifique-se de estar autenticado');
       return;
     }
+    const quantity = Number(formData.quantity);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      toast.error('Informe uma quantidade válida maior que zero.');
+      return;
+    }
 
     addingRef.current = true;
     setIsAdding(true);
@@ -111,7 +116,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
       const productTypeId = formData.productTypeId || "f7dddb0a-9176-4993-9421-3c0b6b4dd9d4";
 
       await apiClient.post('/compra_produt', {
-        quantity: formData.quantity,
+        quantity,
         purchasePrice: formData.purchasePrice,
         purchaseId,
         productId: selectedProduct.id,
@@ -204,12 +209,11 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
           <Input
             type="number"
             min="1"
+            step="1"
             disabled={isAdding}
             value={formData.quantity}
-            onChange={(e) => setFormData({
-              ...formData,
-              quantity: parseInt(e.target.value) || 1
-            })}
+            onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+            placeholder="Informe a quantidade"
             className="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           />
         </div>
@@ -253,7 +257,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
         </Button>
         <Button
           onClick={handleAddProduct}
-          disabled={isAdding}
+          disabled={isAdding || !formData.quantity || Number(formData.quantity) <= 0}
           aria-busy={isAdding}
           className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
         >

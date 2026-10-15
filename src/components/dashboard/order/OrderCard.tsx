@@ -1,7 +1,7 @@
 'use client';
 
-import { memo } from 'react';
-import { Check, ChefHat, CircleCheck, Eye, Loader2, Settings2, LockKeyhole, PackageOpen, PackageCheck, Play } from 'lucide-react';
+import { memo, useState } from 'react';
+import { Check, ChefHat, CircleCheck, Eye, Fish, Loader2, Settings2, LockKeyhole, PackageOpen, PackageCheck, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,7 @@ type Props = {
 };
 
 export const OrderCard = memo(function OrderCard({ canPrepare = true, canFinish = true, order, expanded, pendingItems, finishing, onToggleExpand, onManage, onUpdateStatus, onFinish }: Props) {
+  const [visibleFishItem, setVisibleFishItem] = useState<string | null>(null);
   const allPrepared = order.allPrepared ?? (order.items.length > 0 && order.items.every(item => item.prepared || item.canceled));
   const allDelivered = order.items.length > 0 && order.items.every(item => item.deliveredAt || item.canceled);
   const readyToDeliver = order.items.length > 0 && order.items.every(item => item.prepared || item.canceled) && !allDelivered;
@@ -68,8 +69,26 @@ export const OrderCard = memo(function OrderCard({ canPrepare = true, canFinish 
             pronto: { label: 'Pronto', next: 'entregue' as const, action: 'Marcar entregue', icon: <CircleCheck className="h-4 w-4" />, style: 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' },
             entregue: { label: 'Entregue', next: null, action: 'Entregue', icon: <PackageCheck className="h-4 w-4" />, style: 'border-sky-300 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200' },
           }[status];
+          const showFish = visibleFishItem === item.id;
           return <div key={item.id} className={`flex min-h-12 flex-wrap items-center gap-3 rounded-xl border px-3 py-2 ${item.canceled ? 'bg-destructive/5 opacity-60' : state.style}`}>
-            <div className="min-w-0 flex-1"><p className={`truncate text-sm font-medium ${item.canceled ? 'line-through' : ''}`}>{item.amount}× {item.Product.name}{item.selectedIngredient ? ` — ${item.selectedIngredient.name}` : ''}</p>{item.notes && <p className="text-sm font-semibold text-amber-700 whitespace-pre-wrap break-words">Observação: {item.notes}</p>}{item.canceled && <p className="text-xs text-destructive">Cancelado</p>}</div>
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <p className={`truncate text-sm font-medium ${item.canceled ? 'line-through' : ''}`}>{item.amount}× {item.Product.name}</p>
+                {item.selectedIngredient && <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  aria-label={`${showFish ? 'Ocultar' : 'Ver'} peixe escolhido: ${item.selectedIngredient.name}`}
+                  aria-expanded={showFish}
+                  title="Ver peixe escolhido"
+                  onClick={() => setVisibleFishItem(showFish ? null : item.id)}
+                ><Fish className="h-4 w-4" /></Button>}
+              </div>
+              {showFish && item.selectedIngredient && <p className="mt-1 text-xs font-semibold text-sky-800 dark:text-sky-200">Peixe escolhido: {item.selectedIngredient.name}</p>}
+              {item.notes && <p className="whitespace-pre-wrap break-words text-sm font-semibold text-amber-700">Observação: {item.notes}</p>}
+              {item.canceled && <p className="text-xs text-destructive">Cancelado</p>}
+            </div>
             {item.areaName && <Badge variant="outline">{item.areaName}</Badge>}
             {!item.canceled && !blocked && <Badge className={status === 'pendente' ? 'bg-slate-600' : status === 'em_preparacao' ? 'bg-amber-600' : status === 'pronto' ? 'bg-emerald-600' : 'bg-sky-700'}>{state.label}</Badge>}
             {blocked && !item.canceled && <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">Aguarda economato</span>}
