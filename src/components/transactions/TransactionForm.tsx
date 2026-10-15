@@ -12,6 +12,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { MoneyInput } from '@/components/ui/money-input'
 import { 
   Select,
   SelectContent,
@@ -79,11 +80,11 @@ export function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
             <FormItem>
               <FormLabel className="text-gray-300">Amount</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
+                <MoneyInput
+                  value={field.value}
+                  onValueChange={value => field.onChange(value === undefined ? '' : String(value))}
                   className="bg-[#2D2E3F] border-[#3E3F4E]" 
-                  placeholder="0.00" 
-                  type="number" 
+                  placeholder="0,00"
                 />
               </FormControl>
               <FormMessage />

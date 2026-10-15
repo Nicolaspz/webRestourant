@@ -6,6 +6,7 @@ import { AuthContext } from "@/contexts/AuthContext";
 import { StockTable } from "@/components/dashboard/stock/StockTable"; 
 import { PageContainer } from "@/components/dashboard/stock/PageContainer"; 
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
+import { formatMoney } from "@/components/ui/money-input";
 
 // Interface baseada nas que você forneceu
 interface StockProduct {
@@ -64,7 +65,7 @@ export default function StockPage() {
             unit: product.unit || "",         // ✅ tabela usa product.unit
             quantity: item.quantity || 0,
             reservedQuantity: item.reservedQuantity || 0,
-            currentPrice: `${precoVendaAtual} Kz`,  // ✅ tabela usa este campo!
+            currentPrice: Number.isFinite(Number(precoVendaAtual)) ? `${formatMoney(precoVendaAtual)} Kz` : undefined,
             PrecoVenda: product.PrecoVenda || [],   // ✅ tabela usa este campo!
             isDerived: product.isDerived,
             is_fractional: product.is_fractional,

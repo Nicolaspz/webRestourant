@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from '@/components/ui/money-input';
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -148,21 +149,17 @@ export function PagamentoFechamentoModal({
             <>
               <div className="space-y-2">
                 <Label>Valor Pago</Label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <MoneyInput
                   value={valorPago}
-                  onChange={(e) => setValorPago(parseFloat(e.target.value) || 0)}
+                  onValueChange={(value) => setValorPago(value ?? 0)}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label>Troco Para (opcional)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <MoneyInput
                   value={trocoPara}
-                  onChange={(e) => setTrocoPara(e.target.value)}
+                  onValueChange={(value) => setTrocoPara(value === undefined ? '' : String(value))}
                   placeholder="Deixar em branco para calcular troco"
                 />
               </div>

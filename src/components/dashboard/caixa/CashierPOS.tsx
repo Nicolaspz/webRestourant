@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProductImage } from '@/components/ProductImage';
 import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
+import { MoneyInput } from '@/components/ui/money-input';
 import { toast } from 'react-toastify';
 import { Armchair, ArrowLeft, CreditCard, Loader2, Minus, Plus, Printer, Search, Send, X } from 'lucide-react';
 
@@ -23,6 +24,7 @@ type PosProduct = {
   banner?: string | null;
   isIgredient: boolean;
   isDerived?: boolean;
+  requiresFishSelection?: boolean;
   is_fractional?: boolean;
   unit?: string;
   recipeItems?: Array<{ quantity: number }>;
@@ -150,7 +152,7 @@ export function CashierPOS({
 
   const addProduct = (product: PosProduct) => {
     if (!selectedMesa) { toast.info('Selecione uma mesa primeiro.'); return; }
-    if (product.recipeItems?.length) {
+    if (product.requiresFishSelection) {
       setProductToConfigure(product);
       setMufeteEntries([{ id: crypto.randomUUID(), fishId: '', price: '' }]);
       return;
@@ -318,7 +320,7 @@ export function CashierPOS({
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="text-lg font-semibold">Selecionar produtos</h2><p className="text-xs text-muted-foreground">Toque num produto para o adicionar ao pedido.</p></div><div className="relative w-full sm:max-w-sm"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input autoComplete="off" value={productSearch} onChange={event => setProductSearch(event.target.value)} placeholder="Pesquisar produto" className="pl-9" /></div></div>
             <div className="mb-4 flex gap-2 overflow-x-auto pb-1">{categories.map(option => <Button key={option} type="button" size="sm" variant={category === option ? 'default' : 'outline'} onClick={() => setCategory(option)} className="shrink-0">{option}</Button>)}</div>
             {productsLoading ? <div className="pos-product-grid">{Array.from({ length: 8 }, (_, index) => <div key={index} className="h-60 animate-pulse rounded-xl bg-muted" />)}</div>
-              : visibleProducts.length ? <div className="pos-product-grid">{visibleProducts.map(product => <button key={product.id} type="button" disabled={!caixaAberto || busy} onClick={() => addProduct(product)} className="group overflow-hidden rounded-xl border bg-card text-left transition-all hover:border-primary hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"><ProductImage banner={product.banner} name={product.name} className="aspect-[4/3] w-full bg-muted object-cover" /><span className="block p-2.5"><span className="block truncate text-[11px] text-muted-foreground">{product.Category?.name || 'Sem categoria'}</span><span className="mt-1 block line-clamp-2 min-h-9 text-sm font-semibold">{product.name}</span><span className="mt-1.5 flex items-center justify-between gap-2"><span className="text-sm font-bold text-primary">{product.recipeItems?.length ? 'Preço definido no pedido' : `${money.format(amountOf(product))} Kz`}</span><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Plus className="h-4 w-4" /></span></span></span></button>)}</div>
+              : visibleProducts.length ? <div className="pos-product-grid">{visibleProducts.map(product => <button key={product.id} type="button" disabled={!caixaAberto || busy} onClick={() => addProduct(product)} className="group overflow-hidden rounded-xl border bg-card text-left transition-all hover:border-primary hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"><ProductImage banner={product.banner} name={product.name} className="aspect-[4/3] w-full bg-muted object-cover" /><span className="block p-2.5"><span className="block truncate text-[11px] text-muted-foreground">{product.Category?.name || 'Sem categoria'}</span><span className="mt-1 block line-clamp-2 min-h-9 text-sm font-semibold">{product.name}</span><span className="mt-1.5 flex items-center justify-between gap-2"><span className="text-sm font-bold text-primary">{product.requiresFishSelection ? 'Preço definido no pedido' : `${money.format(amountOf(product))} Kz`}</span><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Plus className="h-4 w-4" /></span></span></span></button>)}</div>
               : <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{productSearch ? 'Nenhum produto corresponde à pesquisa.' : 'Não há produtos disponíveis.'}</div>}
           </section>
 
@@ -356,8 +358,8 @@ export function CashierPOS({
         {mufeteEntries.map((entry, index) => {
           return <section key={entry.id} className="space-y-3 rounded-xl border p-3">
             <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Mufete {index + 1}</h3>{mufeteEntries.length > 1 && <Button type="button" size="sm" variant="ghost" onClick={() => setMufeteEntries(entries => entries.filter(value => value.id !== entry.id))}>Remover</Button>}</div>
-            <div className="space-y-2"><Label>Peixe escolhido *</Label><Select value={entry.fishId} onValueChange={fishId => updateMufeteEntry(entry.id, { fishId })}><SelectTrigger><SelectValue placeholder="Selecione o peixe" /></SelectTrigger><SelectContent>{productToConfigure?.fishOptions?.map(fish => <SelectItem key={fish.id} value={fish.id}>{fish.name} · {money.format(fish.availableQuantity)} {fish.unit} disponível</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label>Preço final deste prato (Kz) *</Label><Input inputMode="decimal" type="number" min="0.01" step="0.01" value={entry.price} onChange={event => updateMufeteEntry(entry.id, { price: event.target.value })} placeholder="Preço combinado com o cliente" /></div>
+            <div className="space-y-2"><Label>Peixe escolhido *</Label><Select value={entry.fishId} onValueChange={fishId => updateMufeteEntry(entry.id, { fishId })}><SelectTrigger><SelectValue placeholder="Selecione o peixe" /></SelectTrigger><SelectContent>{productToConfigure?.fishOptions?.map(fish => { const unavailable = fish.availableQuantity < 1; return <SelectItem key={fish.id} value={fish.id} disabled={unavailable}>{fish.name} · {unavailable ? 'Sem stock' : `${money.format(fish.availableQuantity)} ${fish.unit} disponível`}</SelectItem>; })}</SelectContent></Select></div>
+            <div className="space-y-2"><Label>Preço final deste prato (Kz) *</Label><MoneyInput value={entry.price} onValueChange={value => updateMufeteEntry(entry.id, { price: value === undefined ? '' : String(value) })} placeholder="Preço combinado com o cliente" /></div>
           </section>;
         })}
         <Button type="button" variant="outline" className="w-full" onClick={() => setMufeteEntries(entries => [...entries, { id: crypto.randomUUID(), fishId: '', price: '' }])}><Plus className="mr-2 h-4 w-4" />Adicionar outro Mufete</Button>

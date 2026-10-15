@@ -60,6 +60,7 @@ export function ProductFormModal({
     preparationAreaId: '',
     taxPercentage: 14,
     taxExemptionCode: '',
+    requiresFishSelection: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -143,6 +144,7 @@ export function ProductFormModal({
           preparationAreaId: initialData.preparationAreaId || initialData.preparationArea?.id || kitchenAreaId,
           taxPercentage: Number(initialData.taxPercentage ?? 14),
           taxExemptionCode: initialData.taxExemptionCode || '',
+          requiresFishSelection: initialData.requiresFishSelection || false,
         });
 
         console.log("✅ FormData setado:", {
@@ -171,6 +173,7 @@ export function ProductFormModal({
           preparationAreaId: kitchenAreaId,
           taxPercentage: 14,
           taxExemptionCode: '',
+          requiresFishSelection: false,
         });
       }
 
@@ -225,6 +228,7 @@ export function ProductFormModal({
       formPayload.append('productKind', formData.productKind);
       formPayload.append('taxPercentage', String(formData.taxPercentage));
       formPayload.append('taxExemptionCode', formData.taxExemptionCode);
+      formPayload.append('requiresFishSelection', String(formData.requiresFishSelection));
 
       if (formData.categoryId) {
         formPayload.append('categoryId', formData.categoryId);
@@ -627,6 +631,14 @@ export function ProductFormModal({
                   onCheckedChange={(checked) => handleInputChange('allowAsIngredient', !!checked)}
                 />
                 <span>Permitir usar este prato como ingrediente de outros pratos</span>
+              </label>
+              <label className="mt-3 flex items-start gap-2 text-sm font-medium">
+                <Checkbox
+                  id="requiresFishSelection"
+                  checked={formData.requiresFishSelection}
+                  onCheckedChange={(checked) => handleInputChange('requiresFishSelection', !!checked)}
+                />
+                <span>Pedir tipo de peixe e preço ao efetuar o pedido</span>
               </label>
             </div>
           )}

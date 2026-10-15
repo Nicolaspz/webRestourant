@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, Download, X, CheckCircle, Clock, CreditCard, DollarSign } from 'lucide-react';
 import { PosData } from '@/types/pos';
 import { toast } from 'react-toastify';
+import { MoneyInput } from '@/components/ui/money-input';
 
 interface SimplePosReceiptProps {
   isOpen: boolean;
@@ -46,9 +47,10 @@ export default function PosReceipt({ isOpen, onClose, data, onConfirmPayment }: 
     return paidAmount - data.totalGeral;
   };
 
-  const handleCashInput = (value: string) => {
-    setCashAmount(value);
-    const changeAmount = calculateChange(value);
+  const handleCashInput = (value: number | undefined) => {
+    const draft = value === undefined ? '' : String(value);
+    setCashAmount(draft);
+    const changeAmount = calculateChange(draft);
     setChange(changeAmount > 0 ? changeAmount : 0);
   };
 
@@ -192,14 +194,11 @@ export default function PosReceipt({ isOpen, onClose, data, onConfirmPayment }: 
                   Valor entregue
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="number"
+                  <MoneyInput
                     value={cashAmount}
-                    onChange={(e) => handleCashInput(e.target.value)}
+                    onValueChange={handleCashInput}
                     className="flex-1 p-2 border rounded"
-                    placeholder="0.00"
-                    step="0.01"
-                    min={data.totalGeral}
+                    placeholder="0,00"
                   />
                   <div className="bg-white p-3 rounded border">
                     <p className="text-sm">Troco</p>

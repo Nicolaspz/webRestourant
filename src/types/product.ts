@@ -49,6 +49,7 @@ export interface Product {
   allowAsIngredient: boolean;
   isIgredient: boolean;
   isFish?: boolean;
+  requiresFishSelection?: boolean;
   isFeatured: boolean;
   isNew: boolean;
   productKind?: 'INGREDIENT' | 'SIMPLE_PRODUCT' | 'RECIPE_PRODUCT';
@@ -108,6 +109,7 @@ export interface ProductFormData {
   preparationAreaId: string;
   taxPercentage: number;
   taxExemptionCode: string;
+  requiresFishSelection: boolean;
 }
 export interface Ingredient {
   id: string;

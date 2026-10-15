@@ -6,6 +6,7 @@ import { Fatura } from '@/types/product';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { MoneyInput } from '@/components/ui/money-input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -216,24 +217,20 @@ const PagamentoModal = ({ fatura, onClose, onSuccess }: PagamentoModalProps) => 
                 <Label htmlFor="valor-pago">
                   Valor Pago {metodoPagamento === 'dinheiro' && '(em dinheiro)'}
                 </Label>
-                <Input
+                <MoneyInput
                   id="valor-pago"
-                  type="number"
-                  step="0.01"
                   value={valorPago}
-                  onChange={(e) => setValorPago(parseFloat(e.target.value) || 0)}
+                  onValueChange={(value) => setValorPago(value ?? 0)}
                 />
               </div>
 
               {metodoPagamento === 'dinheiro' && (
                 <div className="space-y-2">
                   <Label htmlFor="troco-para">Troco Para</Label>
-                  <Input
+                  <MoneyInput
                     id="troco-para"
-                    type="number"
-                    step="0.01"
                     value={trocoPara}
-                    onChange={(e) => setTrocoPara(e.target.value)}
+                    onValueChange={(value) => setTrocoPara(value === undefined ? '' : String(value))}
                     placeholder="Opcional"
                   />
                   {trocoPara && (
@@ -271,12 +268,10 @@ const PagamentoModal = ({ fatura, onClose, onSuccess }: PagamentoModalProps) => 
 
                     <div className="flex-1 space-y-2">
                       <Label htmlFor={`valor-${index}`}>Valor</Label>
-                      <Input
+                      <MoneyInput
                         id={`valor-${index}`}
-                        type="number"
-                        step="0.01"
                         value={pagamento.valor}
-                        onChange={(e) => handleUpdatePagamento(index, 'valor', parseFloat(e.target.value) || 0)}
+                        onValueChange={(value) => handleUpdatePagamento(index, 'valor', value ?? 0)}
                       />
                     </div>
 

@@ -5,6 +5,7 @@ import {ActionForm} from '@/components/ui/action-feedback';
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Label } from "@/components/ui/label";
 import { Loader2, X, DollarSign } from "lucide-react";
 import { Product } from "@/types/product";
@@ -175,17 +176,14 @@ export function PriceUpdateModal({
             <Label htmlFor="customPrice" className="text-gray-900 dark:text-white">
               Novo Preço *
             </Label>
-            <Input
+            <MoneyInput
               id="customPrice"
-              type="number"
-              step="0.01"
-              min="0.01"
               value={customPrice}
-              onChange={(e) => {
-                setCustomPrice(e.target.value);
+              onValueChange={(value) => {
+                setCustomPrice(value === undefined ? '' : String(value));
                 setUseSuggested(false);
               }}
-              placeholder="0.00"
+              placeholder="0,00"
               required
               className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
             />

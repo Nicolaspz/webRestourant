@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Package, Loader2, X } from "lucide-react";
 import { setupAPIClient } from "@/services/api";
@@ -217,15 +218,12 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
           <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
             Preço unitário de Compra
           </label>
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
+          <MoneyInput
             disabled={isAdding}
             value={formData.purchasePrice}
-            onChange={(e) => setFormData({
+            onValueChange={(value) => setFormData({
               ...formData,
-              purchasePrice: parseFloat(e.target.value) || 0
+              purchasePrice: value || 0
             })}
             className="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           />

@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { Eye, Search, X, Package } from "lucide-react";
 import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
+import { formatMoney } from '@/components/ui/money-input';
 
 // Usando as interfaces que você forneceu
 interface PrecoVenda {
@@ -106,7 +107,7 @@ export function StockTable({ products, isLoading }: StockTableProps) {
     if (product.currentPrice) return product.currentPrice;
     
     const currentPrice = product.PrecoVenda?.find(price => !price.data_fim);
-    return currentPrice ? `${currentPrice.preco_venda} Kz` : "Preço não definido";
+    return currentPrice ? `${formatMoney(currentPrice.preco_venda)} Kz` : "Preço não definido";
   };
 
   if (isLoading) return <CenterScreenLoader />;

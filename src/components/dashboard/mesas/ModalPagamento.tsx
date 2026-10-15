@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Banknote, CreditCard, ArrowLeftRight, Loader2, CheckCircle2, ChevronRight, ChevronLeft, X, Building2, User, Minus, Send, Copy, MessageCircle, ExternalLink } from 'lucide-react';
 import { setupAPIClient } from '@/services/api';
 import { Input } from '@/components/ui/input';
+import { MoneyInput } from '@/components/ui/money-input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-toastify';
 import { tableCheckoutService } from '@/services/table-checkout';
@@ -332,10 +333,9 @@ export default function ModalPagamento({
                                             </div>
                                             <div className="flex gap-2">
                                                 <div className="relative flex-1">
-                                                    <input
-                                                        type="number"
+                                                    <MoneyInput
                                                         value={valorInput}
-                                                        onChange={e => setValorInput(e.target.value)}
+                                                        onValueChange={value => setValorInput(value === undefined ? '' : String(value))}
                                                         placeholder="Valor a adicionar"
                                                         className="w-full bg-background border-2 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all"
                                                     />
@@ -371,10 +371,9 @@ export default function ModalPagamento({
                                                 <span className="text-[9px] lowercase font-normal italic opacity-60">Troco automático</span>
                                             </label>
                                             <div className="relative">
-                                                <input
-                                                    type="number"
+                                                <MoneyInput
                                                     value={trocoPara}
-                                                    onChange={e => setTrocoPara(e.target.value)}
+                                                    onValueChange={value => setTrocoPara(value === undefined ? '' : String(value))}
                                                     placeholder={`${conta.totalGeral.toLocaleString()}`}
                                                     className="w-full bg-background border-2 rounded-xl px-4 py-3 text-lg font-black focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none shadow-sm transition-all"
                                                 />

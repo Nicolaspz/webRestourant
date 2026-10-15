@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput, formatMoney } from '@/components/ui/money-input';
 import { Label } from "@/components/ui/label";
 import {
     Select,
@@ -148,10 +149,9 @@ export default function TakeawayPaymentModal({
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <Label>Valor Recebido</Label>
-                                <Input
-                                    type="number"
+                                <MoneyInput
                                     value={trocoPara}
-                                    onChange={(e) => setTrocoPara(e.target.value)}
+                                    onValueChange={(value) => setTrocoPara(value === undefined ? '' : String(value))}
                                     placeholder="Ex: 5000"
                                     autoFocus
                                 />
@@ -166,12 +166,7 @@ export default function TakeawayPaymentModal({
                     ) : (
                         <div className="space-y-2">
                             <Label>Valor a Confirmar</Label>
-                            <Input
-                                type="number"
-                                value={valorPago}
-                                readOnly
-                                className="bg-muted font-bold"
-                            />
+                            <Input value={formatMoney(valorPago)} readOnly className="bg-muted font-bold" />
                         </div>
                     )}
 
