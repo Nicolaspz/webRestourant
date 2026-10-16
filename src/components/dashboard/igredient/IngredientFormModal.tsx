@@ -19,6 +19,7 @@ import { API_BASE_URL, getMediaUrl } from "../../../../config";
 import { Area, economatoService } from "@/services/economato";
 import { AuthContext } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
+import { MoneyInput } from "@/components/ui/money-input";
 
 interface IngredientFormModalProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ export function IngredientFormModal({
     isDerived: false,
     isIgredient: true,
     isFish: false,
+    fishPrice: undefined as number | undefined,
     categoryId: '',
     file: null as File | null,
     previewImage: '',
@@ -93,6 +95,7 @@ export function IngredientFormModal({
           categoryId: ingredientCategoryId,
           isIgredient: true,
           isFish: initialData.isFish ?? false,
+          fishPrice: initialData.PrecoVenda?.[0]?.preco_venda,
           file: null,
           existingBanner: initialData.banner || '',
           defaultAreaId: initialData.defaultAreaId || '',
@@ -106,6 +109,7 @@ export function IngredientFormModal({
           isDerived: false,
           isIgredient: true,
           isFish: false,
+          fishPrice: undefined,
           categoryId: ingredientCategoryId,
           file: null,
           previewImage: '',
@@ -127,6 +131,10 @@ export function IngredientFormModal({
       toast.error('A categoria interna “Ingredientes” não está disponível. Crie-a em Gestão de Categorias e tente novamente.');
       return;
     }
+    if (formData.isFish && (!Number.isFinite(formData.fishPrice) || Number(formData.fishPrice) <= 0)) {
+      toast.error('Informe o preço de venda deste peixe. Esse será o preço total do Mufete quando ele for escolhido.');
+      return;
+    }
     // Preparar dados para envio
     const submitData = {
       name: formData.name,
@@ -135,6 +143,7 @@ export function IngredientFormModal({
       isDerived: false,
       isIgredient: true,
       isFish: formData.isFish,
+      fishPrice: formData.fishPrice,
       categoryId: formData.categoryId,
       organizationId: organizationId,
       file: formData.file,
@@ -145,7 +154,7 @@ export function IngredientFormModal({
 
   };
 
-  const handleInputChange = (field: string, value: string | boolean | File) => {
+  const handleInputChange = (field: string, value: string | number | boolean | File | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -277,6 +286,11 @@ export function IngredientFormModal({
                 <input type="checkbox" checked={formData.isFish} onChange={e => handleInputChange('isFish', e.target.checked)} disabled={isSubmitting} />
                 Este ingrediente é um tipo de peixe
               </label>
+              {formData.isFish && <div className="space-y-2 rounded-md border border-sky-200 bg-sky-50 p-3 dark:border-sky-900 dark:bg-sky-950/20">
+                <Label htmlFor="fishPrice">Preço do peixe (Kz) *</Label>
+                <MoneyInput id="fishPrice" value={formData.fishPrice} onValueChange={value => handleInputChange('fishPrice', value)} placeholder="Preço que será aplicado ao Mufete" disabled={isSubmitting} required />
+                <p className="text-xs text-muted-foreground">Ao selecionar este peixe no pedido, este valor será usado como preço total do Mufete.</p>
+              </div>}
             </div>
 
             <div className="space-y-4">

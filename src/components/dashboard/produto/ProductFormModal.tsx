@@ -638,7 +638,7 @@ export function ProductFormModal({
                   checked={formData.requiresFishSelection}
                   onCheckedChange={(checked) => handleInputChange('requiresFishSelection', !!checked)}
                 />
-                <span>Pedir tipo de peixe e preço ao efetuar o pedido</span>
+                <span>Pedir tipo de peixe no pedido e usar o preço cadastrado no ingrediente</span>
               </label>
             </div>
           )}

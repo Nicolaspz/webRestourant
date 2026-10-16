@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProductImage } from '@/components/ProductImage';
 import { CenterScreenLoader } from '@/components/ui/center-screen-loader';
-import { MoneyInput } from '@/components/ui/money-input';
 import { toast } from 'react-toastify';
 import { Armchair, ArrowLeft, CreditCard, Loader2, Minus, Plus, Printer, Search, Send, X } from 'lucide-react';
 
@@ -28,12 +27,12 @@ type PosProduct = {
   is_fractional?: boolean;
   unit?: string;
   recipeItems?: Array<{ quantity: number }>;
-  fishOptions?: Array<{ id: string; name: string; unit: string; is_fractional: boolean; availableQuantity: number }>;
+  fishOptions?: Array<{ id: string; name: string; unit: string; is_fractional: boolean; availableQuantity: number; price: number }>;
   Category?: { id: string; name: string } | null;
   PrecoVenda?: Array<{ preco_venda: number | string }>;
 };
 type CartLine = { id: string; product: PosProduct; quantity: number; unitPrice?: number; selectedIngredientId?: string; selectedIngredientName?: string; selectedIngredientUnit?: string; selectedIngredientQuantity?: number };
-type MufeteEntry = { id: string; fishId: string; price: string };
+type MufeteEntry = { id: string; fishId: string };
 type MesaOrderItem = { id: string; amount: number; canceled?: boolean; prepared: boolean; status?: 'pendente' | 'em_preparacao' | 'pronto'; deliveredAt?: string | null; Product?: { name: string }; selectedIngredient?: { name: string; unit: string } | null };
 type MesaOrder = { id: string; name?: string | null; draft: boolean; items: MesaOrderItem[] };
 
@@ -154,7 +153,7 @@ export function CashierPOS({
     if (!selectedMesa) { toast.info('Selecione uma mesa primeiro.'); return; }
     if (product.requiresFishSelection) {
       setProductToConfigure(product);
-      setMufeteEntries([{ id: crypto.randomUUID(), fishId: '', price: '' }]);
+      setMufeteEntries([{ id: crypto.randomUUID(), fishId: '' }]);
       return;
     }
     setCarts(current => {
@@ -172,11 +171,11 @@ export function CashierPOS({
     const configured = mufeteEntries.map(entry => {
       const fish = productToConfigure.fishOptions?.find(option => option.id === entry.fishId);
       const stockQuantity = 1;
-      const price = Number(entry.price.replace(',', '.'));
+      const price = Number(fish?.price ?? 0);
       return { fish, stockQuantity, price };
     });
     if (configured.some(({ fish, stockQuantity, price }) => !fish || !Number.isFinite(stockQuantity) || stockQuantity <= 0 || !Number.isFinite(price) || price <= 0)) {
-      toast.error('Para cada Mufete, selecione um peixe disponível no stock e informe o preço final.');
+      toast.error('Para cada Mufete, selecione um peixe com stock e preço cadastrado.');
       return;
     }
     setCarts(current => ({ ...current, [selectedMesa.id]: [...(current[selectedMesa.id] || []), ...configured.map(({ fish, stockQuantity, price }) => ({
@@ -229,7 +228,7 @@ export function CashierPOS({
       await api.post('/orders/with-stock', {
         tableNumber: selectedMesa.number,
         organizationId,
-        items: cart.map(line => ({ productId: line.product.id, amount: line.quantity, ...(line.selectedIngredientId ? { selectedIngredientId: line.selectedIngredientId, selectedIngredientQuantity: line.selectedIngredientQuantity, unitPrice: line.unitPrice } : {}) })),
+        items: cart.map(line => ({ productId: line.product.id, amount: line.quantity, ...(line.selectedIngredientId ? { selectedIngredientId: line.selectedIngredientId, selectedIngredientQuantity: line.selectedIngredientQuantity } : {}) })),
         customerName: `Caixa — Mesa ${selectedMesa.number}`,
         clientToken: getMesaToken(userId, selectedMesa.id),
         idempotencyKey,
@@ -353,16 +352,15 @@ export function CashierPOS({
   </Dialog>
   <Dialog open={!!productToConfigure} onOpenChange={open => { if (!open) setProductToConfigure(null); }}>
     <DialogContent className="max-w-md">
-      <DialogHeader><DialogTitle>Configurar {productToConfigure?.name}</DialogTitle><DialogDescription>Para cada prato, selecione o peixe escolhido pelo cliente e informe o preço final correspondente.</DialogDescription></DialogHeader>
+      <DialogHeader><DialogTitle>Configurar {productToConfigure?.name}</DialogTitle><DialogDescription>Selecione o peixe escolhido pelo cliente. O preço cadastrado para esse peixe será aplicado ao prato.</DialogDescription></DialogHeader>
       <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
         {mufeteEntries.map((entry, index) => {
           return <section key={entry.id} className="space-y-3 rounded-xl border p-3">
             <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Mufete {index + 1}</h3>{mufeteEntries.length > 1 && <Button type="button" size="sm" variant="ghost" onClick={() => setMufeteEntries(entries => entries.filter(value => value.id !== entry.id))}>Remover</Button>}</div>
-            <div className="space-y-2"><Label>Peixe escolhido *</Label><Select value={entry.fishId} onValueChange={fishId => updateMufeteEntry(entry.id, { fishId })}><SelectTrigger><SelectValue placeholder="Selecione o peixe" /></SelectTrigger><SelectContent>{productToConfigure?.fishOptions?.map(fish => { const unavailable = fish.availableQuantity < 1; return <SelectItem key={fish.id} value={fish.id} disabled={unavailable}>{fish.name} · {unavailable ? 'Sem stock' : `${money.format(fish.availableQuantity)} ${fish.unit} disponível`}</SelectItem>; })}</SelectContent></Select></div>
-            <div className="space-y-2"><Label>Preço final deste prato (Kz) *</Label><MoneyInput value={entry.price} onValueChange={value => updateMufeteEntry(entry.id, { price: value === undefined ? '' : String(value) })} placeholder="Preço combinado com o cliente" /></div>
+            <div className="space-y-2"><Label>Peixe escolhido *</Label><Select value={entry.fishId} onValueChange={fishId => updateMufeteEntry(entry.id, { fishId })}><SelectTrigger><SelectValue placeholder="Selecione o peixe" /></SelectTrigger><SelectContent>{productToConfigure?.fishOptions?.map(fish => { const unavailable = fish.availableQuantity < 1; const missingPrice = fish.price <= 0; const priceLabel = missingPrice ? 'Preço por definir' : `${money.format(fish.price)} Kz`; const stockLabel = unavailable ? 'Sem stock' : `${money.format(fish.availableQuantity)} ${fish.unit} disponível`; return <SelectItem key={fish.id} value={fish.id} disabled={unavailable || missingPrice}>{fish.name} · {priceLabel} · {stockLabel}</SelectItem>; })}</SelectContent></Select><p className="text-xs text-muted-foreground">O valor apresentado será o preço total deste Mufete.</p></div>
           </section>;
         })}
-        <Button type="button" variant="outline" className="w-full" onClick={() => setMufeteEntries(entries => [...entries, { id: crypto.randomUUID(), fishId: '', price: '' }])}><Plus className="mr-2 h-4 w-4" />Adicionar outro Mufete</Button>
+        <Button type="button" variant="outline" className="w-full" onClick={() => setMufeteEntries(entries => [...entries, { id: crypto.randomUUID(), fishId: '' }])}><Plus className="mr-2 h-4 w-4" />Adicionar outro Mufete</Button>
       </div>
       <DialogFooter><Button type="button" variant="outline" onClick={() => setProductToConfigure(null)}>Cancelar</Button><Button type="button" onClick={addConfiguredDish}>Adicionar {mufeteEntries.length} {mufeteEntries.length === 1 ? 'prato' : 'pratos'} ao pedido</Button></DialogFooter>
     </DialogContent>

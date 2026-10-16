@@ -121,6 +121,7 @@ export interface Ingredient {
   isDerived: boolean;
   isIgredient: boolean;
   isFish?: boolean;
+  PrecoVenda?: PrecoVenda[];
   categoryId: string;
   organizationId: string;
   category?: Category; // Adicione esta linha
