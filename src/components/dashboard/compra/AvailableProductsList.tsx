@@ -26,7 +26,22 @@ interface Product {
   isIgredient: boolean;
   isDerived: boolean;
   currentPrice?: number;
+  targetMarginPercent?: number;
 }
+
+type PurchaseLineForm = {
+  quantity: string;
+  purchasePrice: number | undefined;
+  salePrice: number | undefined;
+  salePriceManuallyEdited: boolean;
+  productTypeId: string;
+  marginPercentage: number;
+};
+
+const calculateSuggestedSalePrice = (purchasePrice: number | undefined, marginPercentage: number) => {
+  if (!purchasePrice || purchasePrice <= 0 || marginPercentage >= 100) return undefined;
+  return Number((purchasePrice / (1 - marginPercentage / 100)).toFixed(2));
+};
 
 interface AvailableProductsListProps {
   purchaseId: string;
@@ -43,9 +58,11 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
   const [isAdding, setIsAdding] = useState(false);
   const addingRef = useRef(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PurchaseLineForm>({
     quantity: '',
-    purchasePrice: 0,
+    purchasePrice: undefined,
+    salePrice: undefined,
+    salePriceManuallyEdited: false,
     productTypeId: "1",
     marginPercentage: 20,
   });
@@ -76,12 +93,17 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
 
   const handleOpenModal = (product: Product) => {
     if (addingRef.current) return;
+    const marginPercentage = Number.isFinite(product.targetMarginPercent)
+      ? Number(product.targetMarginPercent)
+      : 20;
     setSelectedProduct(product);
     setFormData({
       quantity: '',
-      purchasePrice: product.currentPrice || 0,
+      purchasePrice: undefined,
+      salePrice: undefined,
+      salePriceManuallyEdited: false,
       productTypeId: "1",
-      marginPercentage: 20,
+      marginPercentage,
     });
     setShowModal(true);
   };
@@ -91,7 +113,9 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
     setSelectedProduct(null);
     setFormData({
       quantity: '',
-      purchasePrice: 0,
+      purchasePrice: undefined,
+      salePrice: undefined,
+      salePriceManuallyEdited: false,
       productTypeId: "1",
       marginPercentage: 20,
     });
@@ -108,6 +132,14 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
       toast.error('Informe uma quantidade válida maior que zero.');
       return;
     }
+    if (!Number.isFinite(formData.purchasePrice) || !formData.purchasePrice || formData.purchasePrice <= 0) {
+      toast.error('Informe um preço unitário de compra válido.');
+      return;
+    }
+    if (!Number.isFinite(formData.salePrice) || !formData.salePrice || formData.salePrice <= 0) {
+      toast.error('Informe um preço de venda válido.');
+      return;
+    }
 
     addingRef.current = true;
     setIsAdding(true);
@@ -118,6 +150,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
       await apiClient.post('/compra_produt', {
         quantity,
         purchasePrice: formData.purchasePrice,
+        salePrice: formData.salePrice,
         purchaseId,
         productId: selectedProduct.id,
         organizationId: user.organizationId // OBRIGATÓRIO
@@ -225,24 +258,53 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
           <MoneyInput
             disabled={isAdding}
             value={formData.purchasePrice}
-            onValueChange={(value) => setFormData({
-              ...formData,
-              purchasePrice: value || 0
-            })}
+            onValueChange={(purchasePrice) => setFormData(current => ({
+              ...current,
+              purchasePrice,
+              salePrice: current.salePriceManuallyEdited
+                ? current.salePrice
+                : calculateSuggestedSalePrice(purchasePrice, current.marginPercentage),
+            }))}
             className="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           />
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md">
+        <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md space-y-2">
           <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-            Preço de Venda (automático)
+            Preço de Venda
           </label>
+          <MoneyInput
+            disabled={isAdding}
+            value={formData.salePrice}
+            onValueChange={(salePrice) => setFormData(current => ({
+              ...current,
+              salePrice,
+              salePriceManuallyEdited: true,
+            }))}
+            className="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
+          />
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {formData.purchasePrice} + {formData.marginPercentage}% = {' '}
+            Sugestão pela margem de {formData.marginPercentage}%:{' '}
             <span className="font-semibold text-gray-900 dark:text-white">
-              {(formData.purchasePrice * (1 + formData.marginPercentage / 100)).toFixed(2)}
+              {calculateSuggestedSalePrice(formData.purchasePrice, formData.marginPercentage) === undefined
+                ? 'preencha o preço de compra'
+                : `${calculateSuggestedSalePrice(formData.purchasePrice, formData.marginPercentage)!.toFixed(2)} Kz`}
             </span>
           </p>
+          {calculateSuggestedSalePrice(formData.purchasePrice, formData.marginPercentage) !== undefined && formData.salePriceManuallyEdited && (
+            <Button
+              type="button"
+              variant="link"
+              className="h-auto p-0 text-sm"
+              onClick={() => setFormData(current => ({
+                ...current,
+                salePrice: calculateSuggestedSalePrice(current.purchasePrice, current.marginPercentage),
+                salePriceManuallyEdited: false,
+              }))}
+            >
+              Usar preço sugerido
+            </Button>
+          )}
         </div>
       </div>
 
@@ -257,7 +319,7 @@ export function AvailableProductsList({ purchaseId, onAddSuccess }: AvailablePro
         </Button>
         <Button
           onClick={handleAddProduct}
-          disabled={isAdding || !formData.quantity || Number(formData.quantity) <= 0}
+          disabled={isAdding || !formData.quantity || Number(formData.quantity) <= 0 || !formData.purchasePrice || formData.purchasePrice <= 0 || !formData.salePrice || formData.salePrice <= 0}
           aria-busy={isAdding}
           className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
         >
