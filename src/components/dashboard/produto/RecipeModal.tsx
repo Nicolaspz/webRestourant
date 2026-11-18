@@ -31,7 +31,7 @@ import {
   Calculator,
   DollarSign
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "@/services/apiClients";
 import { toast } from "react-toastify"; 
 import { Product, RecipeItem } from "@/types/product";
@@ -54,14 +54,22 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [selectedIngredient, setSelectedIngredient] = useState<string>("");
+  const [ingredientSearch, setIngredientSearch] = useState("");
+  const ingredientSearchRef = useRef<HTMLInputElement>(null);
+  const normalizeSearch = (value: string) =>
+    value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const searchTerm = normalizeSearch(ingredientSearch);
+  const matchingIngredients = allIngredients.filter(ingredient =>
+    normalizeSearch(ingredient.name).includes(searchTerm)
+  );
   const [quantity, setQuantity] = useState('');
   const [impactaPreco, setImpactaPreco] = useState<boolean>(true);
 
-  const fetchData = async () => {
+  const fetchData = async (showLoading = true) => {
     if (!product?.id || !token) return;
 
     try {
-      setIsLoading(true);
+      if (showLoading) setIsLoading(true);
       
       const ingredientsResponse = await api.get('/produts', {
         params: { organizationId },
@@ -119,6 +127,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
 
   const resetForm = () => {
     setSelectedIngredient("");
+    setIngredientSearch("");
     setQuantity('');
     setImpactaPreco(true);
   };
@@ -152,9 +161,9 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       });
 
       toast.success("Ingrediente adicionado com sucesso!");
-      fetchData();
-      setShowAddIngredient(false);
+      await fetchData(false);
       resetForm();
+      ingredientSearchRef.current?.focus();
     } catch (error: any) {
       console.error("Error adding ingredient:", error);
       toast.error(error.response?.data?.error || "Erro ao adicionar ingrediente");
@@ -460,24 +469,43 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
+                        <Label htmlFor="ingredient-search">Pesquisar ingrediente</Label>
+                        <Input
+                          id="ingredient-search"
+                          ref={ingredientSearchRef}
+                          autoFocus
+                          value={ingredientSearch}
+                          placeholder="Digite o nome do ingrediente"
+                          onChange={event => {
+                            setIngredientSearch(event.target.value);
+                            setSelectedIngredient("");
+                          }}
+                          readOnly={isSubmitting}
+                        />
                         <Label htmlFor="ingredient">Ingrediente *</Label>
-                        <Select value={selectedIngredient} onValueChange={setSelectedIngredient}>
-                          <SelectTrigger>
+                        <Select value={selectedIngredient} onValueChange={setSelectedIngredient} disabled={isSubmitting || matchingIngredients.length === 0}>
+                          <SelectTrigger id="ingredient" className="w-full">
                             <SelectValue placeholder="Selecione um ingrediente" />
                           </SelectTrigger>
                           <SelectContent>
-                            {allIngredients.map(ingredient => (
+                            {matchingIngredients.map(ingredient => (
                               <SelectItem key={ingredient.id} value={ingredient.id}>
                                 {ingredient.name} ({ingredient.isDerived ? 'unidade' : ingredient.unit}) - {ingredient.PrecoVenda?.[0]?.preco_venda?.toFixed(2) || '0.00'} Kz
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                        {matchingIngredients.length === 0 && (
+                          <p className="text-xs text-muted-foreground" role="status">
+                            Nenhum ingrediente encontrado.
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="quantity">Quantidade *</Label>
                         <Input
+                          id="quantity"
                           type="number"
                           value={quantity}
                           onChange={(e) => setQuantity(e.target.value)}
