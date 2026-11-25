@@ -53,17 +53,19 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [selectedIngredient, setSelectedIngredient] = useState<string>("");
-  const [ingredientSearch, setIngredientSearch] = useState("");
-  const ingredientSearchRef = useRef<HTMLInputElement>(null);
+  const nextRowId = useRef(0);
+  const [rows, setRows] = useState([{ id: 0, ingredientId: "", search: "", quantity: "", impactaPreco: true, isOptional: false }]);
   const normalizeSearch = (value: string) =>
     value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-  const searchTerm = normalizeSearch(ingredientSearch);
-  const matchingIngredients = allIngredients.filter(ingredient =>
-    normalizeSearch(ingredient.name).includes(searchTerm)
-  );
-  const [quantity, setQuantity] = useState('');
-  const [impactaPreco, setImpactaPreco] = useState<boolean>(true);
+
+  const addRow = () => {
+    const id = ++nextRowId.current;
+    setRows(current => [...current, { id, ingredientId: "", search: "", quantity: "", impactaPreco: true, isOptional: false }]);
+  };
+
+  const updateRow = (id: number, changes: Partial<(typeof rows)[number]>) => {
+    setRows(current => current.map(row => row.id === id ? { ...row, ...changes } : row));
+  };
 
   const fetchData = async (showLoading = true) => {
     if (!product?.id || !token) return;
@@ -90,6 +92,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
         productId: item.productId,
         impactaPreco: item.impactaPreco,
         isSelectable: item.isSelectable ?? false,
+        isOptional: item.isOptional ?? false,
         ingredient: {
           id: item.ingredient.id,
           name: item.ingredient.name,
@@ -126,10 +129,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   }, [isOpen, product]);
 
   const resetForm = () => {
-    setSelectedIngredient("");
-    setIngredientSearch("");
-    setQuantity('');
-    setImpactaPreco(true);
+    setRows([{ id: 0, ingredientId: "", search: "", quantity: "", impactaPreco: true, isOptional: false }]);
   };
 
   const calculateTotalCost = () => {
@@ -142,10 +142,20 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
     }, 0);
   };
 
-  const handleAddIngredient = async () => {
-    if (!selectedIngredient || !product?.id) return;
-    if (!quantity.trim() || !Number.isFinite(Number(quantity)) || Number(quantity) <= 0) {
-      toast.error('Informe uma quantidade válida para o ingrediente.');
+  const handleAddIngredients = async () => {
+    if (!product?.id || isSubmitting) return;
+
+    const pending = rows.filter(row => row.ingredientId || row.quantity || row.search.trim());
+    const ingredientIds = pending.map(row => row.ingredientId);
+    if (!pending.length || pending.some(row =>
+      !row.ingredientId || !Number.isFinite(Number(row.quantity)) || Number(row.quantity) <= 0
+    )) {
+      toast.error("Selecione um ingrediente e indique uma quantidade válida em cada linha preenchida.");
+      return;
+    }
+    if (new Set(ingredientIds).size !== pending.length ||
+        recipeItems.some(item => ingredientIds.includes(item.ingredient.id))) {
+      toast.error("Cada ingrediente pode aparecer apenas uma vez na ficha técnica.");
       return;
     }
 
@@ -153,20 +163,17 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       setIsSubmitting(true);
       await api.post("/recipe", {
         productId: product.id,
-        ingredientId: selectedIngredient,
-        quantity: Number(quantity),
-        impactaPreco,
+        items: pending.map(({ ingredientId, quantity, impactaPreco, isOptional }) => ({
+          ingredientId, quantity: Number(quantity), impactaPreco, isOptional
+        }))
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      toast.success("Ingrediente adicionado com sucesso!");
-      await fetchData(false);
       resetForm();
-      ingredientSearchRef.current?.focus();
+      toast.success("Ingredientes guardados com sucesso!");
+      await fetchData(false);
     } catch (error: any) {
-      console.error("Error adding ingredient:", error);
-      toast.error(error.response?.data?.error || "Erro ao adicionar ingrediente");
+      toast.error(error.response?.data?.error || "Erro ao guardar os ingredientes.");
     } finally {
       setIsSubmitting(false);
     }
@@ -186,7 +193,8 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
         ingredientId: item.ingredient.id,
         quantity: Number(item.quantity), // Garantir que é número
         impactaPreco: Boolean(item.impactaPreco),
-        isSelectable: Boolean(item.isSelectable)
+        isSelectable: Boolean(item.isSelectable),
+        isOptional: Boolean(item.isOptional)
       };
 
       //console.log("📤 Payload enviado:", payload);
@@ -355,6 +363,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                         <TableHeader>
                           <TableRow>
                             <TableHead>Ingrediente</TableHead>
+                            <TableHead>Opcional sem stock</TableHead>
                             <TableHead className="text-right">Preço Unitário</TableHead>
                             <TableHead className="text-right">Quantidade</TableHead>
                             <TableHead className="text-center">Impacta Preço</TableHead>
@@ -367,6 +376,16 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                             <TableRow key={item.id}>
                               <TableCell className="font-medium">
                                 {item.ingredient.name}
+                              </TableCell>
+                              <TableCell>
+                                {isEditing ? (
+                                  <Switch
+                                    aria-label={`Tornar ${item.ingredient.name} opcional sem stock`}
+                                    checked={item.isOptional ?? false}
+                                    onCheckedChange={isOptional => setRecipeItems(current => current.map(row => row.id === item.id ? { ...row, isOptional } : row))}
+                                    disabled={isSubmitting}
+                                  />
+                                ) : (item.isOptional ? "Sim" : "Não")}
                               </TableCell>
                               <TableCell className="text-right text-green-600">
                                 {(item.ingredient.cost ?? item.ingredient.price ?? 0).toFixed(2)} Kz
@@ -457,6 +476,8 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                       <Button
                         variant="ghost"
                         size="sm"
+                        disabled={isSubmitting}
+                        aria-label="Fechar formulário de ingredientes"
                         onClick={() => {
                           setShowAddIngredient(false);
                           resetForm();
@@ -467,84 +488,97 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="ingredient-search">Pesquisar ingrediente</Label>
-                        <Input
-                          id="ingredient-search"
-                          ref={ingredientSearchRef}
-                          autoFocus
-                          value={ingredientSearch}
-                          placeholder="Digite o nome do ingrediente"
-                          onChange={event => {
-                            setIngredientSearch(event.target.value);
-                            setSelectedIngredient("");
-                          }}
-                          readOnly={isSubmitting}
-                        />
-                        <Label htmlFor="ingredient">Ingrediente *</Label>
-                        <Select value={selectedIngredient} onValueChange={setSelectedIngredient} disabled={isSubmitting || matchingIngredients.length === 0}>
-                          <SelectTrigger id="ingredient" className="w-full">
-                            <SelectValue placeholder="Selecione um ingrediente" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {matchingIngredients.map(ingredient => (
-                              <SelectItem key={ingredient.id} value={ingredient.id}>
-                                {ingredient.name} ({ingredient.isDerived ? 'unidade' : ingredient.unit}) - {ingredient.PrecoVenda?.[0]?.preco_venda?.toFixed(2) || '0.00'} Kz
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {matchingIngredients.length === 0 && (
-                          <p className="text-xs text-muted-foreground" role="status">
-                            Nenhum ingrediente encontrado.
-                          </p>
-                        )}
-                      </div>
+                    <div className="space-y-3">
+                      {rows.map(row => {
+                        const ingredient = allIngredients.find(item => item.id === row.ingredientId);
+                        const search = normalizeSearch(row.search);
+                        const matches = allIngredients.filter(item =>
+                          normalizeSearch(item.name).includes(search)
+                        );
 
-                      <div className="space-y-2">
-                        <Label htmlFor="quantity">Quantidade *</Label>
-                        <Input
-                          id="quantity"
-                          type="number"
-                          value={quantity}
-                          onChange={(e) => setQuantity(e.target.value)}
-                          min={allIngredients.find(item => item.id === selectedIngredient)?.isDerived ? '1' : '0.1'}
-                          step={allIngredients.find(item => item.id === selectedIngredient)?.isDerived ? '1' : '0.1'}
-                          placeholder="0.00"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Unidade: {allIngredients.find(item => item.id === selectedIngredient)?.isDerived ? 'unidade' : (allIngredients.find(item => item.id === selectedIngredient)?.unit || 'selecione um item')}
-                        </p>
-                      </div>
+                        return (
+                          <div key={row.id} className="grid gap-3 rounded-lg border p-3 md:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_auto] md:items-start">
+                            <div className="space-y-2">
+                              <Label htmlFor={`ingredient-search-${row.id}`}>Pesquisar ingrediente</Label>
+                              <Input
+                                id={`ingredient-search-${row.id}`}
+                                autoFocus
+                                value={row.search}
+                                placeholder="Digite o nome do ingrediente"
+                                onChange={event => updateRow(row.id, { search: event.target.value, ingredientId: "" })}
+                                disabled={isSubmitting}
+                              />
+                              <Select value={row.ingredientId} onValueChange={ingredientId => updateRow(row.id, { ingredientId })} disabled={isSubmitting || matches.length === 0}>
+                                <SelectTrigger className="w-full" aria-label="Ingrediente">
+                                  <SelectValue placeholder="Selecione um ingrediente" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {matches.map(item => (
+                                    <SelectItem key={item.id} value={item.id}>
+                                      {item.name} ({item.isDerived ? "unidade" : item.unit})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {matches.length === 0 && (
+                                <p className="text-xs text-muted-foreground" role="status">Nenhum ingrediente encontrado.</p>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`ingredient-quantity-${row.id}`}>Quantidade</Label>
+                              <Input
+                                id={`ingredient-quantity-${row.id}`}
+                                type="number"
+                                step="any"
+                                value={row.quantity}
+                                onChange={event => updateRow(row.id, { quantity: event.target.value })}
+                                disabled={isSubmitting}
+                                placeholder="0,00"
+                              />
+                              {ingredient && (
+                                <p className="text-xs text-muted-foreground">{ingredient.isDerived ? "unidade" : ingredient.unit}</p>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`ingredient-price-${row.id}`}>Impacta no preço final?</Label>
+                              <div>
+                                <Switch
+                                  id={`ingredient-price-${row.id}`}
+                                  checked={row.impactaPreco}
+                                  onCheckedChange={impactaPreco => updateRow(row.id, { impactaPreco })}
+                                  disabled={isSubmitting}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`optional-${row.id}`}>Opcional sem stock</Label>
+                              <Switch id={`optional-${row.id}`} checked={row.isOptional} onCheckedChange={isOptional => updateRow(row.id, { isOptional })} disabled={isSubmitting} />
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              aria-label="Remover linha"
+                              disabled={isSubmitting || rows.length === 1}
+                              onClick={() => setRows(current => current.filter(item => item.id !== row.id))}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    <div className="flex items-center justify-between mt-4 p-3 bg-muted rounded-lg">
-                      <Label htmlFor="impactaPreco" className="cursor-pointer">
-                        Impacta no preço final?
-                      </Label>
-                      <Switch
-                        checked={impactaPreco}
-                        onCheckedChange={setImpactaPreco}
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-3 mt-6">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowAddIngredient(false);
-                          resetForm();
-                        }}
-                      >
-                        Cancelar
+                    <div className="mt-4 flex flex-wrap justify-between gap-3">
+                      <Button variant="outline" onClick={addRow} disabled={isSubmitting}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Adicionar linha
                       </Button>
-                      <Button
-                        onClick={handleAddIngredient}
-                        disabled={!selectedIngredient || isSubmitting}
-                      >
-                        {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        Adicionar Ingrediente
+                      <Button onClick={handleAddIngredients} disabled={isSubmitting || !rows.some(row => row.ingredientId)}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Guardar ingredientes
                       </Button>
                     </div>
                   </CardContent>

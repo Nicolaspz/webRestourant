@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Package, Loader2, Trash2, FileText, Download } from "lucide-react";
+import { Package, Loader2, Trash2, FileText, Download, Pencil, Check, X } from "lucide-react";
 import { setupAPIClient } from "@/services/api";
 import { toast } from "react-toastify";
 import { AuthContext } from "@/contexts/AuthContext";
@@ -51,6 +51,31 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status, refreshVers
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const apiClient = setupAPIClient();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftQuantity, setDraftQuantity] = useState("");
+  const [savingQuantity, setSavingQuantity] = useState(false);
+
+  const saveQuantity = async (item: PurchaseProduct) => {
+    const quantity = Number(draftQuantity);
+    if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+      toast.error("Informe uma quantidade inteira maior que zero.");
+      return;
+    }
+    setSavingQuantity(true);
+    try {
+      await apiClient.put("/compra_produt", {
+        purchaseId, productId: item.productId, quantity
+      }, { headers: { Authorization: `Bearer ${user?.token}` } });
+      setProducts(current => current.map(product => product.id === item.id ? { ...product, quantity } : product));
+      setEditingId(null);
+      onUpdate();
+      toast.success("Quantidade actualizada.");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Erro ao actualizar a quantidade.");
+    } finally {
+      setSavingQuantity(false);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -219,7 +244,18 @@ export function PurchaseProductsList({ purchaseId, onUpdate, status, refreshVers
                     </TableCell>
 
                     <TableCell>
-                      {purchaseProduct.quantity} {purchaseProduct.product.unit || '(unidade não definida)'}
+                      {!status && editingId === purchaseProduct.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input aria-label="Nova quantidade" type="number" min="1" step="1" className="w-24" autoFocus value={draftQuantity} disabled={savingQuantity} onChange={event => setDraftQuantity(event.target.value)} />
+                          <Button size="sm" variant="ghost" aria-label="Guardar quantidade" disabled={savingQuantity} onClick={() => saveQuantity(purchaseProduct)}><Check className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="ghost" aria-label="Cancelar edição" disabled={savingQuantity} onClick={() => setEditingId(null)}><X className="h-4 w-4" /></Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>{purchaseProduct.quantity} {purchaseProduct.product.unit}</span>
+                          {!status && <Button size="sm" variant="ghost" aria-label={`Editar quantidade de ${purchaseProduct.product.name}`} disabled={savingQuantity} onClick={() => { setEditingId(purchaseProduct.id); setDraftQuantity(String(purchaseProduct.quantity)); }}><Pencil className="h-4 w-4" /></Button>}
+                        </div>
+                      )}
                     </TableCell>
 
                     <TableCell>

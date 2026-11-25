@@ -27,6 +27,7 @@ export interface RecipeItem {
   unit: string;
   impactaPreco: boolean;
   isSelectable?: boolean;
+  isOptional?: boolean;
   ingredient: {
     id: string;
     name: string;

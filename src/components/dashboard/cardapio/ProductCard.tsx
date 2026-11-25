@@ -20,6 +20,7 @@ interface ProductCardProps {
     recipeItems?: Array<{
       quantity: number;
       impactaPreco: boolean;
+      isOptional?: boolean;
       ingredient: {
         isDerived?: boolean;
         defaultAreaId?: string | null;
@@ -34,8 +35,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart, variant = 'grid' }: ProductCardProps) {
   const recipeItems = product.recipeItems?.filter(item => item.impactaPreco) ?? [];
-  const hasRecipe = product.isDerived && recipeItems.length > 0;
-  const recipeAvailable = hasRecipe && recipeItems.every(({ quantity, ingredient }) => {
+  const hasRecipe = product.isDerived && !!product.recipeItems?.length;
+  const recipeAvailable = hasRecipe && recipeItems.every(({ quantity, ingredient, isOptional }) => {
+    if (isOptional) return true;
     // A disponibilidade de pratos derivados vem dos ingredientes; o prato não
     // precisa de uma quantidade própria registada no stock.
     if (ingredient.isDerived) return true;
