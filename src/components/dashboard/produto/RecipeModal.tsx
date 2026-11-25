@@ -88,7 +88,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       if (showLoading) setIsLoading(true);
       
       const ingredientsResponse = await api.get('/produts', {
-        params: { organizationId },
+        params: { organizationId, ingredientsOnly: true, includeUnavailable: true },
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -142,7 +142,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
         document.body.style.overflow = 'unset';
       };
     }
-  }, [isOpen, product]);
+  }, [isOpen, product, organizationId, token]);
 
   const resetForm = () => {
     setRows([{ id: 0, ingredientId: "", search: "", quantity: "", unit: "", impactaPreco: true, isOptional: false }]);
