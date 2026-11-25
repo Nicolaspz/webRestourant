@@ -44,6 +44,20 @@ interface RecipeModalProps {
   organizationId: string;
 }
 
+function recipeUnits(stockUnit: string, derived?: boolean) {
+  if (derived) return ["un"];
+  const normalized = stockUnit.trim().toLowerCase();
+  if (["l", "ml"].includes(normalized)) return ["l", "ml"];
+  if (["kg", "g"].includes(normalized)) return ["kg", "g"];
+  return [normalized];
+}
+function stockQuantity(item: RecipeItem) {
+  const factors: Record<string, number> = { l: 1000, ml: 1, kg: 1000, g: 1, un: 1 };
+  const stockUnit = item.ingredient.isDerived ? "un" : item.ingredient.unit.toLowerCase();
+  const recipeUnit = item.recipeUnit?.toLowerCase() || stockUnit;
+  return Number(item.recipeQuantity ?? item.quantity) * (factors[recipeUnit] || 1) / (factors[stockUnit] || 1);
+}
+
 export function RecipeModal({ isOpen, onClose, product, organizationId }: RecipeModalProps) {
   const { '@servFixe.token': token } = parseCookies();
   const [recipeItems, setRecipeItems] = useState<RecipeItem[]>([]);
@@ -54,13 +68,13 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const nextRowId = useRef(0);
-  const [rows, setRows] = useState([{ id: 0, ingredientId: "", search: "", quantity: "", impactaPreco: true, isOptional: false }]);
+  const [rows, setRows] = useState([{ id: 0, ingredientId: "", search: "", quantity: "", unit: "", impactaPreco: true, isOptional: false }]);
   const normalizeSearch = (value: string) =>
     value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
   const addRow = () => {
     const id = ++nextRowId.current;
-    setRows(current => [...current, { id, ingredientId: "", search: "", quantity: "", impactaPreco: true, isOptional: false }]);
+    setRows(current => [...current, { id, ingredientId: "", search: "", quantity: "", unit: "", impactaPreco: true, isOptional: false }]);
   };
 
   const updateRow = (id: number, changes: Partial<(typeof rows)[number]>) => {
@@ -79,7 +93,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       });
 
       const ingredients = ingredientsResponse.data.filter(
-        (p: Product) => p.id !== product.id && (p.isIgredient === true || (p.isDerived === true && p.allowAsIngredient === true))
+        (p: Product) => p.id !== product.id && (p.isIgredient === true || p.allowAsIngredient === true)
       );
 
       const recipeResponse = await api.get(`/recipe/${product.id}`, {
@@ -89,6 +103,8 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       const itemsWithPrices = recipeResponse.data.map((item: any) => ({
         id: item.id,
         quantity: item.quantity,
+        recipeQuantity: item.recipeQuantity ?? item.quantity,
+        recipeUnit: (item.recipeUnit ?? (item.ingredient.isDerived ? "un" : item.ingredient.unit)).toLowerCase(),
         productId: item.productId,
         impactaPreco: item.impactaPreco,
         isSelectable: item.isSelectable ?? false,
@@ -129,14 +145,14 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   }, [isOpen, product]);
 
   const resetForm = () => {
-    setRows([{ id: 0, ingredientId: "", search: "", quantity: "", impactaPreco: true, isOptional: false }]);
+    setRows([{ id: 0, ingredientId: "", search: "", quantity: "", unit: "", impactaPreco: true, isOptional: false }]);
   };
 
   const calculateTotalCost = () => {
     return recipeItems.reduce((total, item) => {
       if (item.impactaPreco && !item.isSelectable) {
         const cost = item.ingredient.cost ?? item.ingredient.price ?? 0;
-        return total + (cost * (Number(item.quantity) || 0));
+        return total + (cost * (stockQuantity(item) || 0));
       }
       return total;
     }, 0);
@@ -163,8 +179,8 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       setIsSubmitting(true);
       await api.post("/recipe", {
         productId: product.id,
-        items: pending.map(({ ingredientId, quantity, impactaPreco, isOptional }) => ({
-          ingredientId, quantity: Number(quantity), impactaPreco, isOptional
+        items: pending.map(({ ingredientId, quantity, unit, impactaPreco, isOptional }) => ({
+          ingredientId, quantity: Number(quantity), unit: unit || undefined, impactaPreco, isOptional
         }))
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -180,7 +196,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
   };
 
   const handleUpdateIngredient = async (item: RecipeItem) => {
-    if (!String(item.quantity).trim() || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0) {
+    if (!String(item.recipeQuantity ?? item.quantity).trim() || !Number.isFinite(Number(item.recipeQuantity ?? item.quantity)) || Number(item.recipeQuantity ?? item.quantity) <= 0) {
       toast.error('Informe uma quantidade válida para o ingrediente.');
       return;
     }
@@ -191,7 +207,8 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
       const payload = {
         productId: product.id,
         ingredientId: item.ingredient.id,
-        quantity: Number(item.quantity), // Garantir que é número
+        quantity: Number(item.recipeQuantity ?? item.quantity),
+        unit: item.recipeUnit,
         impactaPreco: Boolean(item.impactaPreco),
         isSelectable: Boolean(item.isSelectable),
         isOptional: Boolean(item.isOptional)
@@ -395,24 +412,30 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                   <div className="flex items-center justify-end gap-2">
                                     <Input
                                       type="number"
-                                      value={item.quantity}
+                                      value={item.recipeQuantity ?? item.quantity}
                                       onChange={(e) => {
                                         const updatedItems = recipeItems.map(ri => 
-                                          ri.id === item.id ? {...ri, quantity: e.target.value} : ri
+                                          ri.id === item.id ? {...ri, recipeQuantity: e.target.value} : ri
                                         );
                                         setRecipeItems(updatedItems);
                                       }}
                                       className="w-20"
-                                      min="0.1"
-                                      step="0.1"
+                                      min="0"
+                                      step="any"
                                     />
-                                    <span className="text-sm text-muted-foreground">
-                                      {item.ingredient.isDerived ? (Number(item.quantity) === 1 ? 'unidade' : 'unidades') : item.ingredient.unit}
-                                    </span>
+                                    <Select value={item.recipeUnit} onValueChange={recipeUnit => {
+                                      const oldUnit = item.recipeUnit || item.ingredient.unit;
+                                      const factors: Record<string, number> = { l: 1000, ml: 1, kg: 1000, g: 1, un: 1 };
+                                      const converted = Number(item.recipeQuantity ?? item.quantity) * (factors[oldUnit.toLowerCase()] || 1) / (factors[recipeUnit.toLowerCase()] || 1);
+                                      setRecipeItems(current => current.map(row => row.id === item.id ? { ...row, recipeUnit, recipeQuantity: Number(converted.toPrecision(15)) } : row));
+                                    }}>
+                                      <SelectTrigger className="w-24" aria-label="Unidade de consumo"><SelectValue /></SelectTrigger>
+                                      <SelectContent>{recipeUnits(item.ingredient.unit, item.ingredient.isDerived).map(unit => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}</SelectContent>
+                                    </Select>
                                   </div>
                                 ) : (
                                   <span>
-                                    {item.quantity} {item.ingredient.isDerived ? (Number(item.quantity) === 1 ? 'unidade' : 'unidades') : item.ingredient.unit}
+                                    {item.recipeQuantity ?? item.quantity} {item.recipeUnit ?? item.ingredient.unit}
                                   </span>
                                 )}
                               </TableCell>
@@ -434,7 +457,7 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                 )}
                               </TableCell>
                               <TableCell className="text-right text-yellow-600 font-medium">
-                                {item.isSelectable ? 'Definido no pedido' : `${((item.ingredient.cost ?? item.ingredient.price ?? 0) * (Number(item.quantity) || 0)).toFixed(2)} Kz`}
+                                {item.isSelectable ? 'Definido no pedido' : `${((item.ingredient.cost ?? item.ingredient.price ?? 0) * (stockQuantity(item) || 0)).toFixed(2)} Kz`}
                               </TableCell>
                               {isEditing && (
                                 <TableCell className="text-right">
@@ -508,7 +531,10 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                 onChange={event => updateRow(row.id, { search: event.target.value, ingredientId: "" })}
                                 disabled={isSubmitting}
                               />
-                              <Select value={row.ingredientId} onValueChange={ingredientId => updateRow(row.id, { ingredientId })} disabled={isSubmitting || matches.length === 0}>
+                              <Select value={row.ingredientId} onValueChange={ingredientId => {
+                                const selected = allIngredients.find(item => item.id === ingredientId);
+                                updateRow(row.id, { ingredientId, unit: selected?.isDerived ? "un" : selected?.unit?.toLowerCase() || "" });
+                              }} disabled={isSubmitting || matches.length === 0}>
                                 <SelectTrigger className="w-full" aria-label="Ingrediente">
                                   <SelectValue placeholder="Selecione um ingrediente" />
                                 </SelectTrigger>
@@ -537,7 +563,10 @@ export function RecipeModal({ isOpen, onClose, product, organizationId }: Recipe
                                 placeholder="0,00"
                               />
                               {ingredient && (
-                                <p className="text-xs text-muted-foreground">{ingredient.isDerived ? "unidade" : ingredient.unit}</p>
+                                <Select value={row.unit || (ingredient.isDerived ? "un" : ingredient.unit)} onValueChange={unit => updateRow(row.id, { unit })} disabled={isSubmitting}>
+                                  <SelectTrigger aria-label="Unidade de consumo"><SelectValue /></SelectTrigger>
+                                  <SelectContent>{recipeUnits(ingredient.unit, ingredient.isDerived).map(unit => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}</SelectContent>
+                                </Select>
                               )}
                             </div>
 

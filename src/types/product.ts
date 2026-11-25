@@ -28,6 +28,8 @@ export interface RecipeItem {
   impactaPreco: boolean;
   isSelectable?: boolean;
   isOptional?: boolean;
+  recipeQuantity?: number | string;
+  recipeUnit?: string;
   ingredient: {
     id: string;
     name: string;

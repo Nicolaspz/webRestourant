@@ -626,14 +626,6 @@ export function ProductFormModal({
               Este item sera tratado como prato/receita. Depois de criar, defina os ingredientes na receita do produto.
               <label className="mt-3 flex items-start gap-2 text-sm font-medium">
                 <Checkbox
-                  id="allowAsIngredient"
-                  checked={formData.allowAsIngredient}
-                  onCheckedChange={(checked) => handleInputChange('allowAsIngredient', !!checked)}
-                />
-                <span>Permitir usar este prato como ingrediente de outros pratos</span>
-              </label>
-              <label className="mt-3 flex items-start gap-2 text-sm font-medium">
-                <Checkbox
                   id="requiresFishSelection"
                   checked={formData.requiresFishSelection}
                   onCheckedChange={(checked) => handleInputChange('requiresFishSelection', !!checked)}
@@ -642,6 +634,23 @@ export function ProductFormModal({
               </label>
             </div>
           )}
+
+          <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+            <label className="flex items-start gap-2 font-medium">
+              <Checkbox
+                id="allowAsIngredient"
+                checked={formData.allowAsIngredient}
+                onCheckedChange={(checked) => handleInputChange('allowAsIngredient', !!checked)}
+                disabled={!isDataReady || isSubmitting}
+              />
+              <span>Permitir usar este produto como ingrediente de outras receitas</span>
+            </label>
+            <p className="mt-2">
+              {formData.productKind === 'RECIPE_PRODUCT'
+                ? 'Ao usar este prato como ingrediente, o stock dos seus componentes segue a ficha técnica.'
+                : 'Não exige ficha técnica. A venda e o uso em receitas descontam do mesmo stock. Ex.: gin em litros pode ser usado em ml num cocktail.'}
+            </p>
+          </div>
 
           <div className="hidden">
             <Checkbox
